@@ -812,6 +812,22 @@
 </head>
 <body>
 
+<!-- Manage Golfers Modal -->
+<div class="modal-overlay" id="golfersModal">
+  <div class="modal" style="width:420px">
+    <h2>👥 Golfer Profiles</h2>
+    <p style="font-family:'DM Mono',monospace;font-size:.65rem;color:#999;margin-bottom:18px;line-height:1.5">Add everyone who'll use the app. Each session is tagged to a golfer so history and lesson plans stay separate.</p>
+    <div id="golferList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <input class="form-input" type="text" id="newGolferName" placeholder="Name (e.g. Ed, Mike...)" style="flex:1" onkeydown="if(event.key==='Enter')addGolfer()">
+      <button class="btn btn-gold" onclick="addGolfer()">Add</button>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn btn-secondary" onclick="document.getElementById('golfersModal').classList.remove('open')">Done</button>
+    </div>
+  </div>
+</div>
+
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
@@ -966,6 +982,16 @@
             </div>
           </div>
 
+          <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:150px">
+              <label class="form-label">Golfer</label>
+              <select id="golferSelect" style="width:100%;padding:9px 10px;background:rgba(0,0,0,.4);border:1px solid rgba(200,168,75,.4);border-radius:2px;color:var(--cream);font-family:'DM Mono',monospace;font-size:.78rem;cursor:pointer" onchange="onGolferChange()">
+                <option value="">— Select golfer —</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary" style="padding:9px 14px;font-size:.65rem;white-space:nowrap" onclick="openManageGolfers()">Manage Golfers</button>
+          </div>
+
           <div class="form-group" style="margin:0">
             <label class="form-label">Additional Notes (optional)</label>
             <input class="form-input" type="text" id="swingNotes" placeholder="e.g. slicing badly, losing distance...">
@@ -999,7 +1025,12 @@
         <h2 style="font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--cream); font-weight:900;">Session History</h2>
         <p style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--divot); letter-spacing:0.1em; margin-top:4px;" id="historyCount"></p>
       </div>
-      <button class="btn btn-danger" onclick="clearAllHistory()" id="clearAllBtn" style="display:none">Clear All</button>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="historyGolferFilter" style="padding:7px 12px;background:rgba(0,0,0,.4);border:1px solid rgba(200,168,75,.3);color:var(--cream);font-family:'DM Mono',monospace;font-size:.68rem;border-radius:2px;cursor:pointer" onchange="renderHistory()">
+          <option value="">All Golfers</option>
+        </select>
+        <button class="btn btn-danger" onclick="clearAllHistory()" id="clearAllBtn" style="display:none">Clear All</button>
+      </div>
     </div>
     <div id="historyGrid" class="history-grid"></div>
   </div>
@@ -1023,6 +1054,11 @@
 
       <div class="lesson-header">
         <div>
+          <label class="form-label" style="display:block; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--divot); margin-bottom:5px;">Golfer</label>
+          <select id="lessonGolferFilter" style="padding:9px 12px;background:rgba(0,0,0,.4);border:1px solid rgba(200,168,75,.3);color:var(--cream);font-family:'DM Mono',monospace;font-size:.7rem;border-radius:2px;cursor:pointer">
+            <option value="">All Golfers</option>
+          </select>
+        </div>
           <label class="form-label" style="display:block; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--divot); margin-bottom:5px;">Plan Duration</label>
           <select id="planDuration">
             <option value="2">2 Weeks</option>
@@ -1072,6 +1108,7 @@ let currentFile = null;
 let currentAnalysis = null;
 let settings = {};
 let sessions = [];
+let golfers = [];
 let ghFileSHA = null;
 let syncDebounceTimer = null;
 const GH_DATA_FILE = 'golf-coach-data.json';
@@ -1079,11 +1116,13 @@ const GH_DATA_FILE = 'golf-coach-data.json';
 function loadState() {
   try { settings = JSON.parse(localStorage.getItem('caddieai_settings') || '{}'); } catch(e) { settings = {}; }
   try { sessions = JSON.parse(localStorage.getItem('caddieai_sessions') || '[]'); } catch(e) { sessions = []; }
+  try { golfers = JSON.parse(localStorage.getItem('caddieai_golfers') || '[]'); } catch(e) { golfers = []; }
   try { ghFileSHA = localStorage.getItem('caddieai_sha') || null; } catch(e) {}
 }
 
 function saveSessionsToStorage() {
   localStorage.setItem('caddieai_sessions', JSON.stringify(sessions));
+  localStorage.setItem('caddieai_golfers', JSON.stringify(golfers));
 }
 
 // ============================================================
@@ -1111,16 +1150,18 @@ async function loadFromGitHub() {
     const data = await res.json();
     ghFileSHA = data.sha; localStorage.setItem('caddieai_sha', ghFileSHA);
     const content = JSON.parse(atob(data.content.replace(/\n/g, '')));
-    if (content.sessions) { sessions = content.sessions; saveSessionsToStorage(); }
+    if (content.sessions) { sessions = content.sessions; }
+    if (content.golfers) { golfers = content.golfers; }
+    saveSessionsToStorage();
     setSyncStatus('synced', 'github');
-    renderHistory(); checkLessonTab();
+    renderHistory(); renderGolferSelects(); checkLessonTab();
   } catch(e) { setSyncStatus('error', 'load failed'); console.error(e); }
 }
 
 async function syncToGitHub() {
   if (!hasGitHub()) { setSyncStatus('', 'local'); return; }
   setSyncStatus('syncing', 'syncing...');
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions }, null, 2))));
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions, golfers }, null, 2))));
   const body = { message: 'Caddie AI sync ' + new Date().toISOString(), content: encoded };
   if (ghFileSHA) body.sha = ghFileSHA;
   try {
@@ -1164,6 +1205,7 @@ async function init() {
   loadState();
   applySettings();
   checkKeys();
+  renderGolferSelects();
   if (hasGitHub()) { setSyncStatus('syncing', 'loading...'); await loadFromGitHub(); } else { setSyncStatus('', 'local'); }
   renderHistory();
   checkLessonTab();
@@ -1577,9 +1619,11 @@ function showError(msg) {
 function saveSession() {
   if (!currentAnalysis) return;
   const label = document.getElementById('sessionLabel')?.value || 'Session';
+  const golferName = document.getElementById('golferSelect')?.value || '';
   const session = {
     id: Date.now(),
     label,
+    golfer: golferName,
     date: new Date().toISOString(),
     skill: currentAnalysis.skill,
     club: currentAnalysis.club,
@@ -1598,23 +1642,26 @@ function renderHistory() {
   const grid = document.getElementById('historyGrid');
   const count = document.getElementById('historyCount');
   const clearBtn = document.getElementById('clearAllBtn');
+  const filterEl = document.getElementById('historyGolferFilter');
+  const filterVal = filterEl ? filterEl.value : '';
+  const filtered = filterVal ? sessions.filter(s => s.golfer === filterVal) : sessions;
 
   if (!sessions.length) {
     count.textContent = 'No sessions yet';
     clearBtn.style.display = 'none';
-    grid.innerHTML = `
-      <div class="no-history" style="grid-column:1/-1">
-        <div class="big-icon">🏌️</div>
-        <h3>No sessions saved yet</h3>
-        <p>Analyze a swing on the Analyze tab,<br>then save your session to see it here.</p>
-      </div>`;
+    grid.innerHTML = `<div class="no-history" style="grid-column:1/-1"><div class="big-icon">🏌️</div><h3>No sessions saved yet</h3><p>Analyze a swing on the Analyze tab,<br>then save your session to see it here.</p></div>`;
     return;
   }
 
-  count.textContent = `${sessions.length} session${sessions.length !== 1 ? 's' : ''} saved`;
+  count.textContent = `${filtered.length} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''}${filterVal ? ' · ' + filterVal : ''}`;
   clearBtn.style.display = 'inline-block';
 
-  grid.innerHTML = sessions.map(s => {
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="no-history" style="grid-column:1/-1"><div class="big-icon">🔍</div><h3>No sessions for ${filterVal}</h3><p>Analyze a swing and tag it to this golfer.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(s => {
     const d = new Date(s.date);
     const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const a = s.analysis;
@@ -1627,6 +1674,7 @@ function renderHistory() {
           <div class="history-card-date">${dateStr}</div>
         </div>
         <div class="history-card-meta">
+          ${s.golfer ? `<span class="meta-tag" style="background:rgba(122,184,212,.15);border-color:rgba(122,184,212,.3);color:var(--sky)">👤 ${escHtml(s.golfer)}</span>` : ''}
           <span class="meta-tag">${s.club}</span>
           <span class="meta-tag">${s.skill}</span>
           <span class="meta-tag">${s.angle}</span>
@@ -1638,8 +1686,7 @@ function renderHistory() {
             `<span class="mini-score">${k.replace('_',' ')}: <span>${v}</span></span>`
           ).join('')}
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 }
 
@@ -1752,14 +1799,17 @@ async function generateLessonPlan() {
   const weeks = document.getElementById('planDuration').value;
   const days = document.getElementById('practiceDays').value;
   const mins = document.getElementById('sessionLength').value;
+  const lessonGolfer = document.getElementById('lessonGolferFilter')?.value || '';
   const genBtn = document.getElementById('generateBtn');
 
   genBtn.disabled = true;
   genBtn.textContent = 'Generating...';
 
-  // Summarize recent sessions (up to 5)
-  const recentSessions = sessions.slice(0, 5).map(s => ({
+  // Filter sessions by golfer if selected, then take up to 5 most recent
+  const sourceSessions = lessonGolfer ? sessions.filter(s => s.golfer === lessonGolfer) : sessions;
+  const recentSessions = sourceSessions.slice(0, 5).map(s => ({
     label: s.label,
+    golfer: s.golfer || 'Unknown',
     date: new Date(s.date).toLocaleDateString(),
     skill: s.skill,
     club: s.club,
@@ -1770,11 +1820,11 @@ async function generateLessonPlan() {
     improvements: s.analysis.improvements
   }));
 
-  const userName = settings.userName ? settings.userName : 'the golfer';
+  const golferName = lessonGolfer || settings.userName || 'the golfer';
 
   const prompt = `You are a PGA-certified head instructor creating a personalized golf improvement plan.
 
-Golfer: ${userName}
+Golfer: ${golferName}
 Plan: ${weeks} weeks, ${days} practice days per week, ${mins} minutes per session
 
 Recent swing analysis sessions (most recent first):
@@ -1850,6 +1900,73 @@ document.getElementById('settingsModal').addEventListener('click', function(e) {
 document.getElementById('detailModal').addEventListener('click', function(e) {
   if (e.target === this) this.classList.remove('open');
 });
+document.getElementById('golfersModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// ============================================================
+// GOLFER MANAGEMENT
+// ============================================================
+function openManageGolfers() {
+  renderGolferList();
+  document.getElementById('golfersModal').classList.add('open');
+}
+
+function addGolfer() {
+  const input = document.getElementById('newGolferName');
+  const name = input.value.trim();
+  if (!name) return;
+  if (golfers.includes(name)) { input.value = ''; return; }
+  golfers.push(name);
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  input.value = '';
+  renderGolferList();
+  renderGolferSelects();
+}
+
+function removeGolfer(name) {
+  if (!confirm(`Remove "${name}"? Their sessions won't be deleted, just untagged.`)) return;
+  golfers = golfers.filter(g => g !== name);
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  renderGolferList();
+  renderGolferSelects();
+}
+
+function renderGolferList() {
+  const list = document.getElementById('golferList');
+  if (!golfers.length) {
+    list.innerHTML = `<p style="font-family:'DM Mono',monospace;font-size:.65rem;color:#aaa;text-align:center;padding:12px">No golfers added yet.</p>`;
+    return;
+  }
+  list.innerHTML = golfers.map(g => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#f5f0e8;border-radius:3px;border-left:3px solid var(--flag)">
+      <span style="font-family:'DM Mono',monospace;font-size:.78rem;color:var(--ink)">👤 ${escHtml(g)}</span>
+      <button onclick="removeGolfer('${escHtml(g)}')" style="background:none;border:none;cursor:pointer;color:#c44b2b;font-size:.75rem;font-family:'DM Mono',monospace">Remove</button>
+    </div>`).join('');
+}
+
+function renderGolferSelects() {
+  const options = '<option value="">— Select golfer —</option>' + golfers.map(g => `<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
+  const filterOptions = '<option value="">All Golfers</option>' + golfers.map(g => `<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
+
+  const analyzeSelect = document.getElementById('golferSelect');
+  const historyFilter = document.getElementById('historyGolferFilter');
+  const lessonFilter  = document.getElementById('lessonGolferFilter');
+
+  if (analyzeSelect) analyzeSelect.innerHTML = options;
+  if (historyFilter) historyFilter.innerHTML = filterOptions;
+  if (lessonFilter)  lessonFilter.innerHTML  = filterOptions;
+}
+
+function onGolferChange() {
+  // Could pre-fill skill level from golfer's last session
+  const name = document.getElementById('golferSelect').value;
+  if (!name) return;
+  const last = sessions.find(s => s.golfer === name);
+  if (last) document.getElementById('skillLevel').value = last.skill;
+}
 
 // Init
 init();
