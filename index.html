@@ -1362,28 +1362,13 @@ Golfer profile:
 - Focus area requested: ${opts.focus}
 ${opts.notes ? `- Golfer notes: ${opts.notes}` : ''}
 
-IMPORTANT: The camera may only show a partial view of the swing. Analyze only what is visible — do not penalize scores for phases that cannot be seen from this angle. Note which phases were visible in "visible_phases".
+IMPORTANT: The camera may only show a partial view of the swing. Analyze only what is visible — do not penalize scores for phases that cannot be seen from this angle.
 
-Provide a structured analysis in the following JSON format ONLY (no markdown, no extra text):
-{
-  "overall_score": <0-100 integer>,
-  "scores": {
-    "setup": <0-100>,
-    "backswing": <0-100>,
-    "downswing": <0-100>,
-    "impact": <0-100>,
-    "follow_through": <0-100>,
-    "tempo": <0-100>
-  },
-  "visible_phases": ["<phases actually visible from this angle>"],
-  "strengths": [<2-3 specific positive observations as strings>],
-  "improvements": [<3-4 specific issues to fix as strings, most critical first>],
-  "key_fault": "<single most important fault in one sentence>",
-  "drill_1": { "name": "<drill name>", "description": "<2-3 sentence description of exactly how to do this drill>" },
-  "drill_2": { "name": "<drill name>", "description": "<2-3 sentence description>" },
-  "drill_3": { "name": "<drill name>", "description": "<2-3 sentence description>" },
-  "summary": "<2-3 sentence coaching summary appropriate for their skill level>"
-}`;
+Respond with ONLY a valid JSON object. No markdown, no code fences, no extra text before or after. Use real integer values for all scores (not placeholders). Example of the exact format required:
+
+{"overall_score":72,"scores":{"setup":75,"backswing":70,"downswing":68,"impact":72,"follow_through":74,"tempo":73},"visible_phases":["setup","backswing","downswing","impact","follow_through"],"strengths":["Good shoulder rotation","Solid stance width"],"improvements":["Early extension through impact","Over-the-top downswing path","Grip pressure too tight at top"],"key_fault":"Over-the-top swing path causing pull-draws and loss of power.","drill_1":{"name":"Headcover Drill","description":"Place a headcover just outside the ball. Practice swinging without hitting it to train an inside-out path. Do 20 slow swings focusing on the feeling of coming from inside."},"drill_2":{"name":"Pause at the Top","description":"Make your normal backswing then pause for 2 seconds at the top before starting down. This eliminates rushing and over-the-top moves. Do 15 reps with a 7-iron."},"drill_3":{"name":"Alignment Stick Path Drill","description":"Lay a stick pointing at your target and practice swinging parallel to it through impact. 10 minutes of slow-motion swings to ingrain the correct path."},"summary":"Your swing shows good fundamentals in setup and shoulder rotation. The primary issue is an over-the-top downswing path which is robbing you of distance and consistency. Focus on the headcover drill daily to train the correct inside-out path."}
+
+Now analyze the actual video and return a JSON object in exactly that format with your real observations.`;
 
   const body = {
     contents: [{
@@ -1392,7 +1377,7 @@ Provide a structured analysis in the following JSON format ONLY (no markdown, no
         { text: prompt }
       ]
     }],
-    generationConfig: { temperature: 0.3, maxOutputTokens: 1500 }
+    generationConfig: { temperature: 0.2, maxOutputTokens: 1800 }
   };
 
   const res = await fetch(
@@ -1407,7 +1392,6 @@ Provide a structured analysis in the following JSON format ONLY (no markdown, no
       const errJson = JSON.parse(errText);
       msg = errJson.error?.message || errText;
     } catch(e) { msg = errText; }
-    // Inline data size limit exceeded
     if (msg.includes('too large') || msg.includes('Request payload') || msg.includes('413')) {
       throw new Error('Video is too large for direct upload. Please trim it to under 60 seconds and try again.');
     }
@@ -1417,17 +1401,41 @@ Provide a structured analysis in the following JSON format ONLY (no markdown, no
   const data = await res.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-  // Parse JSON from response
-  const clean = text.replace(/```json|```/g, '').trim();
+  // Robust JSON extraction and sanitization
+  let clean = text.replace(/```json|```/g, '').trim();
+  // Remove any leading/trailing non-JSON text
+  const firstBrace = clean.indexOf('{');
+  const lastBrace = clean.lastIndexOf('}');
+  if (firstBrace > 0) clean = clean.slice(firstBrace);
+  if (lastBrace < clean.length - 1) clean = clean.slice(0, lastBrace + 1);
+
+  let parsed;
   try {
-    return JSON.parse(clean);
+    parsed = JSON.parse(clean);
   } catch(e) {
-    // Try to extract JSON from response
-    const match = clean.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]);
-    throw new Error('Could not parse analysis response. Try again.');
+    // Last resort: try to fix common issues (trailing commas, unquoted values)
+    const fixed = clean
+      .replace(/,\s*([}\]])/g, '$1')  // trailing commas
+      .replace(/:\s*<[^>]+>/g, ': 0') // leftover placeholders like <0-100>
+      .replace(/\n/g, ' ');
+    try {
+      parsed = JSON.parse(fixed);
+    } catch(e2) {
+      throw new Error('Could not parse Gemini response. Try again or use a shorter video clip.');
+    }
   }
+
+  // Ensure all score values are numbers
+  if (parsed.scores) {
+    Object.keys(parsed.scores).forEach(k => {
+      parsed.scores[k] = parseInt(parsed.scores[k]) || 0;
+    });
+  }
+  if (parsed.overall_score) parsed.overall_score = parseInt(parsed.overall_score) || 0;
+
+  return parsed;
 }
+
 
 // ============================================================
 // RENDER RESULTS
