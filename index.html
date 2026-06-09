@@ -926,7 +926,7 @@
             <input type="file" id="videoFile" accept="video/*" onchange="onFileSelect(event)">
             <span class="upload-icon">🎥</span>
             <div style="font-size:1rem; margin-bottom:6px; color:var(--cream)">Drop video here or click to browse</div>
-            <div class="upload-hint">MP4, MOV, AVI — max ~20MB recommended</div>
+            <div class="upload-hint">MP4, MOV · keep under 60 seconds for best results</div>
             <div class="upload-filename" id="uploadFilename"></div>
           </div>
 
@@ -1308,19 +1308,14 @@ async function analyzeSwing() {
 
   const skill = document.getElementById('skillLevel').value;
   const angle = document.getElementById('cameraAngle').value;
-  const club = document.getElementById('clubUsed').value;
+  const club  = document.getElementById('clubUsed').value;
   const focus = document.getElementById('focusArea').value;
   const notes = document.getElementById('swingNotes').value;
 
   showLoading();
 
   try {
-    // Step 1: Upload video to Gemini Files API
-    const uploadedFile = await uploadToGemini(currentFile);
-
-    // Step 2: Analyze with Gemini
-    const analysis = await callGeminiAnalysis(uploadedFile, { skill, angle, club, focus, notes });
-
+    const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes });
     currentAnalysis = { analysis, skill, angle, club, focus, notes, fileName: currentFile.name };
     renderResults(currentAnalysis);
   } catch(err) {
@@ -1328,83 +1323,25 @@ async function analyzeSwing() {
   }
 }
 
-async function uploadToGemini(file) {
-  const CHUNK_SIZE = 8 * 1024 * 1024; // 8MB chunks
-  const mimeType = file.type || 'video/mp4';
+async function callGeminiAnalysis(file, opts) {
+  updateLoadingText('Reading video...');
 
-  // Initiate resumable upload
-  const initRes = await fetch(
-    `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable&key=${settings.geminiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'X-Goog-Upload-Protocol': 'resumable',
-        'X-Goog-Upload-Command': 'start',
-        'X-Goog-Upload-Header-Content-Length': file.size,
-        'X-Goog-Upload-Header-Content-Type': mimeType,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ file: { display_name: file.name } })
-    }
-  );
-
-  if (!initRes.ok) {
-    const err = await initRes.text();
-    throw new Error('Upload init failed: ' + err);
-  }
-
-  const uploadUrl = initRes.headers.get('X-Goog-Upload-URL');
-  if (!uploadUrl) throw new Error('No upload URL received from Gemini');
-
-  // Upload file bytes
-  const uploadRes = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      'X-Goog-Upload-Command': 'upload, finalize',
-      'X-Goog-Upload-Offset': '0',
-      'Content-Type': mimeType
-    },
-    body: file
+  // Read file as base64
+  const base64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Could not read video file'));
+    reader.readAsDataURL(file);
   });
 
-  if (!uploadRes.ok) {
-    const err = await uploadRes.text();
-    throw new Error('File upload failed: ' + err);
-  }
-
-  const fileData = await uploadRes.json();
-
-  // Poll until file is ACTIVE
-  let fileUri = fileData.file?.uri || fileData.uri;
-  let fileName = fileData.file?.name || fileData.name;
-  let state = fileData.file?.state || fileData.state;
-
-  updateLoadingText('Processing video...');
-
-  let attempts = 0;
-  while (state !== 'ACTIVE' && attempts < 30) {
-    await new Promise(r => setTimeout(r, 2000));
-    const checkRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${settings.geminiKey}`
-    );
-    const checkData = await checkRes.json();
-    state = checkData.state;
-    attempts++;
-  }
-
-  if (state !== 'ACTIVE') throw new Error('Video processing timed out. Try a shorter clip.');
-
-  return fileUri;
-}
-
-async function callGeminiAnalysis(fileUri, opts) {
+  const mimeType = file.type || 'video/mp4';
   updateLoadingText('Analyzing your swing...');
 
   const skillDescriptions = {
-    beginner: 'complete beginner (just starting golf, unfamiliar with fundamentals)',
+    beginner:     'complete beginner (just starting golf, unfamiliar with fundamentals)',
     intermediate: 'intermediate golfer (plays regularly, knows basics, scores in the 90s-100s)',
-    advanced: 'advanced golfer (low handicap, single digits, competitive amateur)',
-    scratch: 'scratch or near-scratch golfer (competitive, looking for tour-level refinements)'
+    advanced:     'advanced golfer (low handicap, single digits, competitive amateur)',
+    scratch:      'scratch or near-scratch golfer (competitive, looking for tour-level refinements)'
   };
 
   const angleDescriptions = {
@@ -1438,7 +1375,7 @@ Provide a structured analysis in the following JSON format ONLY (no markdown, no
     "follow_through": <0-100>,
     "tempo": <0-100>
   },
-  "visible_phases": ["<phases actually visible from this angle, e.g. backswing, downswing, impact>"],
+  "visible_phases": ["<phases actually visible from this angle>"],
   "strengths": [<2-3 specific positive observations as strings>],
   "improvements": [<3-4 specific issues to fix as strings, most critical first>],
   "key_fault": "<single most important fault in one sentence>",
@@ -1451,7 +1388,7 @@ Provide a structured analysis in the following JSON format ONLY (no markdown, no
   const body = {
     contents: [{
       parts: [
-        { file_data: { mime_type: 'video/mp4', file_uri: fileUri } },
+        { inline_data: { mime_type: mimeType, data: base64 } },
         { text: prompt }
       ]
     }],
@@ -1464,8 +1401,17 @@ Provide a structured analysis in the following JSON format ONLY (no markdown, no
   );
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error('Gemini API error: ' + err);
+    const errText = await res.text();
+    let msg = 'Gemini API error';
+    try {
+      const errJson = JSON.parse(errText);
+      msg = errJson.error?.message || errText;
+    } catch(e) { msg = errText; }
+    // Inline data size limit exceeded
+    if (msg.includes('too large') || msg.includes('Request payload') || msg.includes('413')) {
+      throw new Error('Video is too large for direct upload. Please trim it to under 60 seconds and try again.');
+    }
+    throw new Error(msg);
   }
 
   const data = await res.json();
