@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caddie AI — Golf Swing Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fairway: #1a2e1a;
+    --rough: #2d4a2d;
+    --green: #3d6b3d;
+    --flag: #c8a84b;
+    --flag-light: #e8c96b;
+    --sand: #d4b896;
+    --cream: #f5f0e8;
+    --scorecard: #faf7f0;
+    --ink: #1a1a14;
+    --ink-light: #3a3a2e;
+    --divot: #8a7a5a;
+    --sky: #7ab8d4;
+    --white: #ffffff;
+    --danger: #c44b2b;
+    --good: #4a8c4a;
+    --panel-bg: rgba(26, 46, 26, 0.97);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: var(--fairway);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grass texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        87deg,
+        transparent,
+        transparent 18px,
+        rgba(255,255,255,0.015) 18px,
+        rgba(255,255,255,0.015) 20px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 18px,
+        rgba(0,0,0,0.04) 18px,
+        rgba(0,0,0,0.04) 20px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 28px 40px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(200,168,75,0.25);
+    background: rgba(10,20,10,0.6);
+    backdrop-filter: blur(8px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .logo-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--flag);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .logo-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 300;
+    color: var(--divot);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .skill-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border: 1px solid var(--flag);
+    color: var(--flag);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .skill-badge:hover { background: var(--flag); color: var(--fairway); }
+
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    background: rgba(0,0,0,0.3);
+    padding: 3px;
+    border-radius: 4px;
+  }
+
+  .nav-tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--divot);
+    background: transparent;
+  }
+  .nav-tab.active {
+    background: var(--rough);
+    color: var(--flag);
+  }
+  .nav-tab:hover:not(.active) { color: var(--cream); }
+
+  /* ===== MAIN LAYOUT ===== */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ===== SETTINGS MODAL ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--scorecard);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: 36px;
+    width: 480px;
+    max-width: 95vw;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    border-top: 4px solid var(--flag);
+  }
+
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--ink);
+    margin-bottom: 24px;
+  }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--divot);
+    margin-bottom: 6px;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink);
+    background: white;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { outline: none; border-color: var(--green); }
+
+  .form-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink);
+    background: white;
+    cursor: pointer;
+  }
+
+  .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--green); color: white; }
+  .btn-primary:hover { background: var(--rough); }
+  .btn-secondary { background: #eee; color: var(--ink-light); }
+  .btn-secondary:hover { background: #ddd; }
+  .btn-gold { background: var(--flag); color: var(--fairway); font-weight: 500; }
+  .btn-gold:hover { background: var(--flag-light); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { opacity: 0.85; }
+
+  /* ===== ANALYZE TAB ===== */
+  .analyze-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 768px) {
+    .analyze-layout { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; flex-wrap: wrap; gap: 12px; }
+    .logo-title { font-size: 1.5rem; }
+  }
+
+  .card {
+    background: rgba(10,20,10,0.7);
+    border: 1px solid rgba(200,168,75,0.2);
+    border-radius: 4px;
+    padding: 24px;
+    backdrop-filter: blur(4px);
+  }
+
+  .card-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--flag);
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(200,168,75,0.2);
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed rgba(200,168,75,0.35);
+    border-radius: 4px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--flag);
+    background: rgba(200,168,75,0.05);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .upload-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--divot);
+    letter-spacing: 0.08em;
+  }
+
+  .upload-filename {
+    margin-top: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--flag);
+    word-break: break-all;
+  }
+
+  /* video preview */
+  #videoPreview {
+    width: 100%;
+    border-radius: 3px;
+    margin-top: 14px;
+    max-height: 220px;
+    object-fit: contain;
+    background: #000;
+    display: none;
+  }
+
+  /* Options row */
+  .options-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .option-group label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--divot);
+    margin-bottom: 5px;
+  }
+
+  .option-group select {
+    width: 100%;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(200,168,75,0.3);
+    border-radius: 2px;
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+  .option-group select option { background: var(--fairway); }
+
+  .analyze-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--green), var(--rough));
+    border: 1px solid rgba(200,168,75,0.3);
+    color: var(--flag);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.25s;
+    letter-spacing: 0.03em;
+    margin-top: 8px;
+  }
+  .analyze-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--rough), #3a5a3a);
+    border-color: var(--flag);
+    box-shadow: 0 4px 20px rgba(200,168,75,0.2);
+  }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Results panel */
+  .results-panel {
+    min-height: 300px;
+  }
+
+  .score-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .score-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(200,168,75,0.2);
+    min-width: 80px;
+    background: rgba(0,0,0,0.3);
+  }
+  .score-chip .score-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--flag);
+    line-height: 1;
+  }
+  .score-chip .score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--divot);
+    margin-top: 4px;
+    text-align: center;
+  }
+
+  .result-section {
+    margin-bottom: 18px;
+  }
+
+  .result-section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--flag);
+    margin-bottom: 8px;
+  }
+
+  .result-text {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--cream);
+    font-weight: 300;
+  }
+
+  .drill-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .drill-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 3px;
+    border-left: 3px solid var(--flag);
+  }
+
+  .drill-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--flag);
+    min-width: 18px;
+    padding-top: 2px;
+  }
+
+  .drill-text { font-size: 0.9rem; line-height: 1.55; font-weight: 300; }
+
+  .loading-state {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .golf-loader {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(200,168,75,0.2);
+    border-top-color: var(--flag);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--divot);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    opacity: 0.5;
+  }
+
+  .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+
+  .empty-state p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--divot);
+  }
+
+  .save-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(200,168,75,0.15);
+  }
+
+  .save-row input {
+    flex: 1;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(200,168,75,0.25);
+    border-radius: 2px;
+    color: var(--cream);
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.9rem;
+  }
+  .save-row input::placeholder { color: var(--divot); }
+  .save-row input:focus { outline: none; border-color: var(--flag); }
+
+  /* ===== HISTORY TAB ===== */
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 18px;
+  }
+
+  .history-card {
+    background: rgba(10,20,10,0.7);
+    border: 1px solid rgba(200,168,75,0.18);
+    border-radius: 4px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .history-card:hover {
+    border-color: rgba(200,168,75,0.45);
+    background: rgba(20,35,20,0.85);
+  }
+
+  .history-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .history-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--cream);
+    font-weight: 700;
+  }
+
+  .history-card-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--divot);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    margin-left: 10px;
+  }
+
+  .history-card-meta {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .meta-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+    background: rgba(200,168,75,0.12);
+    color: var(--flag);
+    border: 1px solid rgba(200,168,75,0.2);
+  }
+
+  .history-card-preview {
+    font-size: 0.85rem;
+    color: var(--divot);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .history-score-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(200,168,75,0.1);
+  }
+
+  .mini-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--divot);
+  }
+  .mini-score span { color: var(--flag); font-weight: 500; }
+
+  .delete-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--divot);
+    cursor: pointer;
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+    padding: 2px 6px;
+  }
+  .history-card:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { color: var(--danger); }
+
+  .no-history {
+    text-align: center;
+    padding: 80px 20px;
+    opacity: 0.45;
+  }
+  .no-history .big-icon { font-size: 4rem; margin-bottom: 16px; }
+  .no-history h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+    color: var(--cream);
+  }
+  .no-history p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    color: var(--divot);
+  }
+
+  /* ===== LESSON PLAN TAB ===== */
+  .lesson-header {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .lesson-header select {
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(200,168,75,0.3);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .lesson-header select option { background: var(--fairway); }
+
+  .generate-btn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #8a6a20, var(--flag));
+    border: none;
+    color: var(--fairway);
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-style: italic;
+    cursor: pointer;
+    border-radius: 3px;
+    font-weight: 700;
+    transition: all 0.2s;
+  }
+  .generate-btn:hover:not(:disabled) { filter: brightness(1.1); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .lesson-plan-content {
+    background: rgba(250,247,240,0.05);
+    border: 1px solid rgba(200,168,75,0.2);
+    border-radius: 4px;
+    padding: 28px;
+    min-height: 300px;
+  }
+
+  .lesson-week {
+    margin-bottom: 28px;
+  }
+
+  .lesson-week-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--flag);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(200,168,75,0.2);
+  }
+
+  .lesson-day {
+    margin-bottom: 14px;
+    padding: 14px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 3px;
+  }
+
+  .lesson-day-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--sky);
+    margin-bottom: 6px;
+  }
+
+  .lesson-day-content {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    font-weight: 300;
+  }
+
+  /* ===== SESSION DETAIL MODAL ===== */
+  .detail-modal {
+    width: 700px;
+    max-width: 95vw;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .detail-modal::-webkit-scrollbar { width: 4px; }
+  .detail-modal::-webkit-scrollbar-track { background: transparent; }
+  .detail-modal::-webkit-scrollbar-thumb { background: rgba(200,168,75,0.3); border-radius: 2px; }
+
+  .api-key-note {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--divot);
+    letter-spacing: 0.05em;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .api-key-note a { color: var(--flag); text-decoration: none; }
+  .api-key-note a:hover { text-decoration: underline; }
+
+  .notice {
+    padding: 12px 16px;
+    border-radius: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .notice-warn { background: rgba(196,75,43,0.15); border: 1px solid rgba(196,75,43,0.3); color: #e8896a; }
+  .notice-info { background: rgba(122,184,212,0.1); border: 1px solid rgba(122,184,212,0.25); color: var(--sky); }
+
+  /* fade-in */
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .no-keys-msg {
+    text-align: center;
+    padding: 60px 20px;
+    opacity: 0.6;
+  }
+  .no-keys-msg .icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .no-keys-msg p { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--divot); line-height: 1.6; }
+
+  /* progress bar */
+  .progress-bars { margin: 16px 0; }
+  .prog-item { margin-bottom: 10px; }
+  .prog-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    color: var(--divot);
+    margin-bottom: 4px;
+  }
+  .prog-label span:last-child { color: var(--flag); }
+  .prog-track {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--flag));
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+</style>
+</head>
+<body>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h2>⚙️ Settings</h2>
+    <div class="form-group">
+      <label class="form-label">Gemini API Key <span style="color:var(--danger)">*</span></label>
+      <input class="form-input" type="password" id="geminiKey" placeholder="AIzaSy...">
+      <p class="api-key-note">Required for video analysis. Get one free at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a></p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Claude API Key</label>
+      <input class="form-input" type="password" id="claudeKey" placeholder="sk-ant-...">
+      <p class="api-key-note">Required for lesson plan generation. Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+    </div>
+    <div class="form-group">
+      <div style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #e0ddd5">
+        <p style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:10px">GitHub Sync (Recommended)</p>
+        <p style="font-family:'DM Mono',monospace;font-size:.62rem;color:#999;line-height:1.55;margin-bottom:12px">Stores sessions in a JSON file on your repo — no size limits, syncs across devices. Create a <a href="https://github.com/settings/tokens?type=beta" target="_blank" style="color:#8a6a20">fine-grained PAT</a> with Contents read+write.</p>
+        <div class="form-group">
+          <label class="form-label">GitHub Username</label>
+          <input class="form-input" type="text" id="ghUser" placeholder="e.g. edhenschel20">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Repository Name</label>
+          <input class="form-input" type="text" id="ghRepo" placeholder="e.g. GolfCoach">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Personal Access Token</label>
+          <input class="form-input" type="password" id="ghToken" placeholder="github_pat_...">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" style="padding:6px 14px;font-size:.62rem" onclick="testGitHubConnection()">Test Connection</button>
+          <button class="btn btn-primary" style="padding:6px 14px;font-size:.62rem" onclick="forceSyncNow()">Sync Now</button>
+          <button class="btn btn-secondary" style="padding:6px 14px;font-size:.62rem" onclick="loadFromGitHub()">Load from GitHub</button>
+        </div>
+        <p id="ghTestResult" style="font-family:'DM Mono',monospace;font-size:.62rem;margin-top:8px"></p>
+      </div>
+      <label class="form-label">Your Name (optional)</label>
+      <input class="form-input" type="text" id="userName" placeholder="e.g. Ed">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Default Skill Level</label>
+      <select class="form-select" id="defaultSkill">
+        <option value="beginner">Beginner (just starting out)</option>
+        <option value="intermediate" selected>Intermediate (plays regularly)</option>
+        <option value="advanced">Advanced (single-digit handicap)</option>
+        <option value="scratch">Scratch / competitive</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- Session Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal detail-modal" id="detailContent">
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-title">Caddie AI</span>
+    <span class="logo-subtitle">Golf Swing Coach</span>
+  </div>
+  <div class="header-right">
+    <span id="syncIndicator" style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;color:var(--divot);padding:4px 10px;border:1px solid rgba(200,168,75,.15);border-radius:2px;white-space:nowrap">⬤ local</span>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('analyze')">Analyze</button>
+      <button class="nav-tab" onclick="switchTab('history')">History</button>
+      <button class="nav-tab" onclick="switchTab('lessons')">Lesson Plan</button>
+    </div>
+    <button class="skill-badge" onclick="openSettings()">Settings</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ANALYZE TAB -->
+  <div class="tab-panel active" id="tab-analyze">
+    <div class="analyze-layout">
+
+      <!-- Left: Upload + Options -->
+      <div>
+        <div class="card">
+          <div class="card-title">Upload Swing Video</div>
+
+          <div id="noKeyWarning" class="notice notice-warn" style="display:none">
+            ⚠️ No Gemini API key set. Open Settings to add your key before analyzing.
+          </div>
+
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="videoFile" accept="video/*" onchange="onFileSelect(event)">
+            <span class="upload-icon">🎥</span>
+            <div style="font-size:1rem; margin-bottom:6px; color:var(--cream)">Drop video here or click to browse</div>
+            <div class="upload-hint">MP4, MOV, AVI — max ~20MB recommended</div>
+            <div class="upload-filename" id="uploadFilename"></div>
+          </div>
+
+          <video id="videoPreview" controls></video>
+
+          <div style="background:rgba(122,184,212,.08);border:1px solid rgba(122,184,212,.2);border-radius:3px;padding:10px 13px;margin:12px 0;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--sky);letter-spacing:.04em;line-height:1.6">
+            📐 <strong>Camera tip:</strong> Place your phone on a tripod, golf bag, or chair behind your trail hip pointing toward the target. Never film face-on when hitting real shots.
+          </div>
+
+          <div class="options-row">
+            <div class="option-group">
+              <label>Skill Level</label>
+              <select id="skillLevel">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate" selected>Intermediate</option>
+                <option value="advanced">Advanced</option>
+                <option value="scratch">Scratch</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Camera Angle</label>
+              <select id="cameraAngle">
+                <option value="down-the-line" selected>Down the Line (behind trail hip)</option>
+                <option value="behind-target">Behind / Target Line (caddie cam)</option>
+                <option value="elevated-dtl">Elevated Down the Line</option>
+                <option value="partial">Partial View / Mixed</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Club Used</label>
+              <select id="clubUsed">
+                <option value="driver">Driver</option>
+                <option value="3-wood">3-Wood</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="long-iron">Long Iron (3-5)</option>
+                <option value="mid-iron">Mid Iron (6-8)</option>
+                <option value="short-iron">Short Iron (9-PW)</option>
+                <option value="wedge">Wedge</option>
+                <option value="putter">Putter</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Focus Area</label>
+              <select id="focusArea">
+                <option value="full">Full Swing Analysis</option>
+                <option value="setup">Setup & Address</option>
+                <option value="backswing">Backswing</option>
+                <option value="downswing">Downswing & Impact</option>
+                <option value="followthrough">Follow-Through</option>
+                <option value="tempo">Tempo & Rhythm</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Additional Notes (optional)</label>
+            <input class="form-input" type="text" id="swingNotes" placeholder="e.g. slicing badly, losing distance...">
+          </div>
+
+          <button class="analyze-btn" id="analyzeBtn" onclick="analyzeSwing()" style="margin-top:16px" disabled>
+            Analyze My Swing
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Results -->
+      <div>
+        <div class="card results-panel" id="resultsPanel">
+          <div class="card-title">Analysis Results</div>
+          <div class="empty-state" id="emptyResults">
+            <div class="empty-icon">⛳</div>
+            <p>Upload a video and click<br>Analyze to get started</p>
+          </div>
+          <div id="resultsContent" style="display:none"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div class="tab-panel" id="tab-history">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h2 style="font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--cream); font-weight:900;">Session History</h2>
+        <p style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--divot); letter-spacing:0.1em; margin-top:4px;" id="historyCount"></p>
+      </div>
+      <button class="btn btn-danger" onclick="clearAllHistory()" id="clearAllBtn" style="display:none">Clear All</button>
+    </div>
+    <div id="historyGrid" class="history-grid"></div>
+  </div>
+
+  <!-- LESSON PLAN TAB -->
+  <div class="tab-panel" id="tab-lessons">
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">AI Lesson Plan Generator</div>
+      <p style="font-size:0.9rem; font-weight:300; margin-bottom:18px; line-height:1.7;">
+        Generate a personalized multi-week practice plan based on your recent swing analysis sessions. 
+        Claude will review your identified weaknesses and build a targeted improvement program.
+      </p>
+
+      <div id="noClaudeWarning" class="notice notice-warn" style="display:none">
+        ⚠️ No Claude API key set. Open Settings to add your key for lesson plan generation.
+      </div>
+
+      <div id="noSessionsWarning" class="notice notice-info" style="display:none">
+        📋 No analysis sessions found. Analyze some swings first, then return here to generate a lesson plan.
+      </div>
+
+      <div class="lesson-header">
+        <div>
+          <label class="form-label" style="display:block; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--divot); margin-bottom:5px;">Plan Duration</label>
+          <select id="planDuration">
+            <option value="2">2 Weeks</option>
+            <option value="4" selected>4 Weeks</option>
+            <option value="6">6 Weeks</option>
+            <option value="8">8 Weeks</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="display:block; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--divot); margin-bottom:5px;">Practice Days/Week</label>
+          <select id="practiceDays">
+            <option value="2">2 days</option>
+            <option value="3" selected>3 days</option>
+            <option value="4">4 days</option>
+            <option value="5">5 days</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="display:block; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--divot); margin-bottom:5px;">Session Length</label>
+          <select id="sessionLength">
+            <option value="30">30 min</option>
+            <option value="45" selected>45 min</option>
+            <option value="60">60 min</option>
+            <option value="90">90 min</option>
+          </select>
+        </div>
+        <button class="generate-btn" id="generateBtn" onclick="generateLessonPlan()">Generate Lesson Plan</button>
+      </div>
+    </div>
+
+    <div class="lesson-plan-content" id="lessonPlanContent">
+      <div class="empty-state" id="emptyLesson">
+        <div class="empty-icon">📋</div>
+        <p>Your personalized lesson plan<br>will appear here</p>
+      </div>
+      <div id="lessonPlanText" style="display:none"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ============================================================
+// STATE & STORAGE
+// ============================================================
+let currentFile = null;
+let currentAnalysis = null;
+let settings = {};
+let sessions = [];
+let ghFileSHA = null;
+let syncDebounceTimer = null;
+const GH_DATA_FILE = 'golf-coach-data.json';
+
+function loadState() {
+  try { settings = JSON.parse(localStorage.getItem('caddieai_settings') || '{}'); } catch(e) { settings = {}; }
+  try { sessions = JSON.parse(localStorage.getItem('caddieai_sessions') || '[]'); } catch(e) { sessions = []; }
+  try { ghFileSHA = localStorage.getItem('caddieai_sha') || null; } catch(e) {}
+}
+
+function saveSessionsToStorage() {
+  localStorage.setItem('caddieai_sessions', JSON.stringify(sessions));
+}
+
+// ============================================================
+// GITHUB SYNC
+// ============================================================
+function hasGitHub() { return settings.ghUser && settings.ghRepo && settings.ghToken; }
+function ghHeaders() { return { 'Authorization': 'token ' + settings.ghToken, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }; }
+function ghApiUrl() { return `https://api.github.com/repos/${settings.ghUser}/${settings.ghRepo}/contents/${GH_DATA_FILE}`; }
+
+function setSyncStatus(state, msg) {
+  const el = document.getElementById('syncIndicator');
+  if (!el) return;
+  const colors = { syncing: '#7ab8d4', synced: '#6abf6a', error: '#e87a5a', '': 'var(--divot)' };
+  el.style.color = colors[state] || colors[''];
+  el.textContent = (state === 'syncing' ? '↻' : state === 'synced' ? '✓' : state === 'error' ? '✕' : '⬤') + ' ' + msg;
+}
+
+async function loadFromGitHub() {
+  if (!hasGitHub()) return;
+  setSyncStatus('syncing', 'loading...');
+  try {
+    const res = await fetch(ghApiUrl(), { headers: ghHeaders() });
+    if (res.status === 404) { setSyncStatus('synced', 'github (empty)'); return; }
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    ghFileSHA = data.sha; localStorage.setItem('caddieai_sha', ghFileSHA);
+    const content = JSON.parse(atob(data.content.replace(/\n/g, '')));
+    if (content.sessions) { sessions = content.sessions; saveSessionsToStorage(); }
+    setSyncStatus('synced', 'github');
+    renderHistory(); checkLessonTab();
+  } catch(e) { setSyncStatus('error', 'load failed'); console.error(e); }
+}
+
+async function syncToGitHub() {
+  if (!hasGitHub()) { setSyncStatus('', 'local'); return; }
+  setSyncStatus('syncing', 'syncing...');
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions }, null, 2))));
+  const body = { message: 'Caddie AI sync ' + new Date().toISOString(), content: encoded };
+  if (ghFileSHA) body.sha = ghFileSHA;
+  try {
+    let res = await fetch(ghApiUrl(), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
+    if (!res.ok) {
+      const err = await res.json();
+      if (err.message && err.message.includes('sha')) {
+        const getRes = await fetch(ghApiUrl(), { headers: ghHeaders() });
+        if (getRes.ok) { const d = await getRes.json(); ghFileSHA = d.sha; localStorage.setItem('caddieai_sha', ghFileSHA); body.sha = ghFileSHA; }
+        res = await fetch(ghApiUrl(), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
+        if (!res.ok) throw new Error(await res.text());
+      } else throw new Error(JSON.stringify(err));
+    }
+    const d = await res.json(); ghFileSHA = d.content.sha; localStorage.setItem('caddieai_sha', ghFileSHA);
+    setSyncStatus('synced', 'github ✓');
+  } catch(e) { setSyncStatus('error', 'sync error'); console.error(e); }
+}
+
+function scheduleSyncToGitHub() {
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(syncToGitHub, 3000);
+}
+
+async function forceSyncNow() { clearTimeout(syncDebounceTimer); await syncToGitHub(); }
+
+async function testGitHubConnection() {
+  const result = document.getElementById('ghTestResult');
+  const user  = document.getElementById('ghUser').value.trim();
+  const repo  = document.getElementById('ghRepo').value.trim();
+  const token = document.getElementById('ghToken').value.trim();
+  if (!user || !repo || !token) { result.textContent = '⚠ Fill in all three fields first.'; result.style.color = '#e87a5a'; return; }
+  result.textContent = 'Testing...'; result.style.color = '#aaa';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${user}/${repo}`, { headers: { 'Authorization': 'token ' + token } });
+    if (res.ok) { result.textContent = '✓ Connected!'; result.style.color = '#6abf6a'; }
+    else { result.textContent = '✕ Failed (' + res.status + ') — check username, repo, and token permissions.'; result.style.color = '#e87a5a'; }
+  } catch(e) { result.textContent = '✕ Network error: ' + e.message; result.style.color = '#e87a5a'; }
+}
+
+async function init() {
+  loadState();
+  applySettings();
+  checkKeys();
+  if (hasGitHub()) { setSyncStatus('syncing', 'loading...'); await loadFromGitHub(); } else { setSyncStatus('', 'local'); }
+  renderHistory();
+  checkLessonTab();
+}
+
+function applySettings() {
+  if (settings.defaultSkill) {
+    document.getElementById('skillLevel').value = settings.defaultSkill;
+    document.getElementById('defaultSkill').value = settings.defaultSkill;
+  }
+  if (settings.geminiKey) document.getElementById('geminiKey').value = settings.geminiKey;
+  if (settings.claudeKey) document.getElementById('claudeKey').value = settings.claudeKey;
+  if (settings.userName)  document.getElementById('userName').value  = settings.userName;
+  if (settings.ghUser)    document.getElementById('ghUser').value    = settings.ghUser;
+  if (settings.ghRepo)    document.getElementById('ghRepo').value    = settings.ghRepo;
+  if (settings.ghToken)   document.getElementById('ghToken').value   = settings.ghToken;
+}
+
+function checkKeys() {
+  const noKeyWarning = document.getElementById('noKeyWarning');
+  noKeyWarning.style.display = settings.geminiKey ? 'none' : 'block';
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+function saveSettings() {
+  settings.geminiKey   = document.getElementById('geminiKey').value.trim();
+  settings.claudeKey   = document.getElementById('claudeKey').value.trim();
+  settings.userName    = document.getElementById('userName').value.trim();
+  settings.defaultSkill = document.getElementById('defaultSkill').value;
+  settings.ghUser      = document.getElementById('ghUser').value.trim();
+  settings.ghRepo      = document.getElementById('ghRepo').value.trim();
+  settings.ghToken     = document.getElementById('ghToken').value.trim();
+  localStorage.setItem('caddieai_settings', JSON.stringify(settings));
+  applySettings();
+  checkKeys();
+  checkLessonTab();
+  if (hasGitHub()) setSyncStatus('synced', 'github'); else setSyncStatus('', 'local');
+  closeSettings();
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'history') renderHistory();
+  if (tab === 'lessons') checkLessonTab();
+}
+
+// ============================================================
+// FILE HANDLING
+// ============================================================
+function onFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  currentFile = file;
+  document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
+  const url = URL.createObjectURL(file);
+  const vid = document.getElementById('videoPreview');
+  vid.src = url;
+  vid.style.display = 'block';
+  document.getElementById('analyzeBtn').disabled = !settings.geminiKey;
+  if (!settings.geminiKey) document.getElementById('noKeyWarning').style.display = 'block';
+}
+
+// drag/drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('video/')) {
+    currentFile = file;
+    document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
+    const vid = document.getElementById('videoPreview');
+    vid.src = URL.createObjectURL(file);
+    vid.style.display = 'block';
+    document.getElementById('analyzeBtn').disabled = !settings.geminiKey;
+  }
+});
+
+// ============================================================
+// GEMINI VIDEO ANALYSIS
+// ============================================================
+async function analyzeSwing() {
+  if (!currentFile || !settings.geminiKey) return;
+
+  const skill = document.getElementById('skillLevel').value;
+  const angle = document.getElementById('cameraAngle').value;
+  const club = document.getElementById('clubUsed').value;
+  const focus = document.getElementById('focusArea').value;
+  const notes = document.getElementById('swingNotes').value;
+
+  showLoading();
+
+  try {
+    // Step 1: Upload video to Gemini Files API
+    const uploadedFile = await uploadToGemini(currentFile);
+
+    // Step 2: Analyze with Gemini
+    const analysis = await callGeminiAnalysis(uploadedFile, { skill, angle, club, focus, notes });
+
+    currentAnalysis = { analysis, skill, angle, club, focus, notes, fileName: currentFile.name };
+    renderResults(currentAnalysis);
+  } catch(err) {
+    showError(err.message || 'Analysis failed. Check your API key and try again.');
+  }
+}
+
+async function uploadToGemini(file) {
+  const CHUNK_SIZE = 8 * 1024 * 1024; // 8MB chunks
+  const mimeType = file.type || 'video/mp4';
+
+  // Initiate resumable upload
+  const initRes = await fetch(
+    `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable&key=${settings.geminiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'X-Goog-Upload-Protocol': 'resumable',
+        'X-Goog-Upload-Command': 'start',
+        'X-Goog-Upload-Header-Content-Length': file.size,
+        'X-Goog-Upload-Header-Content-Type': mimeType,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ file: { display_name: file.name } })
+    }
+  );
+
+  if (!initRes.ok) {
+    const err = await initRes.text();
+    throw new Error('Upload init failed: ' + err);
+  }
+
+  const uploadUrl = initRes.headers.get('X-Goog-Upload-URL');
+  if (!uploadUrl) throw new Error('No upload URL received from Gemini');
+
+  // Upload file bytes
+  const uploadRes = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'X-Goog-Upload-Command': 'upload, finalize',
+      'X-Goog-Upload-Offset': '0',
+      'Content-Type': mimeType
+    },
+    body: file
+  });
+
+  if (!uploadRes.ok) {
+    const err = await uploadRes.text();
+    throw new Error('File upload failed: ' + err);
+  }
+
+  const fileData = await uploadRes.json();
+
+  // Poll until file is ACTIVE
+  let fileUri = fileData.file?.uri || fileData.uri;
+  let fileName = fileData.file?.name || fileData.name;
+  let state = fileData.file?.state || fileData.state;
+
+  updateLoadingText('Processing video...');
+
+  let attempts = 0;
+  while (state !== 'ACTIVE' && attempts < 30) {
+    await new Promise(r => setTimeout(r, 2000));
+    const checkRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${settings.geminiKey}`
+    );
+    const checkData = await checkRes.json();
+    state = checkData.state;
+    attempts++;
+  }
+
+  if (state !== 'ACTIVE') throw new Error('Video processing timed out. Try a shorter clip.');
+
+  return fileUri;
+}
+
+async function callGeminiAnalysis(fileUri, opts) {
+  updateLoadingText('Analyzing your swing...');
+
+  const skillDescriptions = {
+    beginner: 'complete beginner (just starting golf, unfamiliar with fundamentals)',
+    intermediate: 'intermediate golfer (plays regularly, knows basics, scores in the 90s-100s)',
+    advanced: 'advanced golfer (low handicap, single digits, competitive amateur)',
+    scratch: 'scratch or near-scratch golfer (competitive, looking for tour-level refinements)'
+  };
+
+  const angleDescriptions = {
+    'down-the-line':  'down the line — camera behind the golfer off the trail hip, looking toward the target. Best for club path, swing plane, and hip/shoulder turn.',
+    'behind-target':  'caddie cam / behind-target — camera directly behind the golfer looking toward the target. Good for shoulder turn and spine tilt.',
+    'elevated-dtl':   'elevated down the line — camera elevated and behind, angled down toward the golfer.',
+    'partial':        'partial or mixed view — only part of the swing may be visible in frame.',
+    'unknown':        'unknown angle — work with whatever is visible.'
+  };
+
+  const prompt = `You are an expert PGA-certified golf instructor with 20+ years of coaching experience. 
+Analyze this golf swing video carefully.
+
+Golfer profile:
+- Skill level: ${skillDescriptions[opts.skill]}
+- Club being used: ${opts.club}
+- Camera angle: ${angleDescriptions[opts.angle] || opts.angle}
+- Focus area requested: ${opts.focus}
+${opts.notes ? `- Golfer notes: ${opts.notes}` : ''}
+
+IMPORTANT: The camera may only show a partial view of the swing. Analyze only what is visible — do not penalize scores for phases that cannot be seen from this angle. Note which phases were visible in "visible_phases".
+
+Provide a structured analysis in the following JSON format ONLY (no markdown, no extra text):
+{
+  "overall_score": <0-100 integer>,
+  "scores": {
+    "setup": <0-100>,
+    "backswing": <0-100>,
+    "downswing": <0-100>,
+    "impact": <0-100>,
+    "follow_through": <0-100>,
+    "tempo": <0-100>
+  },
+  "visible_phases": ["<phases actually visible from this angle, e.g. backswing, downswing, impact>"],
+  "strengths": [<2-3 specific positive observations as strings>],
+  "improvements": [<3-4 specific issues to fix as strings, most critical first>],
+  "key_fault": "<single most important fault in one sentence>",
+  "drill_1": { "name": "<drill name>", "description": "<2-3 sentence description of exactly how to do this drill>" },
+  "drill_2": { "name": "<drill name>", "description": "<2-3 sentence description>" },
+  "drill_3": { "name": "<drill name>", "description": "<2-3 sentence description>" },
+  "summary": "<2-3 sentence coaching summary appropriate for their skill level>"
+}`;
+
+  const body = {
+    contents: [{
+      parts: [
+        { file_data: { mime_type: 'video/mp4', file_uri: fileUri } },
+        { text: prompt }
+      ]
+    }],
+    generationConfig: { temperature: 0.3, maxOutputTokens: 1500 }
+  };
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Gemini API error: ' + err);
+  }
+
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+  // Parse JSON from response
+  const clean = text.replace(/```json|```/g, '').trim();
+  try {
+    return JSON.parse(clean);
+  } catch(e) {
+    // Try to extract JSON from response
+    const match = clean.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('Could not parse analysis response. Try again.');
+  }
+}
+
+// ============================================================
+// RENDER RESULTS
+// ============================================================
+function renderResults(data) {
+  const a = data.analysis;
+  const panel = document.getElementById('resultsContent');
+
+  const scoreColor = s => s >= 80 ? '#6abf6a' : s >= 60 ? 'var(--flag)' : '#e87a5a';
+
+  const drills = [a.drill_1, a.drill_2, a.drill_3].filter(Boolean);
+
+  panel.innerHTML = `
+    <div class="fade-in">
+      <div class="score-row">
+        <div class="score-chip">
+          <div class="score-val" style="color:${scoreColor(a.overall_score)}">${a.overall_score}</div>
+          <div class="score-label">Overall</div>
+        </div>
+        ${Object.entries(a.scores||{}).map(([k,v]) => `
+          <div class="score-chip">
+            <div class="score-val" style="color:${scoreColor(v)};font-size:1.1rem">${v}</div>
+            <div class="score-label">${k.replace('_',' ')}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="progress-bars">
+        ${Object.entries(a.scores||{}).map(([k,v]) => `
+          <div class="prog-item">
+            <div class="prog-label"><span>${k.replace('_',' ')}</span><span>${v}/100</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:${v}%"></div></div>
+          </div>
+        `).join('')}
+      </div>
+
+      ${a.visible_phases?.length ? `
+      <div class="notice notice-info" style="margin-bottom:10px">
+        👁 Visible from this angle: ${a.visible_phases.join(', ')}
+      </div>` : ''}
+
+      ${a.key_fault ? `
+      <div class="notice notice-warn" style="margin-bottom:14px">
+        ⚠️ <strong>Key fault:</strong> ${a.key_fault}
+      </div>` : ''}
+
+      <div class="result-section">
+        <div class="result-section-title">💬 Coaching Summary</div>
+        <div class="result-text">${a.summary || ''}</div>
+      </div>
+
+      ${a.strengths?.length ? `
+      <div class="result-section">
+        <div class="result-section-title">✅ Strengths</div>
+        <ul class="drill-list">
+          ${a.strengths.map(s => `<li class="drill-item"><span class="drill-num">+</span><span class="drill-text">${s}</span></li>`).join('')}
+        </ul>
+      </div>` : ''}
+
+      ${a.improvements?.length ? `
+      <div class="result-section">
+        <div class="result-section-title">🔧 Areas to Improve</div>
+        <ul class="drill-list">
+          ${a.improvements.map(s => `<li class="drill-item" style="border-color:#e87a5a"><span class="drill-num" style="color:#e87a5a">!</span><span class="drill-text">${s}</span></li>`).join('')}
+        </ul>
+      </div>` : ''}
+
+      ${drills.length ? `
+      <div class="result-section">
+        <div class="result-section-title">🏌️ Recommended Drills</div>
+        <ul class="drill-list">
+          ${drills.map((d,i) => `
+            <li class="drill-item">
+              <span class="drill-num">${i+1}</span>
+              <div>
+                <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.08em;color:var(--flag);margin-bottom:4px">${d.name}</div>
+                <div class="drill-text">${d.description}</div>
+              </div>
+            </li>
+          `).join('')}
+        </ul>
+      </div>` : ''}
+
+      <div class="save-row">
+        <input type="text" id="sessionLabel" placeholder="Name this session (e.g. Driver practice)..." value="${data.fileName ? data.fileName.replace(/\.[^.]+$/,'') : ''}">
+        <button class="btn btn-gold" onclick="saveSession()">Save Session</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('emptyResults').style.display = 'none';
+  panel.style.display = 'block';
+
+  // Animate progress bars
+  setTimeout(() => {
+    panel.querySelectorAll('.prog-fill').forEach(el => {
+      const w = el.style.width;
+      el.style.width = '0';
+      requestAnimationFrame(() => requestAnimationFrame(() => { el.style.width = w; }));
+    });
+  }, 100);
+}
+
+function showLoading() {
+  document.getElementById('emptyResults').style.display = 'none';
+  const panel = document.getElementById('resultsContent');
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="loading-state">
+      <div class="golf-loader"></div>
+      <div class="loading-text" id="loadingText">Uploading video...</div>
+    </div>
+  `;
+  document.getElementById('analyzeBtn').disabled = true;
+}
+
+function updateLoadingText(msg) {
+  const el = document.getElementById('loadingText');
+  if (el) el.textContent = msg;
+}
+
+function showError(msg) {
+  const panel = document.getElementById('resultsContent');
+  panel.innerHTML = `
+    <div class="notice notice-warn fade-in" style="margin:0">
+      <strong>Error:</strong> ${msg}
+    </div>
+  `;
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+// ============================================================
+// SESSION SAVE / HISTORY
+// ============================================================
+function saveSession() {
+  if (!currentAnalysis) return;
+  const label = document.getElementById('sessionLabel')?.value || 'Session';
+  const session = {
+    id: Date.now(),
+    label,
+    date: new Date().toISOString(),
+    skill: currentAnalysis.skill,
+    club: currentAnalysis.club,
+    angle: currentAnalysis.angle,
+    analysis: currentAnalysis.analysis
+  };
+  sessions.unshift(session);
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  // Show saved feedback
+  const btn = document.querySelector('.save-row .btn-gold');
+  if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => btn.textContent = 'Save Session', 2000); }
+}
+
+function renderHistory() {
+  const grid = document.getElementById('historyGrid');
+  const count = document.getElementById('historyCount');
+  const clearBtn = document.getElementById('clearAllBtn');
+
+  if (!sessions.length) {
+    count.textContent = 'No sessions yet';
+    clearBtn.style.display = 'none';
+    grid.innerHTML = `
+      <div class="no-history" style="grid-column:1/-1">
+        <div class="big-icon">🏌️</div>
+        <h3>No sessions saved yet</h3>
+        <p>Analyze a swing on the Analyze tab,<br>then save your session to see it here.</p>
+      </div>`;
+    return;
+  }
+
+  count.textContent = `${sessions.length} session${sessions.length !== 1 ? 's' : ''} saved`;
+  clearBtn.style.display = 'inline-block';
+
+  grid.innerHTML = sessions.map(s => {
+    const d = new Date(s.date);
+    const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const a = s.analysis;
+    const scoreColor = sc => sc >= 80 ? '#6abf6a' : sc >= 60 ? 'var(--flag)' : '#e87a5a';
+    return `
+      <div class="history-card" onclick="viewSession(${s.id})">
+        <button class="delete-btn" onclick="event.stopPropagation(); deleteSession(${s.id})" title="Delete">✕</button>
+        <div class="history-card-header">
+          <div class="history-card-title">${escHtml(s.label)}</div>
+          <div class="history-card-date">${dateStr}</div>
+        </div>
+        <div class="history-card-meta">
+          <span class="meta-tag">${s.club}</span>
+          <span class="meta-tag">${s.skill}</span>
+          <span class="meta-tag">${s.angle}</span>
+        </div>
+        <div class="history-card-preview">${a.summary || a.key_fault || ''}</div>
+        <div class="history-score-row">
+          <span class="mini-score">Overall: <span style="color:${scoreColor(a.overall_score)}">${a.overall_score}/100</span></span>
+          ${Object.entries(a.scores||{}).slice(0,3).map(([k,v]) =>
+            `<span class="mini-score">${k.replace('_',' ')}: <span>${v}</span></span>`
+          ).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function viewSession(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  const a = s.analysis;
+  const d = new Date(s.date);
+  const dateStr = d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const scoreColor = sc => sc >= 80 ? '#6abf6a' : sc >= 60 ? '#c8a84b' : '#e87a5a';
+  const drills = [a.drill_1, a.drill_2, a.drill_3].filter(Boolean);
+
+  document.getElementById('detailContent').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--ink)">${escHtml(s.label)}</h2>
+        <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:#888;letter-spacing:0.08em;margin-top:4px">${dateStr} · ${s.club} · ${s.skill} · ${s.angle}</p>
+      </div>
+      <button class="btn btn-secondary" onclick="document.getElementById('detailModal').classList.remove('open')">Close</button>
+    </div>
+
+    <div class="score-row" style="flex-wrap:wrap">
+      <div class="score-chip" style="background:#f5f0e8;border-color:#ddd">
+        <div class="score-val" style="color:${scoreColor(a.overall_score)}">${a.overall_score}</div>
+        <div class="score-label" style="color:#888">Overall</div>
+      </div>
+      ${Object.entries(a.scores||{}).map(([k,v]) => `
+        <div class="score-chip" style="background:#f5f0e8;border-color:#ddd">
+          <div class="score-val" style="color:${scoreColor(v)};font-size:1.1rem">${v}</div>
+          <div class="score-label" style="color:#888">${k.replace('_',' ')}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    ${a.key_fault ? `<div style="padding:12px 14px;background:#fff0ec;border:1px solid #f5c5b5;border-radius:3px;font-size:0.85rem;color:#c44b2b;margin-bottom:14px"><strong>Key fault:</strong> ${a.key_fault}</div>` : ''}
+
+    <div style="margin-bottom:14px">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:6px">Coaching Summary</div>
+      <p style="font-size:0.95rem;line-height:1.7;color:var(--ink-light)">${a.summary||''}</p>
+    </div>
+
+    ${a.strengths?.length ? `
+    <div style="margin-bottom:14px">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:6px">✅ Strengths</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+        ${a.strengths.map(s=>`<li style="padding:8px 12px;background:#f0faf0;border-radius:3px;border-left:3px solid #4a8c4a;font-size:0.88rem;color:var(--ink-light)">${s}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+
+    ${a.improvements?.length ? `
+    <div style="margin-bottom:14px">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:6px">🔧 Areas to Improve</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+        ${a.improvements.map(s=>`<li style="padding:8px 12px;background:#fff5f0;border-radius:3px;border-left:3px solid #e87a5a;font-size:0.88rem;color:var(--ink-light)">${s}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+
+    ${drills.length ? `
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:8px">🏌️ Recommended Drills</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        ${drills.map((d,i)=>`
+          <li style="padding:12px 14px;background:#f9f7f2;border-radius:3px;border-left:3px solid #c8a84b">
+            <div style="font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.08em;color:#8a6a20;margin-bottom:4px">${i+1}. ${d.name}</div>
+            <div style="font-size:0.88rem;color:var(--ink-light);line-height:1.6">${d.description}</div>
+          </li>
+        `).join('')}
+      </ul>
+    </div>` : ''}
+  `;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function deleteSession(id) {
+  if (!confirm('Delete this session?')) return;
+  sessions = sessions.filter(s => s.id !== id);
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  renderHistory();
+  document.getElementById('detailModal').classList.remove('open');
+}
+
+function clearAllHistory() {
+  if (!confirm('Delete all sessions? This cannot be undone.')) return;
+  sessions = [];
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  renderHistory();
+}
+
+// ============================================================
+// LESSON PLAN
+// ============================================================
+function checkLessonTab() {
+  const noClaudeWarn = document.getElementById('noClaudeWarning');
+  const noSessionsWarn = document.getElementById('noSessionsWarning');
+  const generateBtn = document.getElementById('generateBtn');
+
+  const hasKey = !!settings.claudeKey;
+  const hasSessions = sessions.length > 0;
+
+  noClaudeWarn.style.display = hasKey ? 'none' : 'block';
+  noSessionsWarn.style.display = (hasKey && !hasSessions) ? 'block' : 'none';
+  generateBtn.disabled = !hasKey || !hasSessions;
+}
+
+async function generateLessonPlan() {
+  if (!settings.claudeKey || !sessions.length) return;
+
+  const weeks = document.getElementById('planDuration').value;
+  const days = document.getElementById('practiceDays').value;
+  const mins = document.getElementById('sessionLength').value;
+  const genBtn = document.getElementById('generateBtn');
+
+  genBtn.disabled = true;
+  genBtn.textContent = 'Generating...';
+
+  // Summarize recent sessions (up to 5)
+  const recentSessions = sessions.slice(0, 5).map(s => ({
+    label: s.label,
+    date: new Date(s.date).toLocaleDateString(),
+    skill: s.skill,
+    club: s.club,
+    overall_score: s.analysis.overall_score,
+    scores: s.analysis.scores,
+    key_fault: s.analysis.key_fault,
+    strengths: s.analysis.strengths,
+    improvements: s.analysis.improvements
+  }));
+
+  const userName = settings.userName ? settings.userName : 'the golfer';
+
+  const prompt = `You are a PGA-certified head instructor creating a personalized golf improvement plan.
+
+Golfer: ${userName}
+Plan: ${weeks} weeks, ${days} practice days per week, ${mins} minutes per session
+
+Recent swing analysis sessions (most recent first):
+${JSON.stringify(recentSessions, null, 2)}
+
+Based on the recurring faults and areas for improvement identified across these sessions, create a detailed ${weeks}-week lesson plan. The plan should:
+1. Address the most critical and recurring faults first
+2. Build progressively week-over-week
+3. Include specific named drills with rep counts and timing
+4. Balance technical work with on-course feel
+5. Be realistic for a ${recentSessions[0]?.skill || 'intermediate'} golfer with ${mins} minutes per session
+
+Format the plan clearly with Week headers, Day headers (Day 1, Day 2, etc.), and specific activities for each day. Be concrete and actionable.`;
+
+  const lessonEl = document.getElementById('lessonPlanText');
+  const emptyEl = document.getElementById('emptyLesson');
+
+  emptyEl.style.display = 'none';
+  lessonEl.style.display = 'block';
+  lessonEl.innerHTML = `<div class="loading-state"><div class="golf-loader"></div><div class="loading-text">Building your personalized plan...</div></div>`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || '').join('') || '';
+
+    renderLessonPlan(text);
+  } catch(err) {
+    lessonEl.innerHTML = `<div class="notice notice-warn">Error generating lesson plan: ${err.message}</div>`;
+  }
+
+  genBtn.disabled = false;
+  genBtn.textContent = 'Generate Lesson Plan';
+}
+
+function renderLessonPlan(text) {
+  const el = document.getElementById('lessonPlanText');
+
+  // Convert markdown-ish text to styled HTML
+  let html = text
+    .replace(/^#{1,2} ?(.+)$/gm, '<h3 class="lesson-week-title">$1</h3>')
+    .replace(/^#{3,4} ?(.+)$/gm, '<div class="lesson-day-title">$1</div>')
+    .replace(/^\*\*(.+)\*\*$/gm, '<strong>$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^[-•] (.+)$/gm, '<li style="margin-bottom:4px;font-size:0.88rem">$1</li>')
+    .replace(/(<li[\s\S]*?<\/li>)/g, '<ul style="padding-left:18px;margin:6px 0">$1</ul>')
+    .replace(/\n\n/g, '</p><p style="margin-bottom:10px">')
+    .replace(/^(?!<[hud]|<li|<p)(.+)$/gm, '<p style="margin-bottom:8px;font-size:0.92rem;line-height:1.65">$1</p>');
+
+  el.innerHTML = `<div class="fade-in" style="font-weight:300;color:var(--cream)">${html}</div>`;
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Close modals on overlay click
+document.getElementById('settingsModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// Init
+init();
+</script>
+</body>
+</html>
