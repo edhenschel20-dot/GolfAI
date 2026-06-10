@@ -533,6 +533,25 @@
   .save-row input::placeholder { color: var(--divot); }
   .save-row input:focus { outline: none; border-color: var(--flag); }
 
+  /* ===== VISUAL ANALYSIS ===== */
+  .visual-toggle { width:100%; padding:10px 14px; background:rgba(200,168,75,.08); border:1px solid rgba(200,168,75,.25); border-radius:3px; color:var(--flag); font-family:'DM Mono',monospace; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center; transition:all .2s; margin-top:4px; }
+  .visual-toggle:hover { background:rgba(200,168,75,.14); }
+  .visual-body { display:none; padding-top:14px; }
+  .visual-body.open { display:block; }
+  .phase-grid { display:flex; flex-direction:column; gap:9px; margin-bottom:16px; }
+  .phase-card { border-radius:3px; overflow:hidden; border:1px solid rgba(255,255,255,.07); }
+  .phase-header { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; }
+  .phase-name { font-family:'DM Mono',monospace; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; }
+  .phase-badge { font-family:'DM Mono',monospace; font-size:.56rem; letter-spacing:.08em; text-transform:uppercase; padding:2px 7px; border-radius:2px; }
+  .phase-obs { padding:9px 12px; font-size:.87rem; line-height:1.6; font-weight:300; border-top:1px solid rgba(255,255,255,.06); }
+  .pg { background:rgba(74,140,74,.1); } .pg .phase-header { background:rgba(74,140,74,.18); } .pg .phase-name { color:#6abf6a; } .pg .phase-badge { background:rgba(74,140,74,.2); color:#6abf6a; }
+  .pn { background:rgba(200,168,75,.07); } .pn .phase-header { background:rgba(200,168,75,.14); } .pn .phase-name { color:var(--flag); } .pn .phase-badge { background:rgba(200,168,75,.18); color:var(--flag); }
+  .pf { background:rgba(196,75,43,.09); } .pf .phase-header { background:rgba(196,75,43,.17); } .pf .phase-name { color:#e87a5a; } .pf .phase-badge { background:rgba(196,75,43,.18); color:#e87a5a; }
+  .metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .metric-card { background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.07); border-radius:3px; padding:10px 12px; }
+  .metric-label { font-family:'DM Mono',monospace; font-size:.54rem; letter-spacing:.12em; text-transform:uppercase; color:var(--divot); margin-bottom:4px; }
+  .metric-val { font-size:.9rem; color:var(--cream); font-weight:400; line-height:1.3; }
+
   /* ===== HISTORY TAB ===== */
   .history-grid {
     display: grid;
@@ -1362,13 +1381,13 @@ Golfer profile:
 - Focus area requested: ${opts.focus}
 ${opts.notes ? `- Golfer notes: ${opts.notes}` : ''}
 
-IMPORTANT: The camera may only show a partial view of the swing. Analyze only what is visible — do not penalize scores for phases that cannot be seen from this angle.
+IMPORTANT: The camera may only show a partial view. Analyze only what is visible — do not penalize scores for phases not visible from this angle.
 
-Respond with ONLY a valid JSON object. No markdown, no code fences, no extra text before or after. Use real integer values for all scores (not placeholders). Example of the exact format required:
+Respond with ONLY a valid JSON object. No markdown, no code fences, no extra text. Use real integer values for all scores. Return this exact structure:
 
-{"overall_score":72,"scores":{"setup":75,"backswing":70,"downswing":68,"impact":72,"follow_through":74,"tempo":73},"visible_phases":["setup","backswing","downswing","impact","follow_through"],"strengths":["Good shoulder rotation","Solid stance width"],"improvements":["Early extension through impact","Over-the-top downswing path","Grip pressure too tight at top"],"key_fault":"Over-the-top swing path causing pull-draws and loss of power.","drill_1":{"name":"Headcover Drill","description":"Place a headcover just outside the ball. Practice swinging without hitting it to train an inside-out path. Do 20 slow swings focusing on the feeling of coming from inside."},"drill_2":{"name":"Pause at the Top","description":"Make your normal backswing then pause for 2 seconds at the top before starting down. This eliminates rushing and over-the-top moves. Do 15 reps with a 7-iron."},"drill_3":{"name":"Alignment Stick Path Drill","description":"Lay a stick pointing at your target and practice swinging parallel to it through impact. 10 minutes of slow-motion swings to ingrain the correct path."},"summary":"Your swing shows good fundamentals in setup and shoulder rotation. The primary issue is an over-the-top downswing path which is robbing you of distance and consistency. Focus on the headcover drill daily to train the correct inside-out path."}
+{"overall_score":72,"scores":{"setup":75,"backswing":70,"downswing":68,"impact":72,"follow_through":74,"tempo":73},"visible_phases":["setup","backswing","downswing","impact","follow_through"],"strengths":["Good shoulder rotation","Solid stance width"],"improvements":["Early extension through impact","Over-the-top downswing path","Grip pressure too tight at top"],"key_fault":"Over-the-top swing path causing pull-draws and loss of power.","drill_1":{"name":"Headcover Drill","description":"Place a headcover just outside the ball. Practice swinging without hitting it to train an inside-out path. Do 20 slow swings."},"drill_2":{"name":"Pause at the Top","description":"Make your normal backswing then pause 2 seconds at the top before starting down. Do 15 reps with a 7-iron."},"drill_3":{"name":"Alignment Stick Path Drill","description":"Lay a stick pointing at your target and swing parallel to it through impact. 10 minutes of slow-motion swings."},"summary":"Your swing shows good fundamentals in setup and shoulder rotation. The primary issue is an over-the-top downswing path.","phases":{"setup":{"observation":"Stance width appropriate for club. Ball position slightly forward of center. Spine angle good at 35 degrees. Grip appears neutral.","rating":"good"},"backswing":{"observation":"Shoulder turn incomplete at roughly 80 degrees. Lead arm breaks down slightly past parallel. Wrist hinge is early and steep.","rating":"needs_work"},"downswing":{"observation":"Transition rushes from the top. Upper body initiates before lower body, creating over-the-top path. Hip slide excessive.","rating":"fault"},"impact":{"observation":"Early extension through the hitting zone. Hands slightly behind the ball at impact. Face appears square to slightly open.","rating":"needs_work"},"follow_through":{"observation":"Abbreviated finish due to early extension. Weight transfer to lead side incomplete. Good extension of arms through the zone.","rating":"good"}},"metrics":{"club_path_estimate":"4 degrees out-to-in","tempo_ratio":"2.8:1 (backswing:downswing)","hip_turn_estimate":"38 degrees","shoulder_turn_estimate":"82 degrees","swing_plane":"slightly steep","weight_transfer":"moderate — 60% lead side at finish","impact_position":"hands slightly behind ball"}}
 
-Now analyze the actual video and return a JSON object in exactly that format with your real observations.`;
+Now analyze the actual video and return a JSON object in exactly that format with your real observations. For phases, rating must be one of: "good", "needs_work", or "fault". Only include phases that are visible from this camera angle.`;
 
   const body = {
     contents: [{
@@ -1377,7 +1396,7 @@ Now analyze the actual video and return a JSON object in exactly that format wit
         { text: prompt }
       ]
     }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 1800 }
+    generationConfig: { temperature: 0.2, maxOutputTokens: 2500 }
   };
 
   const res = await fetch(
@@ -1528,6 +1547,43 @@ function renderResults(data) {
         <input type="text" id="sessionLabel" placeholder="Name this session (e.g. Driver practice)..." value="${data.fileName ? data.fileName.replace(/\.[^.]+$/,'') : ''}">
         <button class="btn btn-gold" onclick="saveSession()">Save Session</button>
       </div>
+
+      ${(a.phases || a.metrics) ? `
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(200,168,75,.15)">
+        <button class="visual-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.va-arrow').textContent=this.nextElementSibling.classList.contains('open')?'▲':'▼'">
+          <span>📊 Visual Swing Analysis</span>
+          <span class="va-arrow" style="font-size:.7rem">▼</span>
+        </button>
+        <div class="visual-body">
+
+          ${a.phases ? `
+          <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--flag);margin-bottom:10px">Phase Breakdown</div>
+          <div class="phase-grid">
+            ${Object.entries(a.phases).map(([phase, p]) => {
+              const cls = p.rating === 'good' ? 'pg' : p.rating === 'fault' ? 'pf' : 'pn';
+              const label = p.rating === 'good' ? '✓ Good' : p.rating === 'fault' ? '⚠ Fault' : '~ Needs Work';
+              return `<div class="phase-card ${cls}">
+                <div class="phase-header">
+                  <span class="phase-name">${phase.replace('_',' ')}</span>
+                  <span class="phase-badge">${label}</span>
+                </div>
+                <div class="phase-obs">${p.observation}</div>
+              </div>`;
+            }).join('')}
+          </div>` : ''}
+
+          ${a.metrics ? `
+          <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--flag);margin-bottom:10px">Swing Metrics</div>
+          <div class="metrics-grid">
+            ${Object.entries(a.metrics).map(([k, v]) => `
+              <div class="metric-card">
+                <div class="metric-label">${k.replace(/_/g,' ')}</div>
+                <div class="metric-val">${v}</div>
+              </div>`).join('')}
+          </div>` : ''}
+
+        </div>
+      </div>` : ''}
     </div>
   `;
 
