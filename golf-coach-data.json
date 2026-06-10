@@ -1,5 +1,57 @@
 {
-  "sessions": [],
+  "sessions": [
+    {
+      "id": 1781056273247,
+      "label": "13556",
+      "golfer": "Ed",
+      "date": "2026-06-10T01:51:13.248Z",
+      "skill": "intermediate",
+      "club": "mid-iron",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 55,
+        "scores": {
+          "setup": 65,
+          "backswing": 50,
+          "downswing": 55,
+          "impact": 58,
+          "follow_through": 52,
+          "tempo": 50
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Decent hand-eye coordination to make clean contact",
+          "Stance width is stable at setup"
+        ],
+        "improvements": [
+          "Extremely short and flat backswing limits power potential",
+          "Lack of shoulder turn and hip rotation in the backswing",
+          "Loss of balance on the follow-through, stepping forward with the trail foot",
+          "Rushed tempo with an abrupt transition"
+        ],
+        "key_fault": "Extremely abbreviated backswing and lack of body rotation, resulting in an arm-dominated swing and poor balance.",
+        "drill_1": {
+          "name": "L-to-L Drill",
+          "description": "Focus on hinging your wrists to create an 'L' shape between your lead arm and the club shaft halfway back, and mirror this 'L' shape on the follow-through. This helps lengthen the swing and improve wrist hinge."
+        },
+        "drill_2": {
+          "name": "Shoulder Turn Drill",
+          "description": "Place a club across your shoulders and practice turning until the lead end of the club points behind the ball. This trains a full shoulder turn and prevents a short, arm-only backswing."
+        },
+        "drill_3": {
+          "name": "Hold Your Finish Drill",
+          "description": "Make swings focusing on holding your finish completely balanced on your lead side for 3 seconds. This will prevent you from falling backward or stepping out of the swing."
+        },
+        "summary": "Your swing is currently very short and dominated by the arms, which limits your power and causes you to lose balance on the follow-through. By focusing on a fuller shoulder turn and proper wrist hinge (L-to-L drill), you will create a wider, more powerful arc and improve your overall consistency."
+      }
+    }
+  ],
   "golfers": [
     "Ed"
   ]
