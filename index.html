@@ -1799,6 +1799,8 @@ Based on the recurring faults and areas for improvement identified across these 
 4. Balance technical work with on-course feel
 5. Be realistic for a ${recentSessions[0]?.skill || 'intermediate'} golfer with ${mins} minutes per session
 
+IMPORTANT FORMATTING RULE: Every time you mention a specific named drill or exercise, wrap it like this: [DRILL: Drill Name Here]. For example: [DRILL: Headcover Drill], [DRILL: Pause at the Top], [DRILL: Gate Drill]. This applies every time a drill name appears.
+
 Format the plan clearly with Week headers, Day headers (Day 1, Day 2, etc.), and specific activities for each day. Be concrete and actionable.`;
 
   const lessonEl = document.getElementById('lessonPlanText');
@@ -1821,7 +1823,7 @@ Format the plan clearly with Week headers, Day headers (Day 1, Day 2, etc.), and
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 8000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -1851,16 +1853,26 @@ Format the plan clearly with Week headers, Day headers (Day 1, Day 2, etc.), and
 function renderLessonPlan(text) {
   const el = document.getElementById('lessonPlanText');
 
-  // Convert markdown-ish text to styled HTML
-  let html = text
+  // Convert [DRILL: Name] tags to drill name + YouTube link
+  let processed = text.replace(/\[DRILL:\s*([^\]]+)\]/g, (match, drillName) => {
+    const name = drillName.trim();
+    const url = `https://www.youtube.com/results?search_query=golf+${encodeURIComponent(name)}`;
+    return `<span style="display:inline-flex;align-items:center;gap:6px"><strong style="color:var(--flag)">${name}</strong><a href="${url}" target="_blank" style="font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.06em;color:var(--sky);text-decoration:none;border:1px solid rgba(122,184,212,.3);padding:1px 6px;border-radius:2px;white-space:nowrap">▶ YouTube</a></span>`;
+  });
+
+  // Convert markdown to styled HTML
+  let html = processed
+    .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid rgba(200,168,75,.2);margin:14px 0">')
     .replace(/^#{1,2} ?(.+)$/gm, '<h3 class="lesson-week-title">$1</h3>')
     .replace(/^#{3,4} ?(.+)$/gm, '<div class="lesson-day-title">$1</div>')
-    .replace(/^\*\*(.+)\*\*$/gm, '<strong>$1</strong>')
+    .replace(/^> ?\*?(.+?)\*?$/gm, '<div style="padding:8px 12px;border-left:3px solid rgba(200,168,75,.4);margin:6px 0;font-style:italic;font-size:0.88rem;color:var(--sand)">$1</div>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^[-•] (.+)$/gm, '<li style="margin-bottom:4px;font-size:0.88rem">$1</li>')
-    .replace(/(<li[\s\S]*?<\/li>)/g, '<ul style="padding-left:18px;margin:6px 0">$1</ul>')
-    .replace(/\n\n/g, '</p><p style="margin-bottom:10px">')
-    .replace(/^(?!<[hud]|<li|<p)(.+)$/gm, '<p style="margin-bottom:8px;font-size:0.92rem;line-height:1.65">$1</p>');
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+    .replace(/^[-•] (.+)$/gm, '<li style="margin-bottom:5px;font-size:0.88rem;line-height:1.6">$1</li>')
+    .replace(/(<li[\s\S]*?<\/li>\n?)+/g, m => `<ul style="padding-left:18px;margin:8px 0">${m}</ul>`)
+    .replace(/\n\n+/g, '</p><p style="margin-bottom:10px">')
+    .replace(/^(?!<[hud]|<li|<p|<hr)(.+)$/gm, '<p style="margin-bottom:8px;font-size:0.92rem;line-height:1.7">$1</p>')
+    .replace(/<p[^>]*>\s*<\/p>/g, '');
 
   el.innerHTML = `<div class="fade-in" style="font-weight:300;color:var(--cream)">${html}</div>`;
 }
