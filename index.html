@@ -1337,6 +1337,17 @@ async function analyzeSwing() {
     const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes });
     currentAnalysis = { analysis, skill, angle, club, focus, notes, fileName: currentFile.name };
     renderResults(currentAnalysis);
+
+    // If Claude key available, generate swing diagram asynchronously
+    if (settings.claudeKey && (analysis.key_fault || analysis.phases)) {
+      updateLoadingText('Generating swing diagram...');
+      generateSwingDiagram(analysis).then(svg => {
+        if (svg) {
+          currentAnalysis.svgDiagram = svg;
+          injectSwingDiagram(svg);
+        }
+      }).catch(() => {}); // silent fail — diagram is bonus
+    }
   } catch(err) {
     showError(err.message || 'Analysis failed. Check your API key and try again.');
   }
@@ -1459,6 +1470,85 @@ Now analyze the actual video and return a JSON object in exactly that format wit
 
 
 // ============================================================
+// SWING DIAGRAM (Claude SVG)
+// ============================================================
+async function generateSwingDiagram(analysis) {
+  if (!settings.claudeKey) return null;
+
+  const faultSummary = [
+    analysis.key_fault,
+    ...(analysis.improvements || []).slice(0, 3)
+  ].filter(Boolean).join(' | ');
+
+  const phaseDetails = analysis.phases ? Object.entries(analysis.phases)
+    .filter(([,p]) => p.rating !== 'good')
+    .map(([phase, p]) => `${phase}: ${p.observation}`)
+    .join('\n') : '';
+
+  const metrics = analysis.metrics ? Object.entries(analysis.metrics)
+    .map(([k,v]) => `${k}: ${v}`).join(', ') : '';
+
+  const prompt = `You are an expert golf instructor and SVG illustrator. Create an SVG stick figure diagram showing a golfer's swing fault.
+
+Key fault: ${faultSummary}
+${phaseDetails ? `Phase observations:\n${phaseDetails}` : ''}
+${metrics ? `Metrics: ${metrics}` : ''}
+
+Create a single SVG (viewBox="0 0 400 500") showing a golfer stick figure at the most critical fault position. Requirements:
+- Dark background rect: fill="#1a2e1a"
+- Draw the golfer as a clear stick figure with circles for joints (head, shoulders, hips, knees, ankles, hands, elbows)
+- Show the club as a line
+- Use thick lines (stroke-width="3") for the body, thinner for the club
+- Color the body parts involved in the fault in RED (#e87a5a), good parts in GREEN (#6abf6a), neutral in WHITE (#f5f0e8)
+- Add 2-4 RED ARROWS pointing to the fault areas using SVG path elements with arrowhead markers
+- Add SHORT text labels (max 4 words each) in gold (#c8a84b) font-size="13" font-family="monospace" near each arrow identifying the fault
+- Add a title at top in gold font-size="16" font-weight="bold" naming the swing phase shown
+- Add a subtitle below in white font-size="11" describing the key fault in one short phrase
+- Keep the figure centered and large enough to see clearly
+- NO external images, NO clipPath, use only basic SVG shapes
+
+Return ONLY the complete SVG element, nothing else. Start with <svg and end with </svg>.`;
+
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': settings.claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+  } catch(e) { return null; }
+
+  if (!res.ok) return null;
+  const data = await res.json();
+  const text = data.content?.map(b => b.text || '').join('') || '';
+
+  // Extract SVG from response
+  const svgMatch = text.match(/<svg[\s\S]*<\/svg>/i);
+  return svgMatch ? svgMatch[0] : null;
+}
+
+function injectSwingDiagram(svg) {
+  const container = document.getElementById('swingDiagramContainer');
+  if (!container) return;
+  container.innerHTML = `
+    <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--flag);margin-bottom:10px">Fault Diagram</div>
+    <div style="border-radius:4px;overflow:hidden;border:1px solid rgba(200,168,75,.2)">
+      ${svg}
+    </div>
+    <p style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--divot);margin-top:8px;letter-spacing:.05em">AI-generated diagram · red highlights fault areas · arrows indicate corrections needed</p>
+  `;
+}
+
+// ============================================================
 // RENDER RESULTS
 // ============================================================
 function renderResults(data) {
@@ -1556,6 +1646,10 @@ function renderResults(data) {
         </button>
         <div class="visual-body">
 
+          <div id="swingDiagramContainer" style="margin-bottom:18px">
+            ${settings.claudeKey ? `<div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--divot);text-align:center;padding:20px;border:1px dashed rgba(200,168,75,.2);border-radius:3px">⏳ Generating fault diagram...</div>` : ''}
+          </div>
+
           ${a.phases ? `
           <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--flag);margin-bottom:10px">Phase Breakdown</div>
           <div class="phase-grid">
@@ -1643,7 +1737,8 @@ function saveSession() {
     skill: currentAnalysis.skill,
     club: currentAnalysis.club,
     angle: currentAnalysis.angle,
-    analysis: currentAnalysis.analysis
+    analysis: currentAnalysis.analysis,
+    svgDiagram: currentAnalysis.svgDiagram || null
   };
   sessions.unshift(session);
   saveSessionsToStorage();
@@ -1773,6 +1868,13 @@ function viewSession(id) {
           </li>
         `).join('')}
       </ul>
+    </div>` : ''}
+
+    ${s.svgDiagram ? `
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e0ddd5">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#8a6a20;margin-bottom:10px">📊 Fault Diagram</div>
+      <div style="border-radius:4px;overflow:hidden;border:1px solid #e0ddd5">${s.svgDiagram}</div>
+      <p style="font-family:'DM Mono',monospace;font-size:0.58rem;color:#aaa;margin-top:6px">AI-generated · red = fault areas · arrows indicate corrections</p>
     </div>` : ''}
   `;
   document.getElementById('detailModal').classList.add('open');
