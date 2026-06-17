@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781664743723,
+      "label": "14341",
+      "golfer": "Ron",
+      "date": "2026-06-17T02:52:23.723Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 68,
+        "scores": {
+          "setup": 74,
+          "backswing": 68,
+          "downswing": 63,
+          "impact": 65,
+          "follow_through": 70,
+          "tempo": 72
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Good athletic setup and stance width",
+          "Decent shoulder turn in the backswing",
+          "Balanced finish and follow-through"
+        ],
+        "improvements": [
+          "Over-the-top downswing path",
+          "Early extension through impact losing spine angle",
+          "Casting and early release of the hands"
+        ],
+        "key_fault": "Over-the-top downswing transition combined with early extension at impact, leading to an out-to-in club path.",
+        "drill_1": {
+          "name": "The Pump Drill",
+          "description": "Take the club to the top of your backswing. Start your downswing by bringing your hands down to hip level while keeping your back to the target, then pump back to the top. Do this twice before letting the third swing release through impact. This helps feel an inside-out path."
+        },
+        "drill_2": {
+          "name": "Butt-to-Wall Drill",
+          "description": "Stand a few inches away from a wall without a club. Take your posture and make a simulated swing. Ensure your trail glute touches the wall on the backswing, and your lead glute touches it on the downswing and impact. This prevents early extension."
+        },
+        "drill_3": {
+          "name": "Alignment Stick Path Drill",
+          "description": "Place an alignment stick in the ground 3 feet behind your ball at a 45-degree angle, matching your shaft plane. Practice swinging under the stick on the downswing to force an inside-out path."
+        },
+        "summary": "Your swing has a solid foundation with a strong setup and balanced finish. To improve consistency and power, focus on starting the downswing with your lower body to prevent an over-the-top path, and maintain your spine angle through impact to avoid early extension.",
+        "phases": {
+          "setup": {
+            "observation": "Stance is wide and stable, suitable for a driver. Ball position is forward. Spine angle is decent but hands hang slightly low.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Good shoulder rotation, but the club gets slightly flat on the takeaway and then lifts at the top, crossing the line.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "The downswing is initiated by the upper body, causing the club to come over the top with an out-to-in path.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension is present as the hips move toward the ball, causing the spine to straighten prematurely.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "Good extension and balanced finish, though weight transfer is slightly limited by the early extension.",
+            "rating": "good"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "5 degrees out-to-in",
+          "tempo_ratio": "3.1:1",
+          "hip_turn_estimate": "35 degrees",
+          "shoulder_turn_estimate": "85 degrees",
+          "swing_plane": "steep on downswing",
+          "weight_transfer": "moderate - 70% lead side at finish",
+          "impact_position": "hips cleared slightly late, hands slightly behind ideal lead-side lag"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781664618083,
       "label": "14351",
       "golfer": "Ron",
