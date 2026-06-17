@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781670952628,
+      "label": "14347",
+      "golfer": "Ed",
+      "date": "2026-06-17T04:35:52.628Z",
+      "skill": "intermediate",
+      "club": "mid-iron",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 75,
+        "scores": {
+          "setup": 78,
+          "backswing": 74,
+          "downswing": 73,
+          "impact": 76,
+          "follow_through": 75,
+          "tempo": 74
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Good control of swing length",
+          "Stable lower body during short swing",
+          "Clean contact at impact"
+        ],
+        "improvements": [
+          "Slightly tense grip pressure",
+          "Could use more torso rotation through the ball",
+          "Slightly rigid wrist action"
+        ],
+        "key_fault": "Slightly rigid body rotation through impact, relying mostly on arms to guide the short pitch.",
+        "drill_1": {
+          "name": "Body Rotation Pitching Drill",
+          "description": "Place a glove under your lead armpit and practice pitching while keeping the glove secure to connect your arm swing with your torso rotation. Do 20 reps."
+        },
+        "drill_2": {
+          "name": "One-Handed Chipping",
+          "description": "Practice chipping with only your lead hand to feel the proper clubhead release and lead-side control. Do 15 reps."
+        },
+        "drill_3": {
+          "name": "Line on Turf Drill",
+          "description": "Visualize a line on the turf just behind the ball and practice clipping the grass consistently ahead of that line to ensure clean contact. 10 minutes."
+        },
+        "summary": "Your short pitch swing shows good control and a stable base. To improve consistency, focus on rotating your torso through the shot rather than relying solely on your arms.",
+        "phases": {
+          "setup": {
+            "observation": "Stance is narrow and stable, appropriate for a short pitch. Ball position is centered. Hands are slightly ahead of the ball.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Short, controlled takeaway. Wrist hinge is minimal, keeping the clubface square. Good control of swing amplitude.",
+            "rating": "good"
+          },
+          "downswing": {
+            "observation": "Smooth transition. The club accelerates nicely through the ball, though the lower body remains a bit static.",
+            "rating": "needs_work"
+          },
+          "impact": {
+            "observation": "Clean contact with the ball. Hands are slightly ahead at impact, ensuring a crisp strike.",
+            "rating": "good"
+          },
+          "follow_through": {
+            "observation": "Abbreviated follow-through consistent with a pitch shot. Chest could rotate a bit more toward the target at finish.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "Slightly inside-to-out",
+          "tempo_ratio": "2.1:1 (backswing:downswing)",
+          "hip_turn_estimate": "15 degrees",
+          "shoulder_turn_estimate": "30 degrees",
+          "swing_plane": "on-plane",
+          "weight_transfer": "60% lead side throughout",
+          "impact_position": "hands slightly ahead of ball"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781670887226,
       "label": "14345",
       "golfer": "Ed",
