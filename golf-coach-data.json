@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781664534964,
+      "label": "14348",
+      "golfer": "Ron",
+      "date": "2026-06-17T02:48:54.964Z",
+      "skill": "intermediate",
+      "club": "wedge",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 73,
+        "scores": {
+          "setup": 78,
+          "backswing": 72,
+          "downswing": 70,
+          "impact": 74,
+          "follow_through": 73,
+          "tempo": 75
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Good posture and spine angle at setup",
+          "Controlled backswing length for a wedge shot",
+          "Decent balance throughout the swing"
+        ],
+        "improvements": [
+          "Slightly arm-dominated swing with limited torso rotation",
+          "Steep downswing angle",
+          "Lack of forward shaft lean at impact"
+        ],
+        "key_fault": "Arm-dominated motion with limited body rotation, leading to a slightly steep angle of attack.",
+        "drill_1": {
+          "name": "Body Rotation Pitching",
+          "description": "Place a glove under your lead armpit. Practice hitting 30-yard pitch shots keeping the glove trapped to force your torso to rotate with your arms."
+        },
+        "drill_2": {
+          "name": "Alignment Stick Lead Wrist Drill",
+          "description": "Hold an alignment stick against the shaft of your wedge extending up past your lead hip. Practice chipping without letting the stick hit your lead side to maintain shaft lean."
+        },
+        "drill_3": {
+          "name": "Feet Together Drill",
+          "description": "Hit half-wedge shots with your feet completely together to improve balance, tempo, and upper-body rotation."
+        },
+        "summary": "Your setup is solid with good posture. The swing is a controlled partial wedge shot, but it is quite arm-dominated with limited hip and shoulder rotation, leading to a slightly steep downswing.",
+        "phases": {
+          "setup": {
+            "observation": "Good posture with a straight spine and appropriate knee flex. Stance width is narrow and suitable for a wedge shot.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Abbreviated backswing for a pitch shot. The movement is mostly controlled by the arms with minimal hip or shoulder turn.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "Downswing is initiated primarily by the hands and arms, creating a slightly steep path into the ball.",
+            "rating": "needs_work"
+          },
+          "impact": {
+            "observation": "Decent contact, but the hands are relatively neutral rather than pressed forward, reducing optimal compression.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "Abbreviated finish matching the backswing length. Good balance, though the body rotation is limited.",
+            "rating": "good"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "2 degrees out-to-in",
+          "tempo_ratio": "2.5:1",
+          "hip_turn_estimate": "20 degrees",
+          "shoulder_turn_estimate": "45 degrees",
+          "swing_plane": "slightly steep",
+          "weight_transfer": "60% lead side at finish",
+          "impact_position": "neutral shaft lean"
+        }
+      },
+      "svgDiagram": "<svg viewBox=\"0 0 400 500\" xmlns=\"http://www.w3.org/2000/svg\">\n  <!-- Background -->\n  <rect width=\"400\" height=\"500\" fill=\"#1a2e1a\"/>\n\n  <!-- Arrowhead marker definition -->\n  <defs>\n    <marker id=\"arrowRed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"10\" refY=\"3.5\" orient=\"auto\">\n      <polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#e87a5a\"/>\n    </marker>\n  </defs>\n\n  <!-- Title -->\n  <text x=\"200\" y=\"28\" text-anchor=\"middle\" font-size=\"16\" font-weight=\"bold\" font-family=\"monospace\" fill=\"#c8a84b\">IMPACT POSITION</text>\n  <!-- Subtitle -->\n  <text x=\"200\" y=\"46\" text-anchor=\"middle\" font-size=\"11\" font-family=\"monospace\" fill=\"#f5f0e8\">Arm-dominated, no shaft lean</text>\n\n  <!-- Ground line -->\n  <line x1=\"60\" y1=\"420\" x2=\"340\" y2=\"420\" stroke=\"#6abf6a\" stroke-width=\"2\"/>\n\n  <!-- Ball -->\n  <circle cx=\"210\" cy=\"418\" r=\"5\" fill=\"#f5f0e8\"/>\n\n  <!-- ===== STICK FIGURE - Impact Position ===== -->\n\n  <!-- LEGS - mostly good weight transfer, green -->\n  <!-- Left (lead) leg - straight, bearing weight -->\n  <line x1=\"195\" y1=\"340\" x2=\"185\" y2=\"380\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <line x1=\"185\" y1=\"380\" x2=\"178\" y2=\"420\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n\n  <!-- Right (trail) leg - slightly bent -->\n  <line x1=\"205\" y1=\"340\" x2=\"215\" y2=\"378\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <line x1=\"215\" y1=\"378\" x2=\"225\" y2=\"420\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n\n  <!-- Hip joint -->\n  <line x1=\"185\" y1=\"340\" x2=\"215\" y2=\"340\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- Hip joints circles -->\n  <circle cx=\"185\" cy=\"340\" r=\"5\" fill=\"#f5f0e8\"/>\n  <circle cx=\"215\" cy=\"340\" r=\"5\" fill=\"#f5f0e8\"/>\n\n  <!-- Knee joints -->\n  <circle cx=\"185\" cy=\"380\" r=\"4\" fill=\"#6abf6a\"/>\n  <circle cx=\"215\" cy=\"378\" r=\"4\" fill=\"#6abf6a\"/>\n\n  <!-- Ankle joints -->\n  <circle cx=\"178\" cy=\"420\" r=\"4\" fill=\"#6abf6a\"/>\n  <circle cx=\"225\" cy=\"420\" r=\"4\" fill=\"#6abf6a\"/>\n\n  <!-- TORSO - limited rotation, red/orange -->\n  <!-- Spine from hips to shoulders - upright, minimal tilt = fault -->\n  <line x1=\"200\" y1=\"340\" x2=\"200\" y2=\"250\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Shoulder line - very square (minimal rotation = fault) -->\n  <line x1=\"170\" y1=\"258\" x2=\"230\" y2=\"258\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Shoulder joints circles -->\n  <circle cx=\"170\" cy=\"258\" r=\"5\" fill=\"#e87a5a\"/>\n  <circle cx=\"230\" cy=\"258\" r=\"5\" fill=\"#e87a5a\"/>\n\n  <!-- HEAD -->\n  <circle cx=\"200\" cy=\"230\" r=\"18\" fill=\"none\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- Neck -->\n  <line x1=\"200\" y1=\"248\" x2=\"200\" y2=\"258\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- LEFT ARM (lead arm) - arm dominated, red -->\n  <!-- Upper left arm: shoulder to elbow -->\n  <line x1=\"170\" y1=\"258\" x2=\"155\" y2=\"295\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Lower left arm: elbow to hands -->\n  <line x1=\"155\" y1=\"295\" x2=\"200\" y2=\"318\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Left elbow -->\n  <circle cx=\"155\" cy=\"295\" r=\"4\" fill=\"#e87a5a\"/>\n\n  <!-- RIGHT ARM (trail arm) - arm dominated, red -->\n  <!-- Upper right arm -->\n  <line x1=\"230\" y1=\"258\" x2=\"235\" y2=\"298\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Lower right arm -->\n  <line x1=\"235\" y1=\"298\" x2=\"200\" y2=\"318\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Right elbow -->\n  <circle cx=\"235\" cy=\"298\" r=\"4\" fill=\"#e87a5a\"/>\n\n  <!-- Hands (grip) -->\n  <circle cx=\"200\" cy=\"318\" r=\"6\" fill=\"#e87a5a\"/>\n\n  <!-- CLUB - steep angle, neutral shaft lean -->\n  <!-- Shaft: from hands down to ball - nearly vertical, no forward lean -->\n  <line x1=\"200\" y1=\"318\" x2=\"210\" y2=\"418\" stroke=\"#f5f0e8\" stroke-width=\"2\"/>\n  <!-- Club head -->\n  <line x1=\"205\" y1=\"415\" x2=\"218\" y2=\"420\" stroke=\"#f5f0e8\" stroke-width=\"2.5\"/>\n\n  <!-- ===== RED FAULT ARROWS ===== -->\n\n  <!-- Arrow 1: Pointing to torso/spine - limited rotation -->\n  <path d=\"M 120 290 Q 100 310 155 320\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"58\" y=\"278\" font-size=\"13\" font-family=\"monospace\" fill=\"#c8a84b\">No Body</text>\n  <text x=\"58\" y=\"292\" font-size=\"13\" font-family=\"monospace\" fill=\"#c8a84b\">Rotation</text>\n\n  <!-- Arrow 2: Pointing to shoulders - square/open -->\n  <path d=\"M 290 240 L 237 252\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"292\" y=\"234\" font-size=\"13\" font-family=\"monospace\" fill=\"#c8a84b\">Square</text>\n  <text x=\"292\" y=\"248\" font-size=\"13\" font-family=\"monospace\" fill=\"#c8a84b\">Shoulders</text>\n\n  <!-- Arrow 3: Pointing to hands/shaft - no forward lean -->\n  <path d=\"M 290 340 L 215 325\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"292\" y=\"334\" font-size=\"13\" font-family=\"monospace\" fill=\"#c8a84b\">No Shaft</text>\n  <text x=\"292\" y=\"348\" font-size=\"13\" font-family=\"monospace\" fill=\"#c8a84b\">Lean</text>\n\n  <!-- Arrow 4: Pointing to club shaft angle - steep -->\n  <path d=\"M 100 390 L 197 385\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"55\" y=\"384\" font-size=\"13\" font-family=\"monospace\" fill=\"#c8a84b\">Steep</text>\n  <text x=\"55\" y=\"398\" font-size=\"13\" font-family=\"monospace\" fill=\"#c8a84b\">Attack</text>\n\n  <!-- Legend -->\n  <rect x=\"20\" y=\"455\" width=\"12\" height=\"4\" fill=\"#e87a5a\" rx=\"1\"/>\n  <text x=\"36\" y=\"462\" font-size=\"10\" font-family=\"monospace\" fill=\"#e87a5a\">Fault</text>\n  <rect x=\"85\" y=\"455\" width=\"12\" height=\"4\" fill=\"#6abf6a\" rx=\"1\"/>\n  <text x=\"101\" y=\"462\" font-size=\"10\" font-family=\"monospace\" fill=\"#6abf6a\">Good</text>\n  <rect x=\"148\" y=\"455\" width=\"12\" height=\"4\" fill=\"#f5f0e8\" rx=\"1\"/>\n  <text x=\"164\" y=\"462\" font-size=\"10\" font-family=\"monospace\" fill=\"#f5f0e8\">Neutral</text>\n\n  <!-- Metrics -->\n  <text x=\"380\" y=\"462\" text-anchor=\"end\" font-size=\"9\" font-family=\"monospace\" fill=\"#c8a84b\">Hip Turn: 20° | Shoulder: 45°</text>\n  <text x=\"380\" y=\"474\" text-anchor=\"end\" font-size=\"9\" font-family=\"monospace\" fill=\"#c8a84b\">Path: 2° out-to-in | Steep</text>\n\n</svg>"
+    },
+    {
       "id": 1781664442859,
       "label": "14346",
       "golfer": "Ron",
