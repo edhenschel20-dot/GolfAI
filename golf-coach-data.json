@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781655192270,
+      "label": "14330",
+      "golfer": "Ron",
+      "date": "2026-06-17T00:13:12.271Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 68,
+        "scores": {
+          "setup": 72,
+          "backswing": 68,
+          "downswing": 64,
+          "impact": 66,
+          "follow_through": 70,
+          "tempo": 68
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Athletic setup posture",
+          "Good hip rotation in follow-through",
+          "Decent shoulder turn"
+        ],
+        "improvements": [
+          "Over-the-top downswing transition",
+          "Early extension at impact",
+          "Loss of posture during downswing"
+        ],
+        "key_fault": "Over-the-top transition leading to a steep, out-to-in swing path and early extension.",
+        "drill_1": {
+          "name": "Pump Drill",
+          "description": "Take the club to the top of the backswing, then bring it down halfway to feel the arms dropping straight down before rotating. Do this 3 times before making a full swing."
+        },
+        "drill_2": {
+          "name": "Alignment Stick in the Ground",
+          "description": "Place an alignment stick in the ground behind you at the same angle as your club shaft. Practice swinging under the stick on the downswing to prevent the over-the-top move."
+        },
+        "drill_3": {
+          "name": "Butt-to-Wall Drill",
+          "description": "Stand a few inches away from a wall in your posture. During the backswing and downswing, keep your glutes in contact with the wall to prevent early extension."
+        },
+        "summary": "Your swing shows athletic potential with a solid setup and good rotation. However, the transition is initiated primarily by the upper body, causing an over-the-top path and early extension at impact. Focusing on dropping the hands and maintaining spine angle will greatly improve consistency.",
+        "phases": {
+          "setup": {
+            "observation": "Stance is wide and athletic, suitable for a driver. Spine angle is decent, though slightly rounded in the upper back. Ball position is forward.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Club is taken back slightly inside, leading to a lift at the top. Shoulder turn is decent but could be deeper.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "The transition starts with the upper body and shoulders, casting the club outward and creating a steep, over-the-top path.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension is present as the hips move toward the ball, causing the spine to straighten and leading to a slightly unstable impact position.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "Good rotation through the ball, finishing with weight mostly on the lead side, though balance is slightly lost at the very end.",
+            "rating": "good"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "5 degrees out-to-in",
+          "tempo_ratio": "3.1:1 (backswing:downswing)",
+          "hip_turn_estimate": "40 degrees",
+          "shoulder_turn_estimate": "85 degrees",
+          "swing_plane": "steep",
+          "weight_transfer": "moderate — 70% lead side at finish",
+          "impact_position": "hips cleared but early extending, hands slightly behind ideal position"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781056273247,
       "label": "13556",
       "golfer": "Ed",
