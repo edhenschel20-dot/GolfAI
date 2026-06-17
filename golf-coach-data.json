@@ -1,6 +1,88 @@
 {
   "sessions": [
     {
+      "id": 1781671068887,
+      "label": "14338",
+      "golfer": "Ed",
+      "date": "2026-06-17T04:37:48.887Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 64,
+        "scores": {
+          "setup": 72,
+          "backswing": 65,
+          "downswing": 60,
+          "impact": 62,
+          "follow_through": 63,
+          "tempo": 65
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Stable stance width",
+          "Decent hand height at setup"
+        ],
+        "improvements": [
+          "Over-the-top downswing transition",
+          "Early extension through impact",
+          "Unbalanced follow-through"
+        ],
+        "key_fault": "Over-the-top downswing path leading to a steep, out-to-in strike and early extension.",
+        "drill_1": {
+          "name": "Pump Drill",
+          "description": "Take the club to the top of the backswing, then practice pulling the hands straight down to hip level while keeping your back facing the target. Do this twice before making a smooth swing to feel an inside-out path."
+        },
+        "drill_2": {
+          "name": "Headcover Obstacle Drill",
+          "description": "Place a soft headcover 2 inches outside and slightly ahead of the ball. Practice hitting shots without striking the headcover to force a more neutral or inside-out swing path."
+        },
+        "drill_3": {
+          "name": "Wall Butt Drill",
+          "description": "Stand a few inches away from a wall with your rear facing it. Practice your swing, ensuring your trail glute touches the wall on the backswing and your lead glute touches it on the downswing to prevent early extension."
+        },
+        "summary": "The swing shows a stable setup but suffers from a classic over-the-top move during the transition, resulting in a steep downswing and early extension at impact. Focus on dropping the hands to start the downswing and maintaining posture.",
+        "phases": {
+          "setup": {
+            "observation": "Stance is wide and stable. Spine is slightly rounded at setup. Clubhead is positioned well behind the ball.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Takeaway starts slightly inside, leading to a steep lift of the arms at the top. Shoulder turn is somewhat restricted.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "The downswing is initiated by the upper body pushing the hands outward, creating a steep, over-the-top path.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension is visible as the hips move toward the ball, causing the spine to straighten up prematurely through impact.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "The finish is abbreviated and slightly unbalanced, with the golfer stepping forward immediately after impact.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "6 degrees out-to-in",
+          "tempo_ratio": "2.6:1",
+          "hip_turn_estimate": "32 degrees",
+          "shoulder_turn_estimate": "76 degrees",
+          "swing_plane": "steep",
+          "weight_transfer": "incomplete, leading to a forward step",
+          "impact_position": "hands level with the ball"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781671003326,
       "label": "14345",
       "golfer": "Ed",
