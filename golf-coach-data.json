@@ -1,6 +1,88 @@
 {
   "sessions": [
     {
+      "id": 1781664618083,
+      "label": "14351",
+      "golfer": "Ron",
+      "date": "2026-06-17T02:50:18.083Z",
+      "skill": "intermediate",
+      "club": "putter",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 67,
+        "scores": {
+          "setup": 72,
+          "backswing": 68,
+          "downswing": 65,
+          "impact": 66,
+          "follow_through": 64,
+          "tempo": 62
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Solid setup posture",
+          "Eyes positioned well over the ball"
+        ],
+        "improvements": [
+          "Head peeking and moving too early",
+          "Wristy stroke instead of shoulder pendulum",
+          "Inconsistent acceleration through impact"
+        ],
+        "key_fault": "Early head movement (peeking) and wrist-dominated stroke leading to inconsistent distance control and face angle at impact.",
+        "drill_1": {
+          "name": "Listen for the Cup Drill",
+          "description": "Practice short putts (3-5 feet) with your eyes focused on the ball's original position. Do not look up until you hear the ball drop into the cup. Perform 20 reps."
+        },
+        "drill_2": {
+          "name": "Coin Under Ball Drill",
+          "description": "Place a small coin directly under the golf ball. Make your putting stroke and keep your eyes focused on the coin after the ball is struck. Do 15 reps."
+        },
+        "drill_3": {
+          "name": "Metronome Tempo Practice",
+          "description": "Use a metronome app set to 70-75 BPM. Sync your backswing to the first beat and impact/follow-through to the second beat to establish a smooth, pendulum tempo. Practice for 10 minutes."
+        },
+        "summary": "Your putting setup is solid with good posture and eye alignment. However, the stroke is hindered by early head movement (peeking) and a wristy motion rather than a smooth shoulder-led pendulum, which affects distance control and face angle consistency.",
+        "phases": {
+          "setup": {
+            "observation": "Good posture with a comfortable spine angle. Eyes appear to be well-positioned over the ball. Grip looks relaxed.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Short backswing, but initiated slightly with the wrists rather than a pure shoulder rock.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "Slightly jabby transition. The head begins to rotate toward the target before impact is fully completed.",
+            "rating": "needs_work"
+          },
+          "impact": {
+            "observation": "Inconsistent face contact due to early head movement. Hands are active, causing minor wrist breakdown.",
+            "rating": "fault"
+          },
+          "follow_through": {
+            "observation": "Abbreviated follow-through. The head looks up immediately, preventing a stable, low release of the putter head.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "Slightly out-to-in",
+          "tempo_ratio": "2:1 (backswing to downswing)",
+          "hip_turn_estimate": "Minimal (appropriate for putting)",
+          "shoulder_turn_estimate": "12 degrees",
+          "swing_plane": "Slightly upright",
+          "weight_transfer": "Static - 50/50 distribution throughout",
+          "impact_position": "Hands slightly behind or even with the ball"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781664534964,
       "label": "14348",
       "golfer": "Ron",
