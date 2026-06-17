@@ -1,6 +1,90 @@
 {
   "sessions": [
     {
+      "id": 1781664442859,
+      "label": "14346",
+      "golfer": "Ron",
+      "date": "2026-06-17T02:47:22.859Z",
+      "skill": "intermediate",
+      "club": "mid-iron",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 65,
+        "scores": {
+          "setup": 68,
+          "backswing": 65,
+          "downswing": 60,
+          "impact": 62,
+          "follow_through": 66,
+          "tempo": 68
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Decent stance width and balance",
+          "Good initial alignment to target",
+          "Keeps eye on the ball through impact"
+        ],
+        "improvements": [
+          "Over-the-top downswing path",
+          "Early extension at impact",
+          "Slouched posture at setup",
+          "Limited shoulder turn in backswing"
+        ],
+        "key_fault": "Over-the-top downswing path combined with early extension at impact, leading to inconsistent contact and a steep angle of attack.",
+        "drill_1": {
+          "name": "Pump Drill",
+          "description": "Take the club to the top, start the downswing by pulling the arms down to hip level while keeping the back to the target, then return to the top. Do this twice before making a full swing to feel the proper downswing sequence."
+        },
+        "drill_2": {
+          "name": "Chair/Wall Drill for Early Extension",
+          "description": "Setup with your glutes touching a wall or chair. During the backswing and downswing, maintain contact with the wall to prevent early extension."
+        },
+        "drill_3": {
+          "name": "Alignment Stick Gate Drill",
+          "description": "Place an alignment stick in the ground at a 45-degree angle just behind and outside your target line to force an inside-out swing path."
+        },
+        "summary": "Your swing has a solid foundation but suffers from a steep, over-the-top downswing and early extension at impact. Improving your posture at setup and focusing on a lower-body-initiated transition will greatly improve contact consistency.",
+        "phases": {
+          "setup": {
+            "observation": "Posture is slightly slouched in the upper spine. Stance width is solid and club is aligned well with the target.",
+            "rating": "needs_work"
+          },
+          "backswing": {
+            "observation": "Takeaway is slightly inside, leading to a lift at the top. Shoulder turn is somewhat restricted, limiting depth.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "Transition starts with the upper body, casting the club outward and creating a steep, over-the-top path.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension is present as the hips move toward the ball, causing the spine to straighten and leading to a slight scoop/flip at impact.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "Finish is somewhat upright and abbreviated due to the early extension, with incomplete rotation through the target.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "5 degrees out-to-in",
+          "tempo_ratio": "3.1:1",
+          "hip_turn_estimate": "30 degrees",
+          "shoulder_turn_estimate": "75 degrees",
+          "swing_plane": "steep",
+          "weight_transfer": "moderate - 55% lead side at finish",
+          "impact_position": "hands level with or slightly behind the ball"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781663364852,
       "label": "14350",
       "golfer": "Ron",
