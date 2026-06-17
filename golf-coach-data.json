@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781655499641,
+      "label": "14330",
+      "golfer": "John",
+      "date": "2026-06-17T00:18:19.641Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 68,
+        "scores": {
+          "setup": 74,
+          "backswing": 68,
+          "downswing": 65,
+          "impact": 66,
+          "follow_through": 70,
+          "tempo": 71
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Good athletic setup posture",
+          "Decent shoulder turn",
+          "Balanced finish"
+        ],
+        "improvements": [
+          "Early extension through impact",
+          "Slightly over-the-top downswing path",
+          "Loss of spine angle during downswing"
+        ],
+        "key_fault": "Early extension and a slightly steep downswing path leading to inconsistent contact and a potential slice/fade ball flight.",
+        "drill_1": {
+          "name": "Chair/Wall Drill",
+          "description": "Practice keeping the trail glute against a wall or chair during the backswing and lead glute during the downswing to prevent early extension. Do 20 slow practice reps."
+        },
+        "drill_2": {
+          "name": "Pump Drill",
+          "description": "From the top of the backswing, pump the hands down to hip level twice while keeping the hips back, then swing through on the third downswing. Do 15 reps."
+        },
+        "drill_3": {
+          "name": "Alignment Stick in Ground",
+          "description": "Place an alignment stick angled behind you to encourage an under-the-stick (inside-out) path. Spend 10 minutes making slow-motion swings."
+        },
+        "summary": "Your swing shows a solid athletic foundation at setup. The primary areas for improvement are maintaining your spine angle through impact (avoiding early extension) and smoothing out the transition to prevent a steep downswing path.",
+        "phases": {
+          "setup": {
+            "observation": "Stance width is appropriate for a driver. Good spine angle and knee flex. Ball position is correctly forward in the stance.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Takeaway is slightly inside, leading to a somewhat steep position at the top. Shoulder turn is decent but could be deeper.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "Transition is initiated slightly by the upper body, causing a steep, out-to-in path. Hips move toward the ball early.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension is present as the hips humped toward the ball, causing the spine to straighten and hands to raise at impact.",
+            "rating": "fault"
+          },
+          "follow_through": {
+            "observation": "Finish is relatively balanced with good weight transfer to the lead side, though slightly upright due to early extension.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "3 degrees out-to-in",
+          "tempo_ratio": "2.7:1 (backswing:downswing)",
+          "hip_turn_estimate": "40 degrees",
+          "shoulder_turn_estimate": "85 degrees",
+          "swing_plane": "slightly steep",
+          "weight_transfer": "good — 75% lead side at finish",
+          "impact_position": "hips slightly cleared, spine angle extended"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781655192270,
       "label": "14330",
       "golfer": "Ron",
@@ -77,7 +160,7 @@
           "hip_turn_estimate": "40 degrees",
           "shoulder_turn_estimate": "85 degrees",
           "swing_plane": "steep",
-          "weight_transfer": "moderate — 70% lead side at finish",
+          "weight_transfer": "moderate â 70% lead side at finish",
           "impact_position": "hips cleared but early extending, hands slightly behind ideal position"
         }
       },
