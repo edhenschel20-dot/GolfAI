@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781664836605,
+      "label": "14335",
+      "golfer": "Ron",
+      "date": "2026-06-17T02:53:56.605Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 60,
+        "scores": {
+          "setup": 68,
+          "backswing": 58,
+          "downswing": 55,
+          "impact": 60,
+          "follow_through": 62,
+          "tempo": 58
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Decent initial setup posture",
+          "Maintains eye contact on the ball through impact"
+        ],
+        "improvements": [
+          "Steep, arm-dominated takeaway",
+          "Over-the-top downswing path",
+          "Lack of lower body rotation and hip turn",
+          "Rushed transition at the top"
+        ],
+        "key_fault": "Extremely steep, arm-led swing path with minimal hip rotation, leading to an over-the-top downswing and inconsistent contact.",
+        "drill_1": {
+          "name": "Step Drill",
+          "description": "Start with feet together. Take a backswing, and just before reaching the top, step forward with your lead foot to initiate the downswing with your lower body. Do 15 reps."
+        },
+        "drill_2": {
+          "name": "Pump Drill",
+          "description": "Bring the club to the top of the backswing. Lower your hands halfway down to your trail hip twice without releasing the wrists, then on the third time, swing through. This helps feel the proper downswing path."
+        },
+        "drill_3": {
+          "name": "Towel Under Armpits Drill",
+          "description": "Place a towel under both armpits and take half-swings. This forces your arms and torso to rotate together, preventing the lifting motion in the backswing."
+        },
+        "summary": "Your swing is highly dominated by your arms, leading to a steep, lifting backswing and an over-the-top downswing. Focus on initiating the swing with torso rotation and starting the downswing with your lower body to flatten your swing plane.",
+        "phases": {
+          "setup": {
+            "observation": "Posture is reasonable with decent spine angle, but arms and shoulders appear tense. Ball position is forward.",
+            "rating": "needs_work"
+          },
+          "backswing": {
+            "observation": "Club is lifted vertically with the arms rather than rotated back with the torso. Hip turn is highly restricted.",
+            "rating": "fault"
+          },
+          "downswing": {
+            "observation": "Initiated entirely by the upper body and arms, causing a steep, over-the-top path. No lower body clearance.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Steep angle of attack. Hands are behind the ball, leading to a weak, casting impact position.",
+            "rating": "fault"
+          },
+          "follow_through": {
+            "observation": "Finish is upright and slightly unstable due to lack of proper weight transfer and rotation.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "6 degrees out-to-in",
+          "tempo_ratio": "2.1:1 (rushed backswing to downswing)",
+          "hip_turn_estimate": "20 degrees",
+          "shoulder_turn_estimate": "55 degrees",
+          "swing_plane": "very steep",
+          "weight_transfer": "poor — weight remains on trail side at impact",
+          "impact_position": "hands behind ball with early release"
+        }
+      },
+      "svgDiagram": "<svg viewBox=\"0 0 400 500\" xmlns=\"http://www.w3.org/2000/svg\">\n  <!-- Background -->\n  <rect width=\"400\" height=\"500\" fill=\"#1a2e1a\"/>\n\n  <!-- Arrowhead marker definition -->\n  <defs>\n    <marker id=\"arrowRed\" markerWidth=\"8\" markerHeight=\"8\" refX=\"6\" refY=\"3\" orient=\"auto\">\n      <path d=\"M0,0 L0,6 L8,3 z\" fill=\"#e87a5a\"/>\n    </marker>\n  </defs>\n\n  <!-- Title -->\n  <text x=\"200\" y=\"28\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"16\" font-weight=\"bold\" fill=\"#c8a84b\">DOWNSWING — OVER-THE-TOP</text>\n  <!-- Subtitle -->\n  <text x=\"200\" y=\"46\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"11\" fill=\"#f5f0e8\">Steep arm-led path, no hip clearance</text>\n\n  <!-- Ground line -->\n  <line x1=\"60\" y1=\"430\" x2=\"340\" y2=\"430\" stroke=\"#4a6a4a\" stroke-width=\"2\"/>\n\n  <!-- === STICK FIGURE: Over-the-top downswing position === -->\n  <!-- Golfer facing left, hitting ball, over-the-top path -->\n\n  <!-- HEAD (neutral) -->\n  <circle cx=\"200\" cy=\"95\" r=\"18\" fill=\"none\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- NECK -->\n  <line x1=\"200\" y1=\"113\" x2=\"200\" y2=\"128\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- SHOULDERS (red — fault: arms pulling across) -->\n  <!-- Left shoulder (lead) -->\n  <circle cx=\"170\" cy=\"135\" r=\"7\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Right shoulder (trail) -->\n  <circle cx=\"232\" cy=\"128\" r=\"7\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Shoulder line -->\n  <line x1=\"170\" y1=\"135\" x2=\"232\" y2=\"128\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Neck to shoulder center -->\n  <line x1=\"200\" y1=\"128\" x2=\"170\" y2=\"135\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <line x1=\"200\" y1=\"128\" x2=\"232\" y2=\"128\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- SPINE (neutral/white — spine angle present) -->\n  <!-- Hip center approx -->\n  <line x1=\"200\" y1=\"128\" x2=\"198\" y2=\"255\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- HIPS (red — minimal rotation, poor clearance) -->\n  <!-- Left hip (lead) -->\n  <circle cx=\"182\" cy=\"258\" r=\"7\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Right hip (trail) -->\n  <circle cx=\"218\" cy=\"252\" r=\"7\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Hip line -->\n  <line x1=\"182\" y1=\"258\" x2=\"218\" y2=\"252\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- LEFT LEG (lead) — green, some weight but weight stuck -->\n  <!-- Left knee -->\n  <circle cx=\"178\" cy=\"330\" r=\"6\" fill=\"#6abf6a\" stroke=\"#6abf6a\" stroke-width=\"2\"/>\n  <!-- Left ankle -->\n  <circle cx=\"172\" cy=\"400\" r=\"6\" fill=\"#6abf6a\" stroke=\"#6abf6a\" stroke-width=\"2\"/>\n  <!-- Left foot -->\n  <line x1=\"172\" y1=\"400\" x2=\"148\" y2=\"410\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <line x1=\"182\" y1=\"258\" x2=\"178\" y2=\"330\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <line x1=\"178\" y1=\"330\" x2=\"172\" y2=\"400\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n\n  <!-- RIGHT LEG (trail) — red, weight stuck on trail side -->\n  <!-- Right knee -->\n  <circle cx=\"214\" cy=\"332\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Right ankle -->\n  <circle cx=\"218\" cy=\"400\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Right foot -->\n  <line x1=\"218\" y1=\"400\" x2=\"244\" y2=\"410\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <line x1=\"218\" y1=\"252\" x2=\"214\" y2=\"332\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <line x1=\"214\" y1=\"332\" x2=\"218\" y2=\"400\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- LEFT ARM (lead arm — red, pulling over the top) -->\n  <!-- Left elbow -->\n  <circle cx=\"148\" cy=\"178\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Left hand/wrist -->\n  <circle cx=\"128\" cy=\"230\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <line x1=\"170\" y1=\"135\" x2=\"148\" y2=\"178\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <line x1=\"148\" y1=\"178\" x2=\"128\" y2=\"230\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- RIGHT ARM (trail arm — red, casting/early release) -->\n  <!-- Right elbow — flared out due to over-the-top -->\n  <circle cx=\"272\" cy=\"168\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Right hand — meeting left hand near ball -->\n  <circle cx=\"140\" cy=\"248\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <line x1=\"232\" y1=\"128\" x2=\"272\" y2=\"168\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <line x1=\"272\" y1=\"168\" x2=\"140\" y2=\"248\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- HANDS together (grip) -->\n  <circle cx=\"134\" cy=\"239\" r=\"8\" fill=\"#e87a5a\" stroke=\"#c8a84b\" stroke-width=\"1.5\"/>\n\n  <!-- CLUB — steep, over-the-top path, shaft steep -->\n  <!-- Club shaft from hands steeply down to ball area -->\n  <line x1=\"134\" y1=\"239\" x2=\"182\" y2=\"418\" stroke=\"#f5f0e8\" stroke-width=\"2\"/>\n  <!-- Club head -->\n  <line x1=\"178\" y1=\"415\" x2=\"196\" y2=\"422\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- BALL -->\n  <circle cx=\"188\" cy=\"425\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#c8a84b\" stroke-width=\"1\"/>\n\n  <!-- === SWING PATH INDICATOR — steep out-to-in === -->\n  <!-- Dashed line showing over-the-top path direction -->\n  <line x1=\"290\" y1=\"80\" x2=\"150\" y2=\"300\" stroke=\"#e87a5a\" stroke-width=\"1.5\" stroke-dasharray=\"8,4\" opacity=\"0.7\"/>\n\n  <!-- === RED ARROWS & LABELS === -->\n\n  <!-- Arrow 1: Over-the-top shoulder pull -->\n  <path d=\"M 305,140 C 290,130 270,128 248,130\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"308\" y=\"132\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">Arms pull over-top</text>\n\n  <!-- Arrow 2: Steep downswing path -->\n  <path d=\"M 318,200 C 290,210 260,220 200,230\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"305\" y=\"195\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">Steep outside path</text>\n\n  <!-- Arrow 3: Hips not clearing -->\n  <path d=\"M 310,295 C 285,278 258,265 228,256\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"298\" y=\"312\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">Hips not clearing</text>\n\n  <!-- Arrow 4: Weight on trail side -->\n  <path d=\"M 310,380 C 285,385 258,390 230,398\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"296\" y=\"375\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">Weight trail side</text>\n\n  <!-- === METRICS PANEL === -->\n  <rect x=\"10\" y=\"442\" width=\"380\" height=\"50\" fill=\"#0d1f0d\" rx=\"4\" opacity=\"0.85\"/>\n  <text x=\"20\" y=\"458\" font-family=\"monospace\" font-size=\"10\" fill=\"#c8a84b\">Club Path: 6° out-to-in</text>\n  <text x=\"145\" y=\"458\" font-family=\"monospace\" font-size=\"10\" fill=\"#c8a84b\">Hip Turn: 20°</text>\n  <text x=\"248\" y=\"458\" font-family=\"monospace\" font-size=\"10\" fill=\"#c8a84b\">Shoulder Turn: 55°</text>\n  <text x=\"20\" y=\"474\" font-family=\"monospace\" font-size=\"10\" fill=\"#f5f0e8\">Tempo: 2.1:1 (rushed)</text>\n  <text x=\"160\" y=\"474\" font-family=\"monospace\" font-size=\"10\" fill=\"#f5f0e8\">Plane: Very Steep</text>\n  <text x=\"272\" y=\"474\" font-family=\"monospace\" font-size=\"10\" fill=\"#f5f0e8\">Weight: Trail Side</text>\n</svg>"
+    },
+    {
       "id": 1781664793738,
       "label": "14335",
       "golfer": "Ron",
