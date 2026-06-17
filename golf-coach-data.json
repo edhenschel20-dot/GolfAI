@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781664793738,
+      "label": "14335",
+      "golfer": "Ron",
+      "date": "2026-06-17T02:53:13.738Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 60,
+        "scores": {
+          "setup": 68,
+          "backswing": 58,
+          "downswing": 55,
+          "impact": 60,
+          "follow_through": 62,
+          "tempo": 58
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Decent initial setup posture",
+          "Maintains eye contact on the ball through impact"
+        ],
+        "improvements": [
+          "Steep, arm-dominated takeaway",
+          "Over-the-top downswing path",
+          "Lack of lower body rotation and hip turn",
+          "Rushed transition at the top"
+        ],
+        "key_fault": "Extremely steep, arm-led swing path with minimal hip rotation, leading to an over-the-top downswing and inconsistent contact.",
+        "drill_1": {
+          "name": "Step Drill",
+          "description": "Start with feet together. Take a backswing, and just before reaching the top, step forward with your lead foot to initiate the downswing with your lower body. Do 15 reps."
+        },
+        "drill_2": {
+          "name": "Pump Drill",
+          "description": "Bring the club to the top of the backswing. Lower your hands halfway down to your trail hip twice without releasing the wrists, then on the third time, swing through. This helps feel the proper downswing path."
+        },
+        "drill_3": {
+          "name": "Towel Under Armpits Drill",
+          "description": "Place a towel under both armpits and take half-swings. This forces your arms and torso to rotate together, preventing the lifting motion in the backswing."
+        },
+        "summary": "Your swing is highly dominated by your arms, leading to a steep, lifting backswing and an over-the-top downswing. Focus on initiating the swing with torso rotation and starting the downswing with your lower body to flatten your swing plane.",
+        "phases": {
+          "setup": {
+            "observation": "Posture is reasonable with decent spine angle, but arms and shoulders appear tense. Ball position is forward.",
+            "rating": "needs_work"
+          },
+          "backswing": {
+            "observation": "Club is lifted vertically with the arms rather than rotated back with the torso. Hip turn is highly restricted.",
+            "rating": "fault"
+          },
+          "downswing": {
+            "observation": "Initiated entirely by the upper body and arms, causing a steep, over-the-top path. No lower body clearance.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Steep angle of attack. Hands are behind the ball, leading to a weak, casting impact position.",
+            "rating": "fault"
+          },
+          "follow_through": {
+            "observation": "Finish is upright and slightly unstable due to lack of proper weight transfer and rotation.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "6 degrees out-to-in",
+          "tempo_ratio": "2.1:1 (rushed backswing to downswing)",
+          "hip_turn_estimate": "20 degrees",
+          "shoulder_turn_estimate": "55 degrees",
+          "swing_plane": "very steep",
+          "weight_transfer": "poor — weight remains on trail side at impact",
+          "impact_position": "hands behind ball with early release"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781664743723,
       "label": "14341",
       "golfer": "Ron",
