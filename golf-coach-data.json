@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781670887226,
+      "label": "14345",
+      "golfer": "Ed",
+      "date": "2026-06-17T04:34:47.226Z",
+      "skill": "intermediate",
+      "club": "mid-iron",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 73,
+        "scores": {
+          "setup": 78,
+          "backswing": 74,
+          "downswing": 72,
+          "impact": 70,
+          "follow_through": 75,
+          "tempo": 74
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Good setup posture and balance",
+          "Stable lower body during the swing",
+          "Decent chest rotation through to the target"
+        ],
+        "improvements": [
+          "Slight scooping motion at impact",
+          "Lack of forward shaft lean at impact",
+          "Slightly steep downswing angle"
+        ],
+        "key_fault": "Flipping the wrists at impact leading to inconsistent contact and loft control.",
+        "drill_1": {
+          "name": "Forward Press Drill",
+          "description": "Practice setting up with your hands slightly ahead of the ball and focus on maintaining that forward shaft lean through impact. Do 20 short practice strokes."
+        },
+        "drill_2": {
+          "name": "Flat Lead Wrist Drill",
+          "description": "Insert a ruler or alignment aid into the back of your glove. Practice making short swings ensuring the ruler doesn't dig into your forearm at impact, keeping the lead wrist flat."
+        },
+        "drill_3": {
+          "name": "Tour Striker / Ball Between Forearms Drill",
+          "description": "Place a small soft ball between your forearms and make short swings to keep your arms and body synchronized, preventing early release."
+        },
+        "summary": "Your swing shows solid fundamentals in setup and body rotation. The primary area for improvement is maintaining forward shaft lean through impact to avoid scooping the ball.",
+        "phases": {
+          "setup": {
+            "observation": "Good posture with a balanced stance. Spine angle is stable and arms hang naturally under the shoulders.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Controlled, abbreviated backswing. Club stays on a decent plane, though wrist hinge is minimal.",
+            "rating": "good"
+          },
+          "downswing": {
+            "observation": "Decent transition, but the clubhead starts to release slightly early, leading to a steep angle of attack.",
+            "rating": "needs_work"
+          },
+          "impact": {
+            "observation": "Hands are slightly behind the ball at impact, causing a scooping motion rather than a crisp, downward strike.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "Good rotation of the torso toward the target with a balanced, controlled finish.",
+            "rating": "good"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "2 degrees out-to-in",
+          "tempo_ratio": "2.5:1 (backswing:downswing)",
+          "hip_turn_estimate": "25 degrees",
+          "shoulder_turn_estimate": "45 degrees",
+          "swing_plane": "slightly steep",
+          "weight_transfer": "moderate — 70% lead side at finish",
+          "impact_position": "hands slightly behind ball"
+        }
+      },
+      "svgDiagram": "<svg viewBox=\"0 0 400 500\" xmlns=\"http://www.w3.org/2000/svg\">\n  <!-- Background -->\n  <rect width=\"400\" height=\"500\" fill=\"#1a2e1a\"/>\n\n  <!-- Arrowhead marker definition -->\n  <defs>\n    <marker id=\"arrowRed\" markerWidth=\"8\" markerHeight=\"8\" refX=\"6\" refY=\"3\" orient=\"auto\">\n      <path d=\"M0,0 L0,6 L8,3 z\" fill=\"#e87a5a\"/>\n    </marker>\n  </defs>\n\n  <!-- Title -->\n  <text x=\"200\" y=\"28\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"16\" font-weight=\"bold\" fill=\"#c8a84b\">IMPACT POSITION</text>\n  <!-- Subtitle -->\n  <text x=\"200\" y=\"46\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"11\" fill=\"#f5f0e8\">Wrist flip — no forward shaft lean</text>\n\n  <!-- Ground line -->\n  <line x1=\"60\" y1=\"420\" x2=\"340\" y2=\"420\" stroke=\"#4a6a4a\" stroke-width=\"2\"/>\n\n  <!-- === STICK FIGURE === -->\n  <!-- Golfer facing right (impact position), slightly open stance -->\n\n  <!-- HEAD (neutral/white) -->\n  <circle cx=\"200\" cy=\"110\" r=\"18\" fill=\"none\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- NECK -->\n  <line x1=\"200\" y1=\"128\" x2=\"200\" y2=\"148\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- SHOULDERS line (neutral) -->\n  <!-- Left shoulder (trail) at ~220,148 | Right shoulder (lead) at ~178,148 -->\n  <line x1=\"178\" y1=\"148\" x2=\"222\" y2=\"148\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <!-- Shoulder joints -->\n  <circle cx=\"178\" cy=\"148\" r=\"5\" fill=\"#f5f0e8\"/>\n  <circle cx=\"222\" cy=\"148\" r=\"5\" fill=\"#f5f0e8\"/>\n\n  <!-- SPINE / TORSO (green - good rotation) -->\n  <line x1=\"200\" y1=\"148\" x2=\"198\" y2=\"255\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n\n  <!-- HIPS (green - moderate turn) -->\n  <line x1=\"182\" y1=\"255\" x2=\"216\" y2=\"255\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <circle cx=\"182\" cy=\"255\" r=\"5\" fill=\"#6abf6a\"/>\n  <circle cx=\"216\" cy=\"255\" r=\"5\" fill=\"#6abf6a\"/>\n\n  <!-- LEFT LEG (lead) - good weight transfer -->\n  <!-- Left hip to knee -->\n  <line x1=\"182\" y1=\"255\" x2=\"176\" y2=\"340\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <circle cx=\"176\" cy=\"340\" r=\"5\" fill=\"#6abf6a\"/>\n  <!-- Left knee to ankle -->\n  <line x1=\"176\" y1=\"340\" x2=\"172\" y2=\"420\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <circle cx=\"172\" cy=\"420\" r=\"5\" fill=\"#6abf6a\"/>\n\n  <!-- RIGHT LEG (trail) - neutral -->\n  <!-- Right hip to knee -->\n  <line x1=\"216\" y1=\"255\" x2=\"228\" y2=\"335\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <circle cx=\"228\" cy=\"335\" r=\"5\" fill=\"#f5f0e8\"/>\n  <!-- Right knee to ankle -->\n  <line x1=\"228\" y1=\"335\" x2=\"234\" y2=\"420\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <circle cx=\"234\" cy=\"420\" r=\"5\" fill=\"#f5f0e8\"/>\n\n  <!-- LEAD ARM (left/right side of image = lead) -->\n  <!-- Lead shoulder to lead elbow -->\n  <line x1=\"178\" y1=\"148\" x2=\"158\" y2=\"210\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <circle cx=\"158\" cy=\"210\" r=\"5\" fill=\"#f5f0e8\"/>\n  <!-- Lead elbow to hands (hands slightly behind ball — RED fault) -->\n  <line x1=\"158\" y1=\"210\" x2=\"155\" y2=\"275\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- TRAIL ARM (right side) -->\n  <!-- Trail shoulder to trail elbow -->\n  <line x1=\"222\" y1=\"148\" x2=\"218\" y2=\"218\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <circle cx=\"218\" cy=\"218\" r=\"5\" fill=\"#e87a5a\"/>\n  <!-- Trail elbow to hands -->\n  <line x1=\"218\" y1=\"218\" x2=\"158\" y2=\"275\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- HANDS (RED - fault zone) -->\n  <circle cx=\"158\" cy=\"275\" r=\"7\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n\n  <!-- WRISTS / FLIP indicator -->\n  <!-- Flipped wrist bend shown by secondary hand circle slightly up -->\n  <circle cx=\"152\" cy=\"268\" r=\"4\" fill=\"#e87a5a\" stroke=\"#c8a84b\" stroke-width=\"1.5\"/>\n\n  <!-- CLUB SHAFT - leaning backward (no forward lean = fault) -->\n  <!-- Club grip at hands, shaft angling slightly backward (lean toward trail side) -->\n  <line x1=\"158\" y1=\"275\" x2=\"148\" y2=\"415\" stroke=\"#c8a84b\" stroke-width=\"2\"/>\n\n  <!-- CLUBHEAD -->\n  <ellipse cx=\"147\" cy=\"420\" rx=\"12\" ry=\"5\" fill=\"none\" stroke=\"#c8a84b\" stroke-width=\"2\"/>\n\n  <!-- BALL position (ahead of hands) -->\n  <circle cx=\"175\" cy=\"420\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#aaaaaa\" stroke-width=\"1\"/>\n\n  <!-- Ball label -->\n  <text x=\"175\" y=\"440\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"9\" fill=\"#aaaaaa\">BALL</text>\n\n  <!-- === IDEAL SHAFT LEAN shown as ghost line for reference === -->\n  <line x1=\"175\" y1=\"420\" x2=\"165\" y2=\"265\" stroke=\"#6abf6a\" stroke-width=\"1\" stroke-dasharray=\"5,4\" opacity=\"0.5\"/>\n  <text x=\"112\" y=\"340\" font-family=\"monospace\" font-size=\"9\" fill=\"#6abf6a\" opacity=\"0.7\">ideal lean</text>\n\n  <!-- === FAULT ARROWS === -->\n\n  <!-- Arrow 1: Hands behind ball -->\n  <path d=\"M 108,285 C 120,278 135,274 148,272\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"58\" y=\"280\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">Hands behind</text>\n  <text x=\"68\" y=\"295\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">ball</text>\n\n  <!-- Arrow 2: Flip / scooping wrists -->\n  <path d=\"M 96,330 C 110,315 128,300 145,285\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"48\" y=\"330\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">Wrist flip</text>\n  <text x=\"42\" y=\"345\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">/ scoop</text>\n\n  <!-- Arrow 3: No forward shaft lean -->\n  <path d=\"M 270,360 C 240,370 210,390 162,400\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"258\" y=\"355\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">No shaft</text>\n  <text x=\"262\" y=\"370\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">lean</text>\n\n  <!-- Arrow 4: Early release trail arm -->\n  <path d=\"M 285,205 C 268,210 245,215 224,218\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"272\" y=\"195\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">Early</text>\n  <text x=\"262\" y=\"210\" font-family=\"monospace\" font-size=\"13\" fill=\"#c8a84b\">release</text>\n\n  <!-- Footer note -->\n  <text x=\"200\" y=\"472\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"10\" fill=\"#6abf6a\">Club path: 2° out-to-in | Steep plane</text>\n  <text x=\"200\" y=\"488\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"10\" fill=\"#6abf6a\">Hip turn: 25° | Weight: 70% lead</text>\n\n</svg>"
+    },
+    {
       "id": 1781670122035,
       "label": "14347",
       "golfer": "Ed",
