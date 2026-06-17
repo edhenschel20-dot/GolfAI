@@ -1,6 +1,88 @@
 {
   "sessions": [
     {
+      "id": 1781661478675,
+      "label": "14341",
+      "golfer": "Ron",
+      "date": "2026-06-17T01:57:58.675Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 62,
+        "scores": {
+          "setup": 70,
+          "backswing": 60,
+          "downswing": 58,
+          "impact": 60,
+          "follow_through": 62,
+          "tempo": 65
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Decent setup posture",
+          "Good hand speed through impact"
+        ],
+        "improvements": [
+          "Lead arm collapses at the top of the backswing",
+          "Casting and early release on the downswing",
+          "Hanging back on the trail foot through impact"
+        ],
+        "key_fault": "Severe collapse of the lead arm at the top of the backswing combined with casting on the downswing, leading to a loss of power and inconsistent contact.",
+        "drill_1": {
+          "name": "Keep the Lead Arm Straight Drill",
+          "description": "Practice half-swings focusing on keeping the lead arm extended and straight to the top of the backswing. Do 20 slow-motion reps daily."
+        },
+        "drill_2": {
+          "name": "Step-Through Drill",
+          "description": "To fix hanging back, take a step forward with your trail foot immediately after impact to force proper weight transfer to the lead side. Do 15 reps."
+        },
+        "drill_3": {
+          "name": "Pump Drill",
+          "description": "From the top of the backswing, pump the hands down to hip level twice while maintaining wrist hinge before releasing on the third swing. 10 minutes of practice."
+        },
+        "summary": "Your swing has a decent foundation at setup, but suffers from a collapsed lead arm at the top and casting on the downswing, which prevents proper weight transfer and consistent compression.",
+        "phases": {
+          "setup": {
+            "observation": "Stance width is good for a driver. Ball position is forward as required. Spine angle is slightly upright but acceptable.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Lead arm collapses significantly at the top of the swing, causing an overswing and loss of structure. Wrist hinge is early.",
+            "rating": "fault"
+          },
+          "downswing": {
+            "observation": "Downswing starts with an early release (casting) of the wrists. Weight remains on the trail foot instead of shifting forward.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Flipping/scooping motion at impact with hands behind the ball. Weight is hung back on the trail side.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "Finish is slightly unbalanced due to the weight staying back. Lead arm exhibits a slight chicken-wing pattern.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "Out-to-in path",
+          "tempo_ratio": "3.2:1",
+          "hip_turn_estimate": "35 degrees",
+          "shoulder_turn_estimate": "75 degrees",
+          "swing_plane": "Steep",
+          "weight_transfer": "Poor — majority of weight remains on trail side at impact",
+          "impact_position": "Hands behind the ball with flipped wrists"
+        }
+      },
+      "svgDiagram": "<svg viewBox=\"0 0 400 500\" xmlns=\"http://www.w3.org/2000/svg\">\n  <rect width=\"400\" height=\"500\" fill=\"#1a2e1a\"/>\n\n  <!-- Arrowhead marker definition -->\n  <defs>\n    <marker id=\"arrowRed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"10\" refY=\"3.5\" orient=\"auto\">\n      <polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#e87a5a\"/>\n    </marker>\n  </defs>\n\n  <!-- Title -->\n  <text x=\"200\" y=\"28\" text-anchor=\"middle\" fill=\"#c8a84b\" font-size=\"16\" font-weight=\"bold\" font-family=\"monospace\">TOP OF BACKSWING</text>\n  <!-- Subtitle -->\n  <text x=\"200\" y=\"46\" text-anchor=\"middle\" fill=\"#f5f0e8\" font-size=\"11\" font-family=\"monospace\">Collapsed arm, casting, weight hanging back</text>\n\n  <!-- Ground line -->\n  <line x1=\"60\" y1=\"430\" x2=\"340\" y2=\"430\" stroke=\"#4a6a4a\" stroke-width=\"2\"/>\n\n  <!-- ===== STICK FIGURE ===== -->\n  <!-- Golfer at top of backswing, weight on trail foot (right), collapsed lead arm -->\n\n  <!-- FEET / ANKLES -->\n  <!-- Trail foot (right) - bearing weight, GREEN ish neutral -->\n  <circle cx=\"230\" cy=\"425\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"1\"/>\n  <!-- Lead foot (left) -->\n  <circle cx=\"165\" cy=\"425\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"1\"/>\n\n  <!-- LEGS -->\n  <!-- Trail leg (right) - weight hanging back, slightly bent, RED fault -->\n  <!-- Trail ankle to knee -->\n  <line x1=\"230\" y1=\"425\" x2=\"225\" y2=\"365\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Trail knee to hip -->\n  <line x1=\"225\" y1=\"365\" x2=\"220\" y2=\"305\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Trail knee joint -->\n  <circle cx=\"225\" cy=\"365\" r=\"5\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"1\"/>\n\n  <!-- Lead leg (left) - straighter, some weight -->\n  <line x1=\"165\" y1=\"425\" x2=\"175\" y2=\"365\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <line x1=\"175\" y1=\"365\" x2=\"195\" y2=\"305\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <!-- Lead knee joint -->\n  <circle cx=\"175\" cy=\"365\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"1\"/>\n\n  <!-- HIPS - centered but shifted trail side -->\n  <!-- Hip line -->\n  <line x1=\"195\" y1=\"305\" x2=\"220\" y2=\"305\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Hip joints -->\n  <circle cx=\"195\" cy=\"305\" r=\"5\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"1\"/>\n  <circle cx=\"220\" cy=\"305\" r=\"5\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"1\"/>\n\n  <!-- SPINE / TORSO - tilted slightly, rotated into backswing -->\n  <!-- Hip center to shoulder center -->\n  <line x1=\"207\" y1=\"305\" x2=\"200\" y2=\"230\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- SHOULDERS - rotated, right shoulder high, left lower -->\n  <!-- Shoulder line -->\n  <line x1=\"175\" y1=\"238\" x2=\"228\" y2=\"222\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <!-- Left shoulder (lead) -->\n  <circle cx=\"175\" cy=\"238\" r=\"6\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"1\"/>\n  <!-- Right shoulder (trail) -->\n  <circle cx=\"228\" cy=\"222\" r=\"6\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"1\"/>\n\n  <!-- HEAD -->\n  <circle cx=\"205\" cy=\"195\" r=\"18\" fill=\"none\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <!-- Neck -->\n  <line x1=\"205\" y1=\"213\" x2=\"203\" y2=\"228\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- ===== ARMS ===== -->\n\n  <!-- TRAIL ARM (right) - straight/braced - GREEN (correct) -->\n  <!-- Trail shoulder to trail elbow -->\n  <line x1=\"228\" y1=\"222\" x2=\"258\" y2=\"190\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <!-- Trail elbow -->\n  <circle cx=\"258\" cy=\"190\" r=\"5\" fill=\"#6abf6a\" stroke=\"#6abf6a\" stroke-width=\"1\"/>\n  <!-- Trail elbow to trail hand -->\n  <line x1=\"258\" y1=\"190\" x2=\"272\" y2=\"162\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <!-- Trail hand -->\n  <circle cx=\"272\" cy=\"162\" r=\"5\" fill=\"#6abf6a\" stroke=\"#6abf6a\" stroke-width=\"1\"/>\n\n  <!-- LEAD ARM (left) - COLLAPSED / BENT - RED fault -->\n  <!-- Lead shoulder to lead elbow - bent inward, collapsed -->\n  <line x1=\"175\" y1=\"238\" x2=\"218\" y2=\"200\" stroke=\"#e87a5a\" stroke-width=\"4\"/>\n  <!-- Lead elbow - significantly bent, showing collapse -->\n  <circle cx=\"218\" cy=\"200\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"1\"/>\n  <!-- Lead elbow to lead hand - bent back sharply -->\n  <line x1=\"218\" y1=\"200\" x2=\"265\" y2=\"168\" stroke=\"#e87a5a\" stroke-width=\"4\"/>\n  <!-- Lead hand meeting trail hand -->\n  <circle cx=\"265\" cy=\"168\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"1\"/>\n\n  <!-- CLUB - steep plane, laid off due to collapse -->\n  <!-- Grip area to clubhead -->\n  <line x1=\"268\" y1=\"165\" x2=\"220\" y2=\"118\" stroke=\"#c8a84b\" stroke-width=\"2\"/>\n  <!-- Clubhead -->\n  <rect x=\"212\" y=\"110\" width=\"12\" height=\"8\" fill=\"#c8a84b\" stroke=\"#c8a84b\" stroke-width=\"1\" transform=\"rotate(-20, 218, 114)\"/>\n\n  <!-- ===== FAULT INDICATORS / ARROWS ===== -->\n\n  <!-- Arrow 1: Collapsed lead arm -->\n  <path d=\"M 145,195 C 155,195 165,198 178,202\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"70\" y=\"185\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Arm Collapse!</text>\n\n  <!-- Arrow 2: Lead elbow bent (overcollapsed) -->\n  <path d=\"M 200,230 C 208,220 212,212 216,204\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"155\" y=\"248\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Early Bend</text>\n\n  <!-- Arrow 3: Weight on trail foot -->\n  <path d=\"M 275,400 C 265,410 252,418 238,422\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"275\" y=\"398\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Weight Back!</text>\n\n  <!-- Arrow 4: Steep/laid off club / early wrist set -->\n  <path d=\"M 195,118 C 205,120 215,118 222,116\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"130\" y=\"112\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Laid-Off Club</text>\n\n  <!-- ===== SWING PLANE GUIDE LINE (reference) ===== -->\n  <line x1=\"175\" y1=\"425\" x2=\"270\" y2=\"145\" stroke=\"#4a6a4a\" stroke-width=\"1\" stroke-dasharray=\"6,4\" opacity=\"0.6\"/>\n  <text x=\"282\" y=\"140\" fill=\"#4a6a4a\" font-size=\"10\" font-family=\"monospace\">Plane</text>\n\n  <!-- ===== METRICS PANEL ===== -->\n  <rect x=\"10\" y=\"452\" width=\"380\" height=\"40\" fill=\"#0d1f0d\" rx=\"4\" opacity=\"0.8\"/>\n  <text x=\"20\" y=\"467\" fill=\"#c8a84b\" font-size=\"10\" font-family=\"monospace\">Path: Out-to-In</text>\n  <text x=\"108\" y=\"467\" fill=\"#c8a84b\" font-size=\"10\" font-family=\"monospace\">| Tempo: 3.2:1</text>\n  <text x=\"210\" y=\"467\" fill=\"#c8a84b\" font-size=\"10\" font-family=\"monospace\">| Plane: Steep</text>\n  <text x=\"298\" y=\"467\" fill=\"#c8a84b\" font-size=\"10\" font-family=\"monospace\">| Hips: 35°</text>\n  <text x=\"20\" y=\"483\" fill=\"#f5f0e8\" font-size=\"10\" font-family=\"monospace\">Weight: Trail Side  | Impact: Hands Behind | Casting: YES</text>\n\n</svg>"
+    },
+    {
       "id": 1781661336250,
       "label": "14341",
       "golfer": "Ron",
