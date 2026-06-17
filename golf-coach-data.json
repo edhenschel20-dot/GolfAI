@@ -1,6 +1,88 @@
 {
   "sessions": [
     {
+      "id": 1781671152714,
+      "label": "14333",
+      "golfer": "Ed",
+      "date": "2026-06-17T04:39:12.714Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 66,
+        "scores": {
+          "setup": 76,
+          "backswing": 68,
+          "downswing": 62,
+          "impact": 64,
+          "follow_through": 60,
+          "tempo": 67
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Athletic setup posture",
+          "Good ball position forward in the stance"
+        ],
+        "improvements": [
+          "Over-the-top downswing transition",
+          "Early extension through impact",
+          "Unstable finish with trail foot stepping forward"
+        ],
+        "key_fault": "Over-the-top transition combined with early extension, causing an out-to-in path and loss of balance.",
+        "drill_1": {
+          "name": "The Pump Drill",
+          "description": "Take the club to the top of your backswing, pause, and pump your hands down to hip level twice while keeping your back to the target. On the third pump, swing through to impact. Do 15 reps."
+        },
+        "drill_2": {
+          "name": "Wall Contact Drill",
+          "description": "Stand a few inches away from a wall with your glutes lightly touching it. Practice your swing, ensuring your trail glute stays in contact during the backswing and your lead glute makes contact during the downswing. Do 20 slow-motion reps."
+        },
+        "drill_3": {
+          "name": "Alignment Stick Gate Drill",
+          "description": "Place an alignment stick in the ground 3 feet behind the ball at a 45-degree angle matching your shaft plane. Practice swinging under the stick on the downswing to encourage an inside-out path. Do 15 reps."
+        },
+        "summary": "Your setup is athletic and well-aligned, but an over-the-top transition and early extension through impact lead to an out-to-in swing path and an unbalanced finish.",
+        "phases": {
+          "setup": {
+            "observation": "Stance is wide and stable, appropriate for a driver. Spine angle is athletic and ball position is correctly placed forward near the lead heel.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Takeaway is slightly inside, leading to a lifted, upright position at the top with a slightly restricted shoulder turn.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "The transition is initiated by the upper body, causing the club shaft to steepen and come over the top on an out-to-in path.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension is visible as the hips move toward the ball, causing a loss of spine angle and forcing an early release of the hands.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "The finish is unbalanced, with the trail foot stepping forward to recover stability, indicating incomplete weight transfer.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "6 degrees out-to-in",
+          "tempo_ratio": "2.9:1",
+          "hip_turn_estimate": "34 degrees",
+          "shoulder_turn_estimate": "76 degrees",
+          "swing_plane": "steep on downswing",
+          "weight_transfer": "incomplete — trail foot steps forward to regain balance",
+          "impact_position": "hands slightly behind ball with early release"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1781671068887,
       "label": "14338",
       "golfer": "Ed",
