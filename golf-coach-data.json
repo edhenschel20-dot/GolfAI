@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1781663364852,
+      "label": "14350",
+      "golfer": "Ron",
+      "date": "2026-06-17T02:29:24.853Z",
+      "skill": "intermediate",
+      "club": "putter",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 68,
+        "scores": {
+          "setup": 72,
+          "backswing": 65,
+          "downswing": 66,
+          "impact": 68,
+          "follow_through": 67,
+          "tempo": 68
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Solid posture and alignment at setup",
+          "Stable lower body throughout the stroke",
+          "Good eye position relative to the ball"
+        ],
+        "improvements": [
+          "Minimize wrist breakdown during the stroke",
+          "Rock the shoulders instead of using the hands",
+          "Keep the putter head lower to the ground on the backstroke"
+        ],
+        "key_fault": "Excessive wrist action (handsy stroke) leading to inconsistent face angle and distance control.",
+        "drill_1": {
+          "name": "Ruler / Splint Drill",
+          "description": "Place a ruler or alignment stick under your lead watch strap or glove, extending down the back of your hand. Practice making strokes without the ruler digging into your forearm, which prevents wrist breakdown."
+        },
+        "drill_2": {
+          "name": "Shoulder Rocking Drill",
+          "description": "Cross your arms over your chest, placing your hands on opposite shoulders. Practice rocking your shoulders back and forth without moving your hips or hands to feel a true pendulum motion."
+        },
+        "drill_3": {
+          "name": "Two-Tee Gate Drill",
+          "description": "Place two tees just wider than your putter head on the putting green. Practice making strokes through the gate to ensure a centered, consistent strike."
+        },
+        "summary": "Your putting setup is solid with good posture, but the stroke is highly dependent on wrist movement rather than a shoulder-controlled pendulum. Quieting the hands will greatly improve your distance control and directional consistency.",
+        "phases": {
+          "setup": {
+            "observation": "Good posture and alignment. Hands are positioned slightly low, which might encourage wrist play. Ball position is neutral.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "The backstroke is initiated primarily by the hands and wrists rather than a shoulder turn, causing the putter head to lift too quickly.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "Forward stroke relies on hand acceleration, making it difficult to control speed consistently.",
+            "rating": "needs_work"
+          },
+          "impact": {
+            "observation": "Impact is made near the center, but the wrist angle is breaking down, which can lead to loft and direction inconsistencies.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "The follow-through shows a noticeable flip of the wrists, with the putter head rising too high too quickly.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "Slightly inside-to-out",
+          "tempo_ratio": "2.1:1 (backstroke:forward stroke)",
+          "hip_turn_estimate": "0 degrees",
+          "shoulder_turn_estimate": "10 degrees",
+          "swing_plane": "slightly steep arc",
+          "weight_transfer": "stable — 50/50 distribution throughout",
+          "impact_position": "hands slightly behind the putter head due to wrist breakdown"
+        }
+      },
+      "svgDiagram": "<svg viewBox=\"0 0 400 500\" xmlns=\"http://www.w3.org/2000/svg\">\n  <!-- Background -->\n  <rect width=\"400\" height=\"500\" fill=\"#1a2e1a\"/>\n\n  <!-- Ground line -->\n  <line x1=\"50\" y1=\"420\" x2=\"350\" y2=\"420\" stroke=\"#4a6a4a\" stroke-width=\"2\"/>\n\n  <!-- Arrowhead marker definition -->\n  <defs>\n    <marker id=\"arrowRed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"10\" refY=\"3.5\" orient=\"auto\">\n      <polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#e87a5a\"/>\n    </marker>\n  </defs>\n\n  <!-- Title -->\n  <text x=\"200\" y=\"28\" text-anchor=\"middle\" fill=\"#c8a84b\" font-size=\"16\" font-weight=\"bold\" font-family=\"monospace\">IMPACT PHASE</text>\n  <!-- Subtitle -->\n  <text x=\"200\" y=\"46\" text-anchor=\"middle\" fill=\"#f5f0e8\" font-size=\"11\" font-family=\"monospace\">Wrist breakdown at impact</text>\n\n  <!-- === STICK FIGURE === -->\n\n  <!-- HEAD (neutral white) -->\n  <circle cx=\"200\" cy=\"100\" r=\"18\" fill=\"none\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- NECK -->\n  <line x1=\"200\" y1=\"118\" x2=\"200\" y2=\"138\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- SHOULDERS line -->\n  <line x1=\"165\" y1=\"150\" x2=\"235\" y2=\"150\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <!-- Left shoulder joint -->\n  <circle cx=\"165\" cy=\"150\" r=\"5\" fill=\"#6abf6a\" stroke=\"#6abf6a\" stroke-width=\"2\"/>\n  <!-- Right shoulder joint -->\n  <circle cx=\"235\" cy=\"150\" r=\"5\" fill=\"#6abf6a\" stroke=\"#6abf6a\" stroke-width=\"2\"/>\n\n  <!-- SPINE (neck to hips) -->\n  <line x1=\"200\" y1=\"138\" x2=\"200\" y2=\"270\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- HIPS line -->\n  <line x1=\"178\" y1=\"270\" x2=\"222\" y2=\"270\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <!-- Left hip joint -->\n  <circle cx=\"178\" cy=\"270\" r=\"5\" fill=\"#6abf6a\" stroke=\"#6abf6a\" stroke-width=\"2\"/>\n  <!-- Right hip joint -->\n  <circle cx=\"222\" cy=\"270\" r=\"5\" fill=\"#6abf6a\" stroke=\"#6abf6a\" stroke-width=\"2\"/>\n\n  <!-- LEFT LEG (upper) -->\n  <line x1=\"178\" y1=\"270\" x2=\"170\" y2=\"340\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <!-- Left knee -->\n  <circle cx=\"170\" cy=\"340\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"2\"/>\n  <!-- Left leg (lower) -->\n  <line x1=\"170\" y1=\"340\" x2=\"165\" y2=\"420\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <!-- Left ankle -->\n  <circle cx=\"165\" cy=\"420\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"2\"/>\n\n  <!-- RIGHT LEG (upper) -->\n  <line x1=\"222\" y1=\"270\" x2=\"230\" y2=\"340\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <!-- Right knee -->\n  <circle cx=\"230\" cy=\"340\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"2\"/>\n  <!-- Right leg (lower) -->\n  <line x1=\"230\" y1=\"340\" x2=\"235\" y2=\"420\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <!-- Right ankle -->\n  <circle cx=\"235\" cy=\"420\" r=\"5\" fill=\"#f5f0e8\" stroke=\"#f5f0e8\" stroke-width=\"2\"/>\n\n  <!-- LEFT ARM (upper) - fault red -->\n  <line x1=\"165\" y1=\"150\" x2=\"148\" y2=\"210\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Left elbow -->\n  <circle cx=\"148\" cy=\"210\" r=\"5\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Left forearm -->\n  <line x1=\"148\" y1=\"210\" x2=\"138\" y2=\"268\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Left hand -->\n  <circle cx=\"138\" cy=\"268\" r=\"6\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n\n  <!-- RIGHT ARM (upper) - fault red -->\n  <line x1=\"235\" y1=\"150\" x2=\"218\" y2=\"210\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Right elbow -->\n  <circle cx=\"218\" cy=\"210\" r=\"5\" fill=\"#e87a5a\" stroke=\"#e87a5a\" stroke-width=\"2\"/>\n  <!-- Right forearm -->\n  <line x1=\"218\" y1=\"210\" x2=\"148\" y2=\"268\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Right hand (overlapping with left at grip) -->\n  <circle cx=\"148\" cy=\"268\" r=\"6\" fill=\"#e87a5a\" stroke=\"#c8a84b\" stroke-width=\"2\"/>\n\n  <!-- WRIST BREAK indicator - kinked angle showing breakdown -->\n  <!-- Wrist angle line emphasizing the breakdown -->\n  <line x1=\"138\" y1=\"268\" x2=\"118\" y2=\"290\" stroke=\"#e87a5a\" stroke-width=\"2\" stroke-dasharray=\"4,3\"/>\n\n  <!-- PUTTER SHAFT (slightly forward lean broken by wrist) -->\n  <!-- Shaft from hands down to putter head -->\n  <line x1=\"138\" y1=\"268\" x2=\"108\" y2=\"390\" stroke=\"#c8a84b\" stroke-width=\"2\"/>\n  <!-- Putter head (horizontal blade) - rising too high on follow-through side -->\n  <line x1=\"90\" y1=\"396\" x2=\"126\" y2=\"386\" stroke=\"#c8a84b\" stroke-width=\"2.5\"/>\n  <!-- Putter hosel dot -->\n  <circle cx=\"108\" cy=\"390\" r=\"3\" fill=\"#c8a84b\"/>\n\n  <!-- Ball on ground -->\n  <circle cx=\"130\" cy=\"418\" r=\"6\" fill=\"#f5f0e8\" stroke=\"#c8a84b\" stroke-width=\"1.5\"/>\n\n  <!-- === RED FAULT ARROWS === -->\n\n  <!-- Arrow 1: pointing to wrist/hand area - wrist breakdown -->\n  <path d=\"M 80 250 L 128 265\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"18\" y=\"242\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Wrist Flip</text>\n\n  <!-- Arrow 2: pointing to left elbow area - arms not passive -->\n  <path d=\"M 80 185 L 142 206\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"12\" y=\"178\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Handsy Stroke</text>\n\n  <!-- Arrow 3: pointing to putter head rising -->\n  <path d=\"M 70 370 L 98 390\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"8\" y=\"363\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Head Too High</text>\n\n  <!-- Arrow 4: shoulder area - minimal turn -->\n  <path d=\"M 310 148 L 238\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\"/>\n  <path d=\"M 308 148 L 240 150\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrowRed)\"/>\n  <text x=\"312\" y=\"142\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">No Shoulder</text>\n  <text x=\"312\" y=\"158\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Rotation</text>\n\n  <!-- Shoulder turn annotation box hint -->\n  <rect x=\"310\" y=\"128\" width=\"80\" height=\"36\" fill=\"none\" stroke=\"#c8a84b\" stroke-width=\"1\" stroke-dasharray=\"3,3\" rx=\"3\"/>\n\n  <!-- Wrist angle breakdown visual arc -->\n  <path d=\"M 125 258 A 18 18 0 0 1 145 278\" stroke=\"#e87a5a\" stroke-width=\"2\" fill=\"none\" stroke-dasharray=\"3,2\"/>\n\n  <!-- Legend box -->\n  <rect x=\"270\" y=\"390\" width=\"120\" height=\"60\" fill=\"#0d1f0d\" stroke=\"#4a6a4a\" stroke-width=\"1\" rx=\"4\"/>\n  <text x=\"330\" y=\"405\" text-anchor=\"middle\" fill=\"#c8a84b\" font-size=\"10\" font-family=\"monospace\">LEGEND</text>\n  <line x1=\"278\" y1=\"415\" x2=\"295\" y2=\"415\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <text x=\"298\" y=\"419\" fill=\"#f5f0e8\" font-size=\"10\" font-family=\"monospace\">Fault</text>\n  <line x1=\"278\" y1=\"430\" x2=\"295\" y2=\"430\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <text x=\"298\" y=\"434\" fill=\"#f5f0e8\" font-size=\"10\" font-family=\"monospace\">Correct</text>\n  <line x1=\"278\" y1=\"445\" x2=\"295\" y2=\"445\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n  <text x=\"298\" y=\"449\" fill=\"#f5f0e8\" font-size=\"10\" font-family=\"monospace\">Neutral</text>\n\n</svg>"
+    },
+    {
       "id": 1781661478675,
       "label": "14341",
       "golfer": "Ron",
