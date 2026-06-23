@@ -2172,7 +2172,7 @@ Format the plan clearly with Week headers, Day headers (Day 1, Day 2, etc.), and
     if (!text) throw new Error(`Claude returned empty content. Full response: ${JSON.stringify(data).slice(0,300)}`);
 
     currentLessonPlanText = text;
-    currentLessonPlanMeta = { golfer: golferName || null, weeks, days, mins, sessionCount: recentSessions.length };
+    currentLessonPlanMeta = { golfer: golferName || null, weeks, days, mins, sessionCount: recentSessions.length, sessionIds: chosenSessions.map(s => s.id) };
     renderLessonPlan(text);
   } catch(err) {
     lessonEl.innerHTML = `<div class="notice notice-warn">Error generating lesson plan: ${err.message}</div>`;
@@ -2230,6 +2230,7 @@ function saveLessonPlan() {
     days: currentLessonPlanMeta?.days || null,
     mins: currentLessonPlanMeta?.mins || null,
     sessionCount: currentLessonPlanMeta?.sessionCount || null,
+    sessionIds: currentLessonPlanMeta?.sessionIds || [],
     text: currentLessonPlanText
   };
   lessonPlans.unshift(plan);
@@ -2272,7 +2273,7 @@ function viewSavedPlan(id) {
   const p = lessonPlans.find(x => x.id === id);
   if (!p) return;
   currentLessonPlanText = p.text;
-  currentLessonPlanMeta = { golfer: p.golfer, weeks: p.weeks, days: p.days, mins: p.mins, sessionCount: p.sessionCount };
+  currentLessonPlanMeta = { golfer: p.golfer, weeks: p.weeks, days: p.days, mins: p.mins, sessionCount: p.sessionCount, sessionIds: p.sessionIds || [] };
   document.getElementById('emptyLesson').style.display = 'none';
   document.getElementById('lessonPlanText').style.display = 'block';
   renderLessonPlan(p.text);
@@ -2397,88 +2398,110 @@ function onGolferChange() {
 // ============================================================
 // PRINT COMBINED REPORT
 // ============================================================
+function buildAnalysisSectionHTML(a, meta, golferName, dateStr) {
+  const drills = [a.drill_1, a.drill_2, a.drill_3].filter(Boolean);
+  const scoreColor = s => s >= 80 ? '#2e7d32' : s >= 60 ? '#b8860b' : '#c44b2b';
+
+  return `
+    <h1 style="font-family:Georgia,serif;color:#1a2e1a;border-bottom:3px solid #c8a84b;padding-bottom:10px;margin-bottom:6px">Swing Analysis Report${meta?.label ? ' — ' + escHtml(meta.label) : ''}</h1>
+    <p style="font-family:monospace;font-size:11px;color:#666;margin-bottom:24px">${golferName ? golferName + ' · ' : ''}${meta?.date ? new Date(meta.date).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : dateStr}${meta?.club ? ' · ' + meta.club : ''}</p>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      <div style="border:1px solid #ddd;border-radius:4px;padding:10px 16px;text-align:center;min-width:80px">
+        <div style="font-size:24px;font-weight:bold;color:${scoreColor(a.overall_score)}">${a.overall_score}</div>
+        <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">Overall</div>
+      </div>
+      ${Object.entries(a.scores||{}).map(([k,v]) => `
+        <div style="border:1px solid #ddd;border-radius:4px;padding:10px 16px;text-align:center;min-width:80px">
+          <div style="font-size:20px;font-weight:bold;color:${scoreColor(v)}">${v}</div>
+          <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">${k.replace('_',' ')}</div>
+        </div>`).join('')}
+    </div>
+
+    ${a.key_fault ? `<div style="background:#fff0ec;border:1px solid #f5c5b5;border-radius:4px;padding:12px 16px;margin-bottom:16px;font-size:13px"><strong>Key Fault:</strong> ${a.key_fault}</div>` : ''}
+
+    <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Coaching Summary</h3>
+    <p style="font-size:13px;line-height:1.7;margin-bottom:18px">${a.summary || ''}</p>
+
+    ${a.strengths?.length ? `
+    <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Strengths</h3>
+    <ul style="margin:0 0 18px 0;padding-left:20px;font-size:13px;line-height:1.7">
+      ${a.strengths.map(s => `<li>${s}</li>`).join('')}
+    </ul>` : ''}
+
+    ${a.improvements?.length ? `
+    <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Areas to Improve</h3>
+    <ul style="margin:0 0 18px 0;padding-left:20px;font-size:13px;line-height:1.7">
+      ${a.improvements.map(s => `<li>${s}</li>`).join('')}
+    </ul>` : ''}
+
+    ${drills.length ? `
+    <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:8px">Recommended Drills</h3>
+    ${drills.map((d,i) => `
+      <div style="border-left:3px solid #c8a84b;padding:8px 14px;margin-bottom:8px;background:#fafaf7">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px">
+          <div style="font-weight:bold;font-size:13px">${i+1}. ${d.name}</div>
+          <a href="https://www.youtube.com/results?search_query=golf+${encodeURIComponent(d.name)}" style="font-size:10px;color:#1a73e8;text-decoration:none;white-space:nowrap">▶ Watch on YouTube</a>
+        </div>
+        <div style="font-size:12px;line-height:1.6;color:#444">${d.description}</div>
+      </div>`).join('')}` : ''}
+
+    ${a.phases ? `
+    <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Phase Breakdown</h3>
+    ${Object.entries(a.phases).map(([phase,p]) => {
+      const c = p.rating === 'good' ? '#2e7d32' : p.rating === 'fault' ? '#c44b2b' : '#b8860b';
+      return `<div style="border-left:3px solid ${c};padding:8px 14px;margin-bottom:6px;background:#fafaf7">
+        <div style="font-weight:bold;font-size:12px;text-transform:uppercase;color:${c}">${phase.replace('_',' ')}</div>
+        <div style="font-size:12px;line-height:1.6;color:#444;margin-top:2px">${p.observation}</div>
+      </div>`;
+    }).join('')}` : ''}
+
+    ${a.metrics ? `
+    <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Swing Metrics</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+      ${Object.entries(a.metrics).map(([k,v]) => `
+        <div style="border:1px solid #ddd;border-radius:4px;padding:8px 12px">
+          <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">${k.replace(/_/g,' ')}</div>
+          <div style="font-size:13px">${v}</div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    ${meta?.svgDiagram ? `
+    <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Fault Diagram</h3>
+    <div style="border:1px solid #ddd;border-radius:4px;overflow:hidden;max-width:400px">${meta.svgDiagram}</div>
+    ` : ''}
+  `;
+}
+
 function printFullReport() {
-  const a = currentAnalysis?.analysis;
-  const golferName = document.getElementById('golferSelect')?.value || settings.userName || '';
+  const golferName = document.getElementById('golferSelect')?.value || currentLessonPlanMeta?.golfer || settings.userName || '';
   const dateStr = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
 
   let sections = '';
+  let analysisCount = 0;
 
-  // ANALYSIS SECTION
-  if (a) {
-    const drills = [a.drill_1, a.drill_2, a.drill_3].filter(Boolean);
-    const scoreColor = s => s >= 80 ? '#2e7d32' : s >= 60 ? '#b8860b' : '#c44b2b';
-
-    sections += `
-      <h1 style="font-family:Georgia,serif;color:#1a2e1a;border-bottom:3px solid #c8a84b;padding-bottom:10px;margin-bottom:6px">Swing Analysis Report</h1>
-      <p style="font-family:monospace;font-size:11px;color:#666;margin-bottom:24px">${golferName ? golferName + ' · ' : ''}${dateStr}${currentAnalysis.club ? ' · ' + currentAnalysis.club : ''}</p>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
-        <div style="border:1px solid #ddd;border-radius:4px;padding:10px 16px;text-align:center;min-width:80px">
-          <div style="font-size:24px;font-weight:bold;color:${scoreColor(a.overall_score)}">${a.overall_score}</div>
-          <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">Overall</div>
-        </div>
-        ${Object.entries(a.scores||{}).map(([k,v]) => `
-          <div style="border:1px solid #ddd;border-radius:4px;padding:10px 16px;text-align:center;min-width:80px">
-            <div style="font-size:20px;font-weight:bold;color:${scoreColor(v)}">${v}</div>
-            <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">${k.replace('_',' ')}</div>
-          </div>`).join('')}
-      </div>
-
-      ${a.key_fault ? `<div style="background:#fff0ec;border:1px solid #f5c5b5;border-radius:4px;padding:12px 16px;margin-bottom:16px;font-size:13px"><strong>Key Fault:</strong> ${a.key_fault}</div>` : ''}
-
-      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Coaching Summary</h3>
-      <p style="font-size:13px;line-height:1.7;margin-bottom:18px">${a.summary || ''}</p>
-
-      ${a.strengths?.length ? `
-      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Strengths</h3>
-      <ul style="margin:0 0 18px 0;padding-left:20px;font-size:13px;line-height:1.7">
-        ${a.strengths.map(s => `<li>${s}</li>`).join('')}
-      </ul>` : ''}
-
-      ${a.improvements?.length ? `
-      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Areas to Improve</h3>
-      <ul style="margin:0 0 18px 0;padding-left:20px;font-size:13px;line-height:1.7">
-        ${a.improvements.map(s => `<li>${s}</li>`).join('')}
-      </ul>` : ''}
-
-      ${drills.length ? `
-      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:8px">Recommended Drills</h3>
-      ${drills.map((d,i) => `
-        <div style="border-left:3px solid #c8a84b;padding:8px 14px;margin-bottom:8px;background:#fafaf7">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px">
-            <div style="font-weight:bold;font-size:13px">${i+1}. ${d.name}</div>
-            <a href="https://www.youtube.com/results?search_query=golf+${encodeURIComponent(d.name)}" style="font-size:10px;color:#1a73e8;text-decoration:none;white-space:nowrap">▶ Watch on YouTube</a>
-          </div>
-          <div style="font-size:12px;line-height:1.6;color:#444">${d.description}</div>
-        </div>`).join('')}` : ''}
-
-      ${a.phases ? `
-      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Phase Breakdown</h3>
-      ${Object.entries(a.phases).map(([phase,p]) => {
-        const c = p.rating === 'good' ? '#2e7d32' : p.rating === 'fault' ? '#c44b2b' : '#b8860b';
-        return `<div style="border-left:3px solid ${c};padding:8px 14px;margin-bottom:6px;background:#fafaf7">
-          <div style="font-weight:bold;font-size:12px;text-transform:uppercase;color:${c}">${phase.replace('_',' ')}</div>
-          <div style="font-size:12px;line-height:1.6;color:#444;margin-top:2px">${p.observation}</div>
-        </div>`;
-      }).join('')}` : ''}
-
-      ${a.metrics ? `
-      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Swing Metrics</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
-        ${Object.entries(a.metrics).map(([k,v]) => `
-          <div style="border:1px solid #ddd;border-radius:4px;padding:8px 12px">
-            <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">${k.replace(/_/g,' ')}</div>
-            <div style="font-size:13px">${v}</div>
-          </div>`).join('')}
-      </div>` : ''}
-
-      ${currentAnalysis.svgDiagram ? `
-      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Fault Diagram</h3>
-      <div style="border:1px solid #ddd;border-radius:4px;overflow:hidden;max-width:400px">${currentAnalysis.svgDiagram}</div>
-      ` : ''}
-    `;
+  // Determine which sessions to include as analysis sections:
+  // 1. If a lesson plan was just generated/loaded, use every session that was actually
+  //    checked for it (so printing after a multi-session plan shows all of them).
+  // 2. Otherwise fall back to whatever is currently on screen from a single analysis.
+  let sessionsToShow = [];
+  if (currentLessonPlanMeta?.sessionIds?.length) {
+    sessionsToShow = sessions.filter(s => currentLessonPlanMeta.sessionIds.includes(s.id));
+  } else if (currentAnalysis?.analysis) {
+    sessionsToShow = [{
+      label: null,
+      date: new Date().toISOString(),
+      club: currentAnalysis.club,
+      analysis: currentAnalysis.analysis,
+      svgDiagram: currentAnalysis.svgDiagram || null
+    }];
   }
+
+  sessionsToShow.forEach((s, i) => {
+    if (i > 0) sections += `<div style="page-break-before:always"></div>`;
+    sections += buildAnalysisSectionHTML(s.analysis, s, golferName, dateStr);
+    analysisCount++;
+  });
 
   // LESSON PLAN SECTION
   if (currentLessonPlanText) {
@@ -2500,9 +2523,10 @@ function printFullReport() {
       .replace(/<p[^>]*>\s*<\/p>/g, '');
 
     sections += `
-      ${a ? '<div style="page-break-before:always"></div>' : ''}
+      ${analysisCount > 0 ? '<div style="page-break-before:always"></div>' : ''}
       <h1 style="font-family:Georgia,serif;color:#1a2e1a;border-bottom:3px solid #c8a84b;padding-bottom:10px;margin-bottom:6px">Lesson Plan</h1>
-      <p style="font-family:monospace;font-size:11px;color:#666;margin-bottom:20px">${golferName ? golferName + ' · ' : ''}${dateStr}</p>
+      <p style="font-family:monospace;font-size:11px;color:#666;margin-bottom:8px">${golferName ? golferName + ' · ' : ''}${dateStr}</p>
+      ${analysisCount > 0 ? `<p style="font-family:monospace;font-size:10px;color:#999;margin-bottom:20px">Built from ${analysisCount} swing analysis session${analysisCount !== 1 ? 's' : ''} shown above</p>` : ''}
       ${html}
     `;
   }
