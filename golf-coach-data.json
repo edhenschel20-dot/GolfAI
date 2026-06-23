@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1782174976530,
+      "label": "14750",
+      "golfer": "Bob Sentinel",
+      "date": "2026-06-23T00:36:16.530Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 71,
+        "scores": {
+          "setup": 76,
+          "backswing": 70,
+          "downswing": 68,
+          "impact": 69,
+          "follow_through": 72,
+          "tempo": 71
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Good athletic posture at setup",
+          "Decent hip rotation in the backswing",
+          "Balanced finish position"
+        ],
+        "improvements": [
+          "Steep downswing plane (over-the-top)",
+          "Early extension and loss of posture at impact",
+          "Slightly flat takeaway leading to a lifted backswing"
+        ],
+        "key_fault": "An inside takeaway followed by a lifting motion, leading to a steep, over-the-top downswing and early extension at impact.",
+        "drill_1": {
+          "name": "Pump Drill",
+          "description": "Take the club to the top, start the downswing by bringing the arms down to hip level while keeping your back to the target, then return to the top. Do this twice before making a full swing to feel the proper shallowing path."
+        },
+        "drill_2": {
+          "name": "Wall Drill for Early Extension",
+          "description": "Stand with your glutes touching a wall at setup. Practice making slow swings, ensuring your trail glute stays against the wall on the backswing and your lead glute touches the wall on the downswing and impact."
+        },
+        "drill_3": {
+          "name": "Alignment Stick Gate Drill",
+          "description": "Place an alignment stick in the ground 3 feet behind the ball at a 45-degree angle, matching your shaft plane. Practice swinging under the stick on the takeaway and downswing to prevent the over-the-top move."
+        },
+        "summary": "Your swing has a solid foundation with good athletic posture. The main areas of improvement are correcting the inside takeaway and steep downswing transition, which currently lead to early extension at impact.",
+        "phases": {
+          "setup": {
+            "observation": "Good athletic posture with a straight spine. Stance width is appropriate for a driver. Hands are in a good position relative to the body.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "The club is taken back slightly inside and flat, which causes a lifting motion at the top to compensate. Shoulder turn is decent but could be deeper.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "The transition starts with the upper body, causing the club shaft to steepen and come over the top, cutting across the ball.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension is visible as the hips move toward the ball, causing the spine to straighten prematurely. Impact position is slightly unstable.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "Good extension through the ball, though the finish is slightly upright due to the early extension. Weight finishes mostly on the lead side.",
+            "rating": "good"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "5 degrees out-to-in",
+          "tempo_ratio": "3.1:1",
+          "hip_turn_estimate": "35 degrees",
+          "shoulder_turn_estimate": "85 degrees",
+          "swing_plane": "steep on downswing",
+          "weight_transfer": "mostly complete, some weight hanging back",
+          "impact_position": "hips slightly open, spine extended"
+        }
+      },
+      "svgDiagram": "<svg viewBox=\"0 0 400 500\" xmlns=\"http://www.w3.org/2000/svg\">\n  <!-- Background -->\n  <rect width=\"400\" height=\"500\" fill=\"#1a2e1a\"/>\n\n  <!-- Ground line -->\n  <line x1=\"40\" y1=\"430\" x2=\"360\" y2=\"430\" stroke=\"#4a6a4a\" stroke-width=\"2\"/>\n\n  <!-- Title -->\n  <text x=\"200\" y=\"28\" text-anchor=\"middle\" fill=\"#c8a84b\" font-size=\"16\" font-weight=\"bold\" font-family=\"monospace\">IMPACT POSITION</text>\n  <text x=\"200\" y=\"46\" text-anchor=\"middle\" fill=\"#f5f0e8\" font-size=\"11\" font-family=\"monospace\">Over-the-top &amp; early extension</text>\n\n  <!-- Arrowhead markers -->\n  <defs>\n    <marker id=\"arrow\" markerWidth=\"8\" markerHeight=\"8\" refX=\"6\" refY=\"3\" orient=\"auto\">\n      <path d=\"M0,0 L0,6 L8,3 z\" fill=\"#e87a5a\"/>\n    </marker>\n  </defs>\n\n  <!-- STICK FIGURE - Impact position with early extension / over-the-top -->\n\n  <!-- Shadow/ground contact -->\n  <ellipse cx=\"200\" cy=\"432\" rx=\"30\" ry=\"5\" fill=\"#0d1f0d\"/>\n\n  <!-- Left foot (weight mostly transferred) -->\n  <line x1=\"185\" y1=\"415\" x2=\"170\" y2=\"430\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <circle cx=\"170\" cy=\"430\" r=\"5\" fill=\"#6abf6a\"/>\n\n  <!-- Right foot (heel slightly raised - weight hanging back) -->\n  <line x1=\"215\" y1=\"415\" x2=\"228\" y2=\"428\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <circle cx=\"228\" cy=\"428\" r=\"5\" fill=\"#e87a5a\"/>\n\n  <!-- Left knee -->\n  <circle cx=\"185\" cy=\"370\" r=\"6\" fill=\"#6abf6a\"/>\n  <!-- Left lower leg -->\n  <line x1=\"185\" y1=\"370\" x2=\"170\" y2=\"430\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n\n  <!-- Right knee -->\n  <circle cx=\"218\" cy=\"368\" r=\"6\" fill=\"#e87a5a\"/>\n  <!-- Right lower leg -->\n  <line x1=\"218\" y1=\"368\" x2=\"228\" y2=\"428\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Hips - shifted toward ball (early extension), slightly open -->\n  <!-- Hip center ~198, y=335 pushed forward -->\n  <circle cx=\"190\" cy=\"335\" r=\"6\" fill=\"#e87a5a\"/>\n  <circle cx=\"218\" cy=\"337\" r=\"6\" fill=\"#e87a5a\"/>\n  <!-- Hip line -->\n  <line x1=\"190\" y1=\"335\" x2=\"218\" y2=\"337\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Left upper leg -->\n  <line x1=\"190\" y1=\"335\" x2=\"185\" y2=\"370\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Right upper leg -->\n  <line x1=\"218\" y1=\"337\" x2=\"218\" y2=\"368\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Spine - straightened (early extension), upright rather than tilted -->\n  <!-- Hip center -->\n  <line x1=\"204\" y1=\"336\" x2=\"200\" y2=\"255\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Shoulders - rotated, upper body over-rotated/over-the-top -->\n  <circle cx=\"185\" cy=\"258\" r=\"6\" fill=\"#e87a5a\"/>\n  <circle cx=\"215\" cy=\"253\" r=\"6\" fill=\"#e87a5a\"/>\n  <!-- Shoulder line (rotated aggressively, over-the-top) -->\n  <line x1=\"185\" y1=\"258\" x2=\"215\" y2=\"253\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Neck -->\n  <line x1=\"200\" y1=\"255\" x2=\"200\" y2=\"238\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- Head -->\n  <circle cx=\"200\" cy=\"225\" r=\"18\" fill=\"none\" stroke=\"#f5f0e8\" stroke-width=\"3\"/>\n\n  <!-- Left upper arm - extended through impact -->\n  <line x1=\"185\" y1=\"258\" x2=\"168\" y2=\"300\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <!-- Left elbow -->\n  <circle cx=\"168\" cy=\"300\" r=\"5\" fill=\"#6abf6a\"/>\n  <!-- Left forearm to hands -->\n  <line x1=\"168\" y1=\"300\" x2=\"162\" y2=\"330\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n\n  <!-- Right upper arm - coming over the top, arm pulled across -->\n  <line x1=\"215\" y1=\"253\" x2=\"185\" y2=\"288\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <!-- Right elbow -->\n  <circle cx=\"185\" cy=\"288\" r=\"5\" fill=\"#e87a5a\"/>\n  <!-- Right forearm -->\n  <line x1=\"185\" y1=\"288\" x2=\"162\" y2=\"330\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n\n  <!-- Hands (together at impact) -->\n  <circle cx=\"162\" cy=\"330\" r=\"7\" fill=\"#e87a5a\"/>\n\n  <!-- Club shaft - steep, over-the-top angle -->\n  <line x1=\"162\" y1=\"330\" x2=\"248\" y2=\"438\" stroke=\"#c8a84b\" stroke-width=\"2\"/>\n  <!-- Club head -->\n  <line x1=\"242\" y1=\"434\" x2=\"256\" y2=\"442\" stroke=\"#c8a84b\" stroke-width=\"3\"/>\n  <circle cx=\"248\" cy=\"438\" r=\"4\" fill=\"#c8a84b\"/>\n\n  <!-- Swing plane indicator (steep downswing) - dashed line showing over-the-top path -->\n  <line x1=\"130\" y1=\"200\" x2=\"260\" y2=\"440\" stroke=\"#e87a5a\" stroke-width=\"1\" stroke-dasharray=\"6,4\" opacity=\"0.7\"/>\n  <!-- Ideal plane for reference -->\n  <line x1=\"145\" y1=\"220\" x2=\"265\" y2=\"440\" stroke=\"#6abf6a\" stroke-width=\"1\" stroke-dasharray=\"4,5\" opacity=\"0.5\"/>\n\n  <!-- FAULT ARROWS -->\n\n  <!-- Arrow 1: Over-the-top shoulder / right arm pulling across -->\n  <path d=\"M 290,220 C 270,230 248,245 220,257\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrow)\"/>\n  <text x=\"295\" y=\"210\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Over-the-top</text>\n  <text x=\"295\" y=\"225\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">shoulder pull</text>\n\n  <!-- Arrow 2: Early extension - hips thrusting toward ball -->\n  <path d=\"M 310,330 C 285,333 258,335 225,337\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrow)\"/>\n  <text x=\"308\" y=\"322\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Hips thrust</text>\n  <text x=\"308\" y=\"337\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">forward</text>\n\n  <!-- Arrow 3: Steep club path -->\n  <path d=\"M 80,370 C 100,375 120,380 155,385\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrow)\"/>\n  <text x=\"30\" y=\"362\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Steep</text>\n  <text x=\"30\" y=\"377\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">out-to-in</text>\n\n  <!-- Arrow 4: Spine straightening -->\n  <path d=\"M 80,290 C 110,295 145,305 198,300\" stroke=\"#e87a5a\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#arrow)\"/>\n  <text x=\"22\" y=\"283\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">Spine rises</text>\n  <text x=\"22\" y=\"298\" fill=\"#c8a84b\" font-size=\"13\" font-family=\"monospace\">early</text>\n\n  <!-- Legend -->\n  <rect x=\"12\" y=\"452\" width=\"180\" height=\"38\" fill=\"#0d1f0d\" rx=\"4\" opacity=\"0.8\"/>\n  <line x1=\"20\" y1=\"465\" x2=\"40\" y2=\"465\" stroke=\"#e87a5a\" stroke-width=\"3\"/>\n  <text x=\"45\" y=\"469\" fill=\"#f5f0e8\" font-size=\"10\" font-family=\"monospace\">Fault area</text>\n  <line x1=\"20\" y1=\"481\" x2=\"40\" y2=\"481\" stroke=\"#6abf6a\" stroke-width=\"3\"/>\n  <text x=\"45\" y=\"485\" fill=\"#f5f0e8\" font-size=\"10\" font-family=\"monospace\">Correct area</text>\n\n  <!-- Plane legend -->\n  <rect x=\"210\" y=\"452\" width=\"180\" height=\"38\" fill=\"#0d1f0d\" rx=\"4\" opacity=\"0.8\"/>\n  <line x1=\"218\" y1=\"465\" x2=\"245\" y2=\"465\" stroke=\"#e87a5a\" stroke-width=\"1\" stroke-dasharray=\"5,3\"/>\n  <text x=\"250\" y=\"469\" fill=\"#f5f0e8\" font-size=\"10\" font-family=\"monospace\">Actual plane</text>\n  <line x1=\"218\" y1=\"481\" x2=\"245\" y2=\"481\" stroke=\"#6abf6a\" stroke-width=\"1\" stroke-dasharray=\"4,4\"/>\n  <text x=\"250\" y=\"485\" fill=\"#f5f0e8\" font-size=\"10\" font-family=\"monospace\">Ideal plane</text>\n\n</svg>"
+    },
+    {
       "id": 1782174034558,
       "label": "14748",
       "golfer": "Scott",
