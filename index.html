@@ -642,19 +642,19 @@
 
   .delete-btn {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    background: none;
-    border: none;
-    color: var(--divot);
+    top: 10px;
+    right: 10px;
+    background: rgba(196,75,43,.15);
+    border: 1px solid rgba(196,75,43,.35);
+    border-radius: 3px;
+    color: #e87a5a;
     cursor: pointer;
-    font-size: 1rem;
-    opacity: 0;
-    transition: opacity 0.2s;
-    padding: 2px 6px;
+    font-size: .85rem;
+    line-height: 1;
+    padding: 4px 8px;
+    z-index: 2;
   }
-  .history-card:hover .delete-btn { opacity: 1; }
-  .delete-btn:hover { color: var(--danger); }
+  .delete-btn:hover, .delete-btn:active { background: rgba(196,75,43,.3); color: #fff; }
 
   .no-history {
     text-align: center;
@@ -676,6 +676,14 @@
   }
 
   /* ===== LESSON PLAN TAB ===== */
+  .session-pick-item { display:flex; align-items:flex-start; gap:10px; padding:9px 12px; background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.07); border-radius:3px; cursor:pointer; transition:all .15s; }
+  .session-pick-item:hover { border-color:rgba(200,168,75,.3); }
+  .session-pick-item.checked { background:rgba(200,168,75,.1); border-color:rgba(200,168,75,.35); }
+  .session-pick-item input[type="checkbox"] { margin-top:2px; width:16px; height:16px; accent-color: var(--flag); cursor:pointer; flex-shrink:0; }
+  .session-pick-label { flex:1; }
+  .session-pick-title { font-family:'Playfair Display',serif; font-size:.92rem; color:var(--cream); }
+  .session-pick-meta { font-family:'DM Mono',monospace; font-size:.6rem; color:var(--divot); letter-spacing:.04em; margin-top:2px; }
+
   .lesson-header {
     display: flex;
     gap: 16px;
@@ -949,6 +957,8 @@
             <div class="upload-filename" id="uploadFilename"></div>
           </div>
 
+          <div id="duplicateVideoWarning" class="notice notice-info" style="display:none"></div>
+
           <video id="videoPreview" controls></video>
 
           <div style="background:rgba(122,184,212,.08);border:1px solid rgba(122,184,212,.2);border-radius:3px;padding:10px 13px;margin:12px 0;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--sky);letter-spacing:.04em;line-height:1.6">
@@ -1003,12 +1013,16 @@
 
           <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap">
             <div style="flex:1;min-width:150px">
-              <label class="form-label">Golfer</label>
-              <select id="golferSelect" style="width:100%;padding:9px 10px;background:rgba(0,0,0,.4);border:1px solid rgba(200,168,75,.4);border-radius:2px;color:var(--cream);font-family:'DM Mono',monospace;font-size:.78rem;cursor:pointer" onchange="onGolferChange()">
-                <option value="">— Select golfer —</option>
+              <label class="form-label">Golfer <span style="color:var(--danger)">*</span></label>
+              <select id="golferSelect" style="width:100%;padding:9px 10px;background:rgba(0,0,0,.4);border:1.5px solid var(--danger);border-radius:2px;color:var(--cream);font-family:'DM Mono',monospace;font-size:.78rem;cursor:pointer" onchange="onGolferChange()">
+                <option value="" disabled selected>⚠️ Choose a golfer — required</option>
               </select>
             </div>
             <button class="btn btn-secondary" style="padding:9px 14px;font-size:.65rem;white-space:nowrap" onclick="openManageGolfers()">Manage Golfers</button>
+          </div>
+
+          <div id="noGolferWarning" class="notice notice-warn" style="display:none">
+            ⚠️ Select a golfer above before analyzing — this keeps sessions from being tagged to the wrong person.
           </div>
 
           <div class="form-group" style="margin:0">
@@ -1045,9 +1059,6 @@
         <p style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--divot); letter-spacing:0.1em; margin-top:4px;" id="historyCount"></p>
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <select id="historyGolferFilter" style="padding:7px 12px;background:rgba(0,0,0,.4);border:1px solid rgba(200,168,75,.3);color:var(--cream);font-family:'DM Mono',monospace;font-size:.68rem;border-radius:2px;cursor:pointer" onchange="renderHistory()">
-          <option value="">All Golfers</option>
-        </select>
         <button class="btn btn-danger" onclick="clearAllHistory()" id="clearAllBtn" style="display:none">Clear All</button>
       </div>
     </div>
@@ -1071,13 +1082,20 @@
         📋 No analysis sessions found. Analyze some swings first, then return here to generate a lesson plan.
       </div>
 
+      <div id="sessionPickerWrap" style="display:none;margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <label class="form-label" style="margin:0">Select Sessions to Include</label>
+          <div style="display:flex;gap:10px">
+            <button type="button" onclick="toggleAllSessionPicks(true)" style="background:none;border:none;color:var(--sky);font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.05em;cursor:pointer;text-decoration:underline">Select All</button>
+            <button type="button" onclick="toggleAllSessionPicks(false)" style="background:none;border:none;color:var(--divot);font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.05em;cursor:pointer;text-decoration:underline">Clear</button>
+          </div>
+        </div>
+        <div id="sessionPickerList" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;padding-right:4px"></div>
+        <p id="sessionPickerCount" style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--divot);margin-top:8px;letter-spacing:.05em"></p>
+      </div>
+
       <div class="lesson-header">
         <div>
-          <label class="form-label" style="display:block; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--divot); margin-bottom:5px;">Golfer</label>
-          <select id="lessonGolferFilter" style="padding:9px 12px;background:rgba(0,0,0,.4);border:1px solid rgba(200,168,75,.3);color:var(--cream);font-family:'DM Mono',monospace;font-size:.7rem;border-radius:2px;cursor:pointer">
-            <option value="">All Golfers</option>
-          </select>
-        </div>
           <label class="form-label" style="display:block; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--divot); margin-bottom:5px;">Plan Duration</label>
           <select id="planDuration">
             <option value="2">2 Weeks</option>
@@ -1125,6 +1143,7 @@
 // ============================================================
 let currentFile = null;
 let currentAnalysis = null;
+let currentLessonPlanText = null;
 let settings = {};
 let sessions = [];
 let golfers = [];
@@ -1270,6 +1289,7 @@ function saveSettings() {
   checkKeys();
   checkLessonTab();
   if (hasGitHub()) setSyncStatus('synced', 'github'); else setSyncStatus('', 'local');
+  updateAnalyzeButtonState();
   closeSettings();
 }
 
@@ -1288,17 +1308,42 @@ function switchTab(tab) {
 // ============================================================
 // FILE HANDLING
 // ============================================================
+async function hashFile(file) {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function findDuplicateSession(hash, golferName) {
+  return sessions.find(s => s.videoHash === hash && s.golfer === golferName);
+}
+
+function updateAnalyzeButtonState() {
+  const golferVal = document.getElementById('golferSelect')?.value || '';
+  const hasFile = !!currentFile;
+  const hasKey = !!settings.geminiKey;
+  const btn = document.getElementById('analyzeBtn');
+  const warn = document.getElementById('noGolferWarning');
+  btn.disabled = !(hasFile && hasKey && golferVal);
+  if (warn) warn.style.display = (hasFile && hasKey && !golferVal) ? 'block' : 'none';
+}
+
+let currentFileHash = null;
+
 function onFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
   currentFile = file;
+  currentFileHash = null;
   document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
   const url = URL.createObjectURL(file);
   const vid = document.getElementById('videoPreview');
   vid.src = url;
   vid.style.display = 'block';
-  document.getElementById('analyzeBtn').disabled = !settings.geminiKey;
   if (!settings.geminiKey) document.getElementById('noKeyWarning').style.display = 'block';
+  updateAnalyzeButtonState();
+  checkForDuplicateVideo(file);
 }
 
 // drag/drop
@@ -1311,19 +1356,45 @@ zone.addEventListener('drop', e => {
   const file = e.dataTransfer.files[0];
   if (file && file.type.startsWith('video/')) {
     currentFile = file;
+    currentFileHash = null;
     document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
     const vid = document.getElementById('videoPreview');
     vid.src = URL.createObjectURL(file);
     vid.style.display = 'block';
-    document.getElementById('analyzeBtn').disabled = !settings.geminiKey;
+    updateAnalyzeButtonState();
+    checkForDuplicateVideo(file);
   }
 });
+
+async function checkForDuplicateVideo(file) {
+  const warnEl = document.getElementById('duplicateVideoWarning');
+  if (warnEl) warnEl.style.display = 'none';
+  try {
+    const hash = await hashFile(file);
+    currentFileHash = hash;
+    const golferName = document.getElementById('golferSelect')?.value || '';
+    const dup = findDuplicateSession(hash, golferName);
+    if (dup && warnEl) {
+      const dateStr = new Date(dup.date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+      warnEl.innerHTML = `⚠️ This exact video was already analyzed for ${escHtml(golferName)} as "<strong>${escHtml(dup.label)}</strong>" on ${dateStr}. You can still analyze it again, but check History first if this was a duplicate upload.`;
+      warnEl.style.display = 'block';
+    }
+  } catch(e) { /* hashing failed silently — not critical */ }
+}
 
 // ============================================================
 // GEMINI VIDEO ANALYSIS
 // ============================================================
 async function analyzeSwing() {
-  if (!currentFile || !settings.geminiKey) return;
+  const golferCheck = document.getElementById('golferSelect')?.value || '';
+  if (!currentFile || !settings.geminiKey || !golferCheck) {
+    if (!golferCheck) {
+      const warn = document.getElementById('noGolferWarning');
+      if (warn) warn.style.display = 'block';
+      updateGolferSelectStyle();
+    }
+    return;
+  }
 
   const skill = document.getElementById('skillLevel').value;
   const angle = document.getElementById('cameraAngle').value;
@@ -1640,11 +1711,8 @@ function renderResults(data) {
 
       ${(a.phases || a.metrics) ? `
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(200,168,75,.15)">
-        <button class="visual-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.va-arrow').textContent=this.nextElementSibling.classList.contains('open')?'▲':'▼'">
-          <span>📊 Visual Swing Analysis</span>
-          <span class="va-arrow" style="font-size:.7rem">▼</span>
-        </button>
-        <div class="visual-body">
+        <div style="font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--flag);margin-bottom:14px">📊 Visual Swing Analysis</div>
+        <div class="visual-body open">
 
           <div id="swingDiagramContainer" style="margin-bottom:18px">
             ${settings.claudeKey ? `<div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--divot);text-align:center;padding:20px;border:1px dashed rgba(200,168,75,.2);border-radius:3px">⏳ Generating fault diagram...</div>` : ''}
@@ -1678,6 +1746,8 @@ function renderResults(data) {
 
         </div>
       </div>` : ''}
+
+      <button class="btn btn-secondary" style="width:100%;margin-top:18px;padding:11px;font-size:.68rem" onclick="printFullReport()">🖨️ Print Full Report${currentLessonPlanText ? ' (Analysis + Lesson Plan)' : ' (Analysis Only)'}</button>
     </div>
   `;
 
@@ -1738,7 +1808,8 @@ function saveSession() {
     club: currentAnalysis.club,
     angle: currentAnalysis.angle,
     analysis: currentAnalysis.analysis,
-    svgDiagram: currentAnalysis.svgDiagram || null
+    svgDiagram: currentAnalysis.svgDiagram || null,
+    videoHash: currentFileHash || null
   };
   sessions.unshift(session);
   saveSessionsToStorage();
@@ -1752,9 +1823,6 @@ function renderHistory() {
   const grid = document.getElementById('historyGrid');
   const count = document.getElementById('historyCount');
   const clearBtn = document.getElementById('clearAllBtn');
-  const filterEl = document.getElementById('historyGolferFilter');
-  const filterVal = filterEl ? filterEl.value : '';
-  const filtered = filterVal ? sessions.filter(s => s.golfer === filterVal) : sessions;
 
   if (!sessions.length) {
     count.textContent = 'No sessions yet';
@@ -1763,15 +1831,10 @@ function renderHistory() {
     return;
   }
 
-  count.textContent = `${filtered.length} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''}${filterVal ? ' · ' + filterVal : ''}`;
+  count.textContent = `${sessions.length} session${sessions.length !== 1 ? 's' : ''} saved`;
   clearBtn.style.display = 'inline-block';
 
-  if (!filtered.length) {
-    grid.innerHTML = `<div class="no-history" style="grid-column:1/-1"><div class="big-icon">🔍</div><h3>No sessions for ${filterVal}</h3><p>Analyze a swing and tag it to this golfer.</p></div>`;
-    return;
-  }
-
-  grid.innerHTML = filtered.map(s => {
+  grid.innerHTML = sessions.map(s => {
     const d = new Date(s.date);
     const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const a = s.analysis;
@@ -1886,6 +1949,7 @@ function deleteSession(id) {
   saveSessionsToStorage();
   scheduleSyncToGitHub();
   renderHistory();
+  checkLessonTab();
   document.getElementById('detailModal').classList.remove('open');
 }
 
@@ -1895,6 +1959,7 @@ function clearAllHistory() {
   saveSessionsToStorage();
   scheduleSyncToGitHub();
   renderHistory();
+  checkLessonTab();
 }
 
 // ============================================================
@@ -1904,30 +1969,90 @@ function checkLessonTab() {
   const noClaudeWarn = document.getElementById('noClaudeWarning');
   const noSessionsWarn = document.getElementById('noSessionsWarning');
   const generateBtn = document.getElementById('generateBtn');
+  const pickerWrap = document.getElementById('sessionPickerWrap');
 
   const hasKey = !!settings.claudeKey;
   const hasSessions = sessions.length > 0;
 
   noClaudeWarn.style.display = hasKey ? 'none' : 'block';
   noSessionsWarn.style.display = (hasKey && !hasSessions) ? 'block' : 'none';
-  generateBtn.disabled = !hasKey || !hasSessions;
+  pickerWrap.style.display = (hasKey && hasSessions) ? 'block' : 'none';
+
+  if (hasKey && hasSessions) renderSessionPicker();
+  updateGenerateButtonState();
+}
+
+function renderSessionPicker() {
+  const list = document.getElementById('sessionPickerList');
+  list.innerHTML = sessions.map(s => {
+    const d = new Date(s.date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const score = s.analysis?.overall_score ?? '—';
+    return `
+      <label class="session-pick-item" id="pick-wrap-${s.id}">
+        <input type="checkbox" class="session-pick-checkbox" data-id="${s.id}" checked onchange="onSessionPickChange(${s.id})">
+        <div class="session-pick-label">
+          <div class="session-pick-title">${escHtml(s.label)}</div>
+          <div class="session-pick-meta">${d} · ${s.club} · Overall ${score}/100${s.golfer ? ' · ' + escHtml(s.golfer) : ''}</div>
+        </div>
+      </label>`;
+  }).join('');
+  list.querySelectorAll('.session-pick-item').forEach(el => el.classList.add('checked'));
+  updateSessionPickerCount();
+}
+
+function onSessionPickChange(id) {
+  const cb = document.querySelector(`.session-pick-checkbox[data-id="${id}"]`);
+  const wrap = document.getElementById('pick-wrap-' + id);
+  if (wrap) wrap.classList.toggle('checked', cb.checked);
+  updateSessionPickerCount();
+  updateGenerateButtonState();
+}
+
+function toggleAllSessionPicks(checked) {
+  document.querySelectorAll('.session-pick-checkbox').forEach(cb => {
+    cb.checked = checked;
+    const wrap = document.getElementById('pick-wrap-' + cb.dataset.id);
+    if (wrap) wrap.classList.toggle('checked', checked);
+  });
+  updateSessionPickerCount();
+  updateGenerateButtonState();
+}
+
+function getSelectedSessionIds() {
+  return Array.from(document.querySelectorAll('.session-pick-checkbox:checked')).map(cb => cb.dataset.id);
+}
+
+function updateSessionPickerCount() {
+  const el = document.getElementById('sessionPickerCount');
+  if (!el) return;
+  const n = getSelectedSessionIds().length;
+  el.textContent = `${n} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''} selected`;
+}
+
+function updateGenerateButtonState() {
+  const generateBtn = document.getElementById('generateBtn');
+  const hasKey = !!settings.claudeKey;
+  const hasSelection = getSelectedSessionIds().length > 0;
+  generateBtn.disabled = !hasKey || !hasSelection;
 }
 
 async function generateLessonPlan() {
   if (!settings.claudeKey || !sessions.length) return;
 
+  const selectedIds = getSelectedSessionIds();
+  if (!selectedIds.length) return;
+
   const weeks = document.getElementById('planDuration').value;
   const days = document.getElementById('practiceDays').value;
   const mins = document.getElementById('sessionLength').value;
-  const lessonGolfer = document.getElementById('lessonGolferFilter')?.value || '';
   const genBtn = document.getElementById('generateBtn');
 
   genBtn.disabled = true;
   genBtn.textContent = 'Generating...';
 
-  // Filter sessions by golfer if selected, then take up to 5 most recent
-  const sourceSessions = lessonGolfer ? sessions.filter(s => s.golfer === lessonGolfer) : sessions;
-  const recentSessions = sourceSessions.slice(0, 5).map(s => ({
+  // Use only the sessions the user checked, most recent first
+  const chosenSessions = sessions.filter(s => selectedIds.includes(String(s.id)));
+  const recentSessions = chosenSessions.map(s => ({
     label: s.label,
     golfer: s.golfer || 'Unknown',
     date: new Date(s.date).toLocaleDateString(),
@@ -1940,14 +2065,16 @@ async function generateLessonPlan() {
     improvements: s.analysis.improvements
   }));
 
-  const golferName = lessonGolfer || settings.userName || 'the golfer';
+  const golferName = recentSessions[0]?.golfer && recentSessions[0].golfer !== 'Unknown'
+    ? recentSessions[0].golfer
+    : (settings.userName || null);
 
   const prompt = `You are a PGA-certified head instructor creating a personalized golf improvement plan.
 
-Golfer: ${golferName}
+${golferName ? `Golfer: ${golferName}` : ''}
 Plan: ${weeks} weeks, ${days} practice days per week, ${mins} minutes per session
 
-Recent swing analysis sessions (most recent first):
+Selected swing analysis sessions (most recent first):
 ${JSON.stringify(recentSessions, null, 2)}
 
 Based on the recurring faults and areas for improvement identified across these sessions, create a detailed ${weeks}-week lesson plan. The plan should:
@@ -1999,6 +2126,7 @@ Format the plan clearly with Week headers, Day headers (Day 1, Day 2, etc.), and
     const text = data.content?.map(b => b.text || '').join('') || '';
     if (!text) throw new Error(`Claude returned empty content. Full response: ${JSON.stringify(data).slice(0,300)}`);
 
+    currentLessonPlanText = text;
     renderLessonPlan(text);
   } catch(err) {
     lessonEl.innerHTML = `<div class="notice notice-warn">Error generating lesson plan: ${err.message}</div>`;
@@ -2032,7 +2160,9 @@ function renderLessonPlan(text) {
     .replace(/^(?!<[hud]|<li|<p|<hr)(.+)$/gm, '<p style="margin-bottom:8px;font-size:0.92rem;line-height:1.7">$1</p>')
     .replace(/<p[^>]*>\s*<\/p>/g, '');
 
-  el.innerHTML = `<div class="fade-in" style="font-weight:300;color:var(--cream)">${html}</div>`;
+  el.innerHTML = `<div class="fade-in" style="font-weight:300;color:var(--cream)">${html}
+    <button class="btn btn-secondary" style="width:100%;margin-top:20px;padding:11px;font-size:.68rem" onclick="printFullReport()">🖨️ Print Full Report${currentAnalysis ? ' (Analysis + Lesson Plan)' : ' (Lesson Plan Only)'}</button>
+  </div>`;
 }
 
 // ============================================================
@@ -2097,24 +2227,167 @@ function renderGolferList() {
 }
 
 function renderGolferSelects() {
-  const options = '<option value="">— Select golfer —</option>' + golfers.map(g => `<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
-  const filterOptions = '<option value="">All Golfers</option>' + golfers.map(g => `<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
-
+  const options = '<option value="" disabled>⚠️ Choose a golfer — required</option>' + golfers.map(g => `<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
   const analyzeSelect = document.getElementById('golferSelect');
-  const historyFilter = document.getElementById('historyGolferFilter');
-  const lessonFilter  = document.getElementById('lessonGolferFilter');
+  if (analyzeSelect) {
+    const prevVal = analyzeSelect.value;
+    analyzeSelect.innerHTML = options;
+    if (prevVal && golfers.includes(prevVal)) analyzeSelect.value = prevVal;
+    else analyzeSelect.selectedIndex = 0;
+    updateGolferSelectStyle();
+  }
+}
 
-  if (analyzeSelect) analyzeSelect.innerHTML = options;
-  if (historyFilter) historyFilter.innerHTML = filterOptions;
-  if (lessonFilter)  lessonFilter.innerHTML  = filterOptions;
+function updateGolferSelectStyle() {
+  const sel = document.getElementById('golferSelect');
+  if (!sel) return;
+  sel.style.borderColor = sel.value ? 'rgba(200,168,75,.4)' : 'var(--danger)';
 }
 
 function onGolferChange() {
-  // Could pre-fill skill level from golfer's last session
+  updateGolferSelectStyle();
+  updateAnalyzeButtonState();
+  // Pre-fill skill level from golfer's last session
   const name = document.getElementById('golferSelect').value;
-  if (!name) return;
-  const last = sessions.find(s => s.golfer === name);
-  if (last) document.getElementById('skillLevel').value = last.skill;
+  if (name) {
+    const last = sessions.find(s => s.golfer === name);
+    if (last) document.getElementById('skillLevel').value = last.skill;
+  }
+  // Re-check duplicate now that golfer changed
+  if (currentFile) checkForDuplicateVideo(currentFile);
+}
+
+// ============================================================
+// PRINT COMBINED REPORT
+// ============================================================
+function printFullReport() {
+  const a = currentAnalysis?.analysis;
+  const golferName = document.getElementById('golferSelect')?.value || settings.userName || '';
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+
+  let sections = '';
+
+  // ANALYSIS SECTION
+  if (a) {
+    const drills = [a.drill_1, a.drill_2, a.drill_3].filter(Boolean);
+    const scoreColor = s => s >= 80 ? '#2e7d32' : s >= 60 ? '#b8860b' : '#c44b2b';
+
+    sections += `
+      <h1 style="font-family:Georgia,serif;color:#1a2e1a;border-bottom:3px solid #c8a84b;padding-bottom:10px;margin-bottom:6px">Swing Analysis Report</h1>
+      <p style="font-family:monospace;font-size:11px;color:#666;margin-bottom:24px">${golferName ? golferName + ' · ' : ''}${dateStr}${currentAnalysis.club ? ' · ' + currentAnalysis.club : ''}</p>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+        <div style="border:1px solid #ddd;border-radius:4px;padding:10px 16px;text-align:center;min-width:80px">
+          <div style="font-size:24px;font-weight:bold;color:${scoreColor(a.overall_score)}">${a.overall_score}</div>
+          <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">Overall</div>
+        </div>
+        ${Object.entries(a.scores||{}).map(([k,v]) => `
+          <div style="border:1px solid #ddd;border-radius:4px;padding:10px 16px;text-align:center;min-width:80px">
+            <div style="font-size:20px;font-weight:bold;color:${scoreColor(v)}">${v}</div>
+            <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">${k.replace('_',' ')}</div>
+          </div>`).join('')}
+      </div>
+
+      ${a.key_fault ? `<div style="background:#fff0ec;border:1px solid #f5c5b5;border-radius:4px;padding:12px 16px;margin-bottom:16px;font-size:13px"><strong>Key Fault:</strong> ${a.key_fault}</div>` : ''}
+
+      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Coaching Summary</h3>
+      <p style="font-size:13px;line-height:1.7;margin-bottom:18px">${a.summary || ''}</p>
+
+      ${a.strengths?.length ? `
+      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Strengths</h3>
+      <ul style="margin:0 0 18px 0;padding-left:20px;font-size:13px;line-height:1.7">
+        ${a.strengths.map(s => `<li>${s}</li>`).join('')}
+      </ul>` : ''}
+
+      ${a.improvements?.length ? `
+      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Areas to Improve</h3>
+      <ul style="margin:0 0 18px 0;padding-left:20px;font-size:13px;line-height:1.7">
+        ${a.improvements.map(s => `<li>${s}</li>`).join('')}
+      </ul>` : ''}
+
+      ${drills.length ? `
+      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:8px">Recommended Drills</h3>
+      ${drills.map((d,i) => `
+        <div style="border-left:3px solid #c8a84b;padding:8px 14px;margin-bottom:8px;background:#fafaf7">
+          <div style="font-weight:bold;font-size:13px;margin-bottom:3px">${i+1}. ${d.name}</div>
+          <div style="font-size:12px;line-height:1.6;color:#444">${d.description}</div>
+        </div>`).join('')}` : ''}
+
+      ${a.phases ? `
+      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Phase Breakdown</h3>
+      ${Object.entries(a.phases).map(([phase,p]) => {
+        const c = p.rating === 'good' ? '#2e7d32' : p.rating === 'fault' ? '#c44b2b' : '#b8860b';
+        return `<div style="border-left:3px solid ${c};padding:8px 14px;margin-bottom:6px;background:#fafaf7">
+          <div style="font-weight:bold;font-size:12px;text-transform:uppercase;color:${c}">${phase.replace('_',' ')}</div>
+          <div style="font-size:12px;line-height:1.6;color:#444;margin-top:2px">${p.observation}</div>
+        </div>`;
+      }).join('')}` : ''}
+
+      ${a.metrics ? `
+      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Swing Metrics</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+        ${Object.entries(a.metrics).map(([k,v]) => `
+          <div style="border:1px solid #ddd;border-radius:4px;padding:8px 12px">
+            <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888">${k.replace(/_/g,' ')}</div>
+            <div style="font-size:13px">${v}</div>
+          </div>`).join('')}
+      </div>` : ''}
+
+      ${currentAnalysis.svgDiagram ? `
+      <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Fault Diagram</h3>
+      <div style="border:1px solid #ddd;border-radius:4px;overflow:hidden;max-width:400px">${currentAnalysis.svgDiagram}</div>
+      ` : ''}
+    `;
+  }
+
+  // LESSON PLAN SECTION
+  if (currentLessonPlanText) {
+    const processed = currentLessonPlanText.replace(/\[DRILL:\s*([^\]]+)\]/g, (m, name) => `<strong>${name.trim()}</strong>`);
+    const html = processed
+      .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid #ddd;margin:14px 0">')
+      .replace(/^#{1,2} ?(.+)$/gm, '<h2 style="font-family:Georgia,serif;color:#1a2e1a;margin-top:22px;border-bottom:2px solid #c8a84b;padding-bottom:6px">$1</h2>')
+      .replace(/^#{3,4} ?(.+)$/gm, '<h4 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#1a73e8;margin:12px 0 4px">$1</h4>')
+      .replace(/^> ?\*?(.+?)\*?$/gm, '<div style="padding:6px 12px;border-left:3px solid #c8a84b;margin:6px 0;font-style:italic;font-size:12px;color:#666">$1</div>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+      .replace(/^[-•] (.+)$/gm, '<li style="margin-bottom:4px;font-size:13px;line-height:1.6">$1</li>')
+      .replace(/(<li[\s\S]*?<\/li>\n?)+/g, m => `<ul style="padding-left:18px;margin:6px 0">${m}</ul>`)
+      .replace(/\n\n+/g, '</p><p style="margin-bottom:8px">')
+      .replace(/^(?!<[h2u4l]|<li|<p|<hr)(.+)$/gm, '<p style="margin-bottom:8px;font-size:13px;line-height:1.7">$1</p>')
+      .replace(/<p[^>]*>\s*<\/p>/g, '');
+
+    sections += `
+      ${a ? '<div style="page-break-before:always"></div>' : ''}
+      <h1 style="font-family:Georgia,serif;color:#1a2e1a;border-bottom:3px solid #c8a84b;padding-bottom:10px;margin-bottom:6px">Lesson Plan</h1>
+      <p style="font-family:monospace;font-size:11px;color:#666;margin-bottom:20px">${golferName ? golferName + ' · ' : ''}${dateStr}</p>
+      ${html}
+    `;
+  }
+
+  if (!sections) {
+    alert('Nothing to print yet — run a swing analysis or generate a lesson plan first.');
+    return;
+  }
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Caddie AI Report</title>
+      <style>
+        body { font-family: -apple-system, Arial, sans-serif; color: #222; max-width: 720px; margin: 30px auto; padding: 0 20px; }
+        @media print { body { margin: 0 auto; } }
+      </style>
+    </head>
+    <body>
+      ${sections}
+      <p style="margin-top:30px;font-size:10px;color:#999;text-align:center">Generated by Caddie AI</p>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.onload = () => { printWindow.print(); };
 }
 
 // Init
