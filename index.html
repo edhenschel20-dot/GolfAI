@@ -1142,6 +1142,14 @@
       </div>
       <div id="lessonPlanText" style="display:none"></div>
     </div>
+
+    <div style="margin-top:28px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--cream);font-weight:900">Saved Lesson Plans</h2>
+        <p style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--divot);letter-spacing:.08em" id="savedPlansCount"></p>
+      </div>
+      <div id="savedPlansList" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
   </div>
 
 </main>
@@ -1153,9 +1161,11 @@
 let currentFile = null;
 let currentAnalysis = null;
 let currentLessonPlanText = null;
+let currentLessonPlanMeta = null;
 let settings = {};
 let sessions = [];
 let golfers = [];
+let lessonPlans = [];
 let ghFileSHA = null;
 let syncDebounceTimer = null;
 const GH_DATA_FILE = 'golf-coach-data.json';
@@ -1164,12 +1174,14 @@ function loadState() {
   try { settings = JSON.parse(localStorage.getItem('caddieai_settings') || '{}'); } catch(e) { settings = {}; }
   try { sessions = JSON.parse(localStorage.getItem('caddieai_sessions') || '[]'); } catch(e) { sessions = []; }
   try { golfers = JSON.parse(localStorage.getItem('caddieai_golfers') || '[]'); } catch(e) { golfers = []; }
+  try { lessonPlans = JSON.parse(localStorage.getItem('caddieai_lessonplans') || '[]'); } catch(e) { lessonPlans = []; }
   try { ghFileSHA = localStorage.getItem('caddieai_sha') || null; } catch(e) {}
 }
 
 function saveSessionsToStorage() {
   localStorage.setItem('caddieai_sessions', JSON.stringify(sessions));
   localStorage.setItem('caddieai_golfers', JSON.stringify(golfers));
+  localStorage.setItem('caddieai_lessonplans', JSON.stringify(lessonPlans));
 }
 
 // ============================================================
@@ -1199,16 +1211,17 @@ async function loadFromGitHub() {
     const content = JSON.parse(atob(data.content.replace(/\n/g, '')));
     if (content.sessions) { sessions = content.sessions; }
     if (content.golfers) { golfers = content.golfers; }
+    if (content.lessonPlans) { lessonPlans = content.lessonPlans; }
     saveSessionsToStorage();
     setSyncStatus('synced', 'github');
-    renderHistory(); renderGolferSelects(); checkLessonTab();
+    renderHistory(); renderGolferSelects(); checkLessonTab(); renderSavedLessonPlans();
   } catch(e) { setSyncStatus('error', 'load failed'); console.error(e); }
 }
 
 async function syncToGitHub() {
   if (!hasGitHub()) { setSyncStatus('', 'local'); return; }
   setSyncStatus('syncing', 'syncing...');
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions, golfers }, null, 2))));
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions, golfers, lessonPlans }, null, 2))));
   const body = { message: 'Caddie AI sync ' + new Date().toISOString(), content: encoded };
   if (ghFileSHA) body.sha = ghFileSHA;
   try {
@@ -1997,6 +2010,7 @@ function checkLessonTab() {
 
   if (hasKey && hasSessions) renderSessionPicker();
   updateGenerateButtonState();
+  renderSavedLessonPlans();
 }
 
 function renderSessionPicker() {
@@ -2158,6 +2172,7 @@ Format the plan clearly with Week headers, Day headers (Day 1, Day 2, etc.), and
     if (!text) throw new Error(`Claude returned empty content. Full response: ${JSON.stringify(data).slice(0,300)}`);
 
     currentLessonPlanText = text;
+    currentLessonPlanMeta = { golfer: golferName || null, weeks, days, mins, sessionCount: recentSessions.length };
     renderLessonPlan(text);
   } catch(err) {
     lessonEl.innerHTML = `<div class="notice notice-warn">Error generating lesson plan: ${err.message}</div>`;
@@ -2192,8 +2207,84 @@ function renderLessonPlan(text) {
     .replace(/<p[^>]*>\s*<\/p>/g, '');
 
   el.innerHTML = `<div class="fade-in" style="font-weight:300;color:var(--cream)">${html}
-    <button class="btn btn-secondary" style="width:100%;margin-top:20px;padding:11px;font-size:.68rem" onclick="printFullReport()">🖨️ Print Full Report${currentAnalysis ? ' (Analysis + Lesson Plan)' : ' (Lesson Plan Only)'}</button>
+    <div class="save-row" style="margin-top:18px">
+      <input type="text" id="lessonPlanLabel" placeholder="Name this plan (e.g. 4-Week Driver Fix)..." value="${currentLessonPlanMeta?.golfer ? currentLessonPlanMeta.golfer + ' — ' + currentLessonPlanMeta.weeks + ' Week Plan' : ''}">
+      <button class="btn btn-gold" onclick="saveLessonPlan()">Save Plan</button>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px;padding:11px;font-size:.68rem" onclick="printFullReport()">🖨️ Print Full Report${currentAnalysis ? ' (Analysis + Lesson Plan)' : ' (Lesson Plan Only)'}</button>
   </div>`;
+}
+
+// ============================================================
+// SAVED LESSON PLANS
+// ============================================================
+function saveLessonPlan() {
+  if (!currentLessonPlanText) return;
+  const label = document.getElementById('lessonPlanLabel')?.value || 'Lesson Plan';
+  const plan = {
+    id: Date.now(),
+    label,
+    date: new Date().toISOString(),
+    golfer: currentLessonPlanMeta?.golfer || null,
+    weeks: currentLessonPlanMeta?.weeks || null,
+    days: currentLessonPlanMeta?.days || null,
+    mins: currentLessonPlanMeta?.mins || null,
+    sessionCount: currentLessonPlanMeta?.sessionCount || null,
+    text: currentLessonPlanText
+  };
+  lessonPlans.unshift(plan);
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  renderSavedLessonPlans();
+  const btn = document.querySelector('#lessonPlanText .save-row .btn-gold');
+  if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => { btn.textContent = 'Save Plan'; }, 2000); }
+}
+
+function renderSavedLessonPlans() {
+  const list = document.getElementById('savedPlansList');
+  const count = document.getElementById('savedPlansCount');
+  if (!list || !count) return;
+
+  if (!lessonPlans.length) {
+    count.textContent = 'No saved plans yet';
+    list.innerHTML = `<p style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--divot);padding:16px;text-align:center;border:1px dashed rgba(200,168,75,.2);border-radius:4px">Generate a plan above, then tap Save Plan to keep it here without regenerating later.</p>`;
+    return;
+  }
+
+  count.textContent = `${lessonPlans.length} saved plan${lessonPlans.length !== 1 ? 's' : ''}`;
+  list.innerHTML = lessonPlans.map(p => {
+    const d = new Date(p.date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    return `
+      <div class="hcard" style="cursor:pointer" onclick="viewSavedPlan(${p.id})">
+        <button class="delete-btn" onclick="event.stopPropagation();deleteSavedPlan(${p.id})" title="Delete">✕</button>
+        <div class="hcard-header"><div class="hcard-title">${escHtml(p.label)}</div><div class="hcard-date">${d}</div></div>
+        <div class="hcard-meta">
+          ${p.golfer ? `<span class="meta-tag" style="background:rgba(122,184,212,.15);border-color:rgba(122,184,212,.3);color:var(--sky)">👤 ${escHtml(p.golfer)}</span>` : ''}
+          ${p.weeks ? `<span class="meta-tag">${p.weeks} weeks</span>` : ''}
+          ${p.days ? `<span class="meta-tag">${p.days}d/wk</span>` : ''}
+          ${p.sessionCount ? `<span class="meta-tag">${p.sessionCount} sessions used</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function viewSavedPlan(id) {
+  const p = lessonPlans.find(x => x.id === id);
+  if (!p) return;
+  currentLessonPlanText = p.text;
+  currentLessonPlanMeta = { golfer: p.golfer, weeks: p.weeks, days: p.days, mins: p.mins, sessionCount: p.sessionCount };
+  document.getElementById('emptyLesson').style.display = 'none';
+  document.getElementById('lessonPlanText').style.display = 'block';
+  renderLessonPlan(p.text);
+  document.getElementById('lessonPlanContent').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function deleteSavedPlan(id) {
+  if (!confirm('Delete this saved lesson plan?')) return;
+  lessonPlans = lessonPlans.filter(p => p.id !== id);
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  renderSavedLessonPlans();
 }
 
 // ============================================================
