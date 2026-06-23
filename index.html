@@ -2486,8 +2486,12 @@ function printFullReport() {
   // 2. Otherwise fall back to whatever is currently on screen from a single analysis.
   let sessionsToShow = [];
   if (currentLessonPlanMeta?.sessionIds?.length) {
-    sessionsToShow = sessions.filter(s => currentLessonPlanMeta.sessionIds.includes(s.id));
-  } else if (currentAnalysis?.analysis) {
+    const idSet = new Set(currentLessonPlanMeta.sessionIds.map(String));
+    sessionsToShow = sessions.filter(s => idSet.has(String(s.id)));
+  }
+  // Fallback: if no lesson-plan-linked sessions were found (e.g. IDs didn't match,
+  // or no lesson plan has been generated yet), show whatever's on screen right now.
+  if (!sessionsToShow.length && currentAnalysis?.analysis) {
     sessionsToShow = [{
       label: null,
       date: new Date().toISOString(),
