@@ -1,6 +1,89 @@
 {
   "sessions": [
     {
+      "id": 1782176831444,
+      "label": "14752",
+      "golfer": "Teresa",
+      "date": "2026-06-23T01:07:11.444Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "analysis": {
+        "overall_score": 68,
+        "scores": {
+          "setup": 74,
+          "backswing": 68,
+          "downswing": 65,
+          "impact": 67,
+          "follow_through": 66,
+          "tempo": 70
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Good athletic setup posture",
+          "Decent shoulder turn in backswing",
+          "Consistent pre-shot routine"
+        ],
+        "improvements": [
+          "Early extension at impact",
+          "Slightly steep downswing plane",
+          "Loss of balance on follow-through"
+        ],
+        "key_fault": "Early extension and steep downswing path leading to inconsistent contact and loss of balance.",
+        "drill_1": {
+          "name": "Chair/Tush Line Drill",
+          "description": "Place a chair or golf bag just behind your hips at setup. Practice making swings while keeping your lead hip in contact with the chair during the downswing and impact to prevent early extension."
+        },
+        "drill_2": {
+          "name": "Pump Drill",
+          "description": "Take the club to the top of the backswing, pump your hands down to hip level twice while keeping your shoulders closed, then swing through on the third motion to feel the proper downswing sequence."
+        },
+        "drill_3": {
+          "name": "Feet Together Drill",
+          "description": "Stand with your feet touching and make smooth, 75% swings with a mid-iron to improve your balance, tempo, and center of contact."
+        },
+        "summary": "Your setup is athletic and solid, but early extension in the downswing causes you to lose your spine angle, leading to a steep impact and slightly unbalanced finish.",
+        "phases": {
+          "setup": {
+            "observation": "Good athletic posture with appropriate spine tilt and balanced stance width. Club alignment looks solid.",
+            "rating": "good"
+          },
+          "backswing": {
+            "observation": "Good shoulder rotation, but the club shaft is slightly flat and short of parallel at the top with limited wrist hinge.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "The downswing starts slightly with the upper body, creating a steep path and early extension as the hips move toward the ball.",
+            "rating": "needs_work"
+          },
+          "impact": {
+            "observation": "Hips move toward the ball (early extension), causing a loss of spine angle and standing up through the hitting zone.",
+            "rating": "fault"
+          },
+          "follow_through": {
+            "observation": "Finish is high, but balance is slightly compromised and weight transfer is incomplete due to the early extension.",
+            "rating": "needs_work"
+          }
+        },
+        "metrics": {
+          "club_path_estimate": "3 degrees out-to-in",
+          "tempo_ratio": "3.1:1 (backswing:downswing)",
+          "hip_turn_estimate": "35 degrees",
+          "shoulder_turn_estimate": "85 degrees",
+          "swing_plane": "slightly steep",
+          "weight_transfer": "moderate — 70% lead side at finish",
+          "impact_position": "hips slightly cleared but early extending"
+        }
+      },
+      "svgDiagram": null
+    },
+    {
       "id": 1782176112681,
       "label": "14750",
       "golfer": "Bob Sentinel",
