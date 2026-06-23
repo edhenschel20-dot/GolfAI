@@ -1059,6 +1059,9 @@
         <p style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--divot); letter-spacing:0.1em; margin-top:4px;" id="historyCount"></p>
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="historyGolferFilter" style="padding:7px 12px;background:rgba(0,0,0,.4);border:1px solid rgba(200,168,75,.3);color:var(--cream);font-family:'DM Mono',monospace;font-size:.68rem;border-radius:2px;cursor:pointer" onchange="renderHistory()">
+          <option value="">All Golfers</option>
+        </select>
         <button class="btn btn-danger" onclick="clearAllHistory()" id="clearAllBtn" style="display:none">Clear All</button>
       </div>
     </div>
@@ -1083,6 +1086,12 @@
       </div>
 
       <div id="sessionPickerWrap" style="display:none;margin-bottom:18px">
+        <div style="margin-bottom:12px">
+          <label class="form-label">Golfer</label>
+          <select id="lessonGolferFilter" style="width:100%;padding:9px 10px;background:rgba(0,0,0,.4);border:1px solid rgba(200,168,75,.3);color:var(--cream);font-family:'DM Mono',monospace;font-size:.78rem;cursor:pointer" onchange="renderSessionPicker()">
+            <option value="">All Golfers</option>
+          </select>
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <label class="form-label" style="margin:0">Select Sessions to Include</label>
           <div style="display:flex;gap:10px">
@@ -1823,6 +1832,9 @@ function renderHistory() {
   const grid = document.getElementById('historyGrid');
   const count = document.getElementById('historyCount');
   const clearBtn = document.getElementById('clearAllBtn');
+  const filterEl = document.getElementById('historyGolferFilter');
+  const filterVal = filterEl ? filterEl.value : '';
+  const filtered = filterVal ? sessions.filter(s => s.golfer === filterVal) : sessions;
 
   if (!sessions.length) {
     count.textContent = 'No sessions yet';
@@ -1831,10 +1843,15 @@ function renderHistory() {
     return;
   }
 
-  count.textContent = `${sessions.length} session${sessions.length !== 1 ? 's' : ''} saved`;
+  count.textContent = `${filtered.length} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''}${filterVal ? ' · ' + filterVal : ''}`;
   clearBtn.style.display = 'inline-block';
 
-  grid.innerHTML = sessions.map(s => {
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="no-history" style="grid-column:1/-1"><div class="big-icon">🔍</div><h3>No sessions for ${escHtml(filterVal)}</h3><p>Try a different golfer filter or analyze a new swing.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(s => {
     const d = new Date(s.date);
     const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const a = s.analysis;
@@ -1984,7 +2001,17 @@ function checkLessonTab() {
 
 function renderSessionPicker() {
   const list = document.getElementById('sessionPickerList');
-  list.innerHTML = sessions.map(s => {
+  const filterEl = document.getElementById('lessonGolferFilter');
+  const filterVal = filterEl ? filterEl.value : '';
+  const filtered = filterVal ? sessions.filter(s => s.golfer === filterVal) : sessions;
+
+  if (!filtered.length) {
+    list.innerHTML = `<p style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--divot);text-align:center;padding:20px">No sessions for ${escHtml(filterVal)} yet.</p>`;
+    updateSessionPickerCount();
+    return;
+  }
+
+  list.innerHTML = filtered.map(s => {
     const d = new Date(s.date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const score = s.analysis?.overall_score ?? '—';
     return `
@@ -1998,6 +2025,7 @@ function renderSessionPicker() {
   }).join('');
   list.querySelectorAll('.session-pick-item').forEach(el => el.classList.add('checked'));
   updateSessionPickerCount();
+  updateGenerateButtonState();
 }
 
 function onSessionPickChange(id) {
@@ -2025,8 +2053,11 @@ function getSelectedSessionIds() {
 function updateSessionPickerCount() {
   const el = document.getElementById('sessionPickerCount');
   if (!el) return;
+  const filterEl = document.getElementById('lessonGolferFilter');
+  const filterVal = filterEl ? filterEl.value : '';
+  const totalShown = filterVal ? sessions.filter(s => s.golfer === filterVal).length : sessions.length;
   const n = getSelectedSessionIds().length;
-  el.textContent = `${n} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''} selected`;
+  el.textContent = `${n} of ${totalShown} session${totalShown !== 1 ? 's' : ''} selected${filterVal ? ' · ' + filterVal : ''}`;
 }
 
 function updateGenerateButtonState() {
@@ -2235,6 +2266,21 @@ function renderGolferSelects() {
     if (prevVal && golfers.includes(prevVal)) analyzeSelect.value = prevVal;
     else analyzeSelect.selectedIndex = 0;
     updateGolferSelectStyle();
+  }
+
+  const filterOptions = '<option value="">All Golfers</option>' + golfers.map(g => `<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
+  const historyFilter = document.getElementById('historyGolferFilter');
+  if (historyFilter) {
+    const prevFilterVal = historyFilter.value;
+    historyFilter.innerHTML = filterOptions;
+    if (prevFilterVal && golfers.includes(prevFilterVal)) historyFilter.value = prevFilterVal;
+  }
+
+  const lessonFilter = document.getElementById('lessonGolferFilter');
+  if (lessonFilter) {
+    const prevLessonVal = lessonFilter.value;
+    lessonFilter.innerHTML = filterOptions;
+    if (prevLessonVal && golfers.includes(prevLessonVal)) lessonFilter.value = prevLessonVal;
   }
 }
 
