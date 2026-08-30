@@ -62,20 +62,30 @@ Design and 3D print an enclosure/organizer ("charging station shell") that:
 - **Brand/model: Gakezi 100W 6-Port GaN Fast Charging Brick** ("Hub Cube
   Box"), PD 3.0. Product page:
   https://www.amazon.com/dp/B0D815Z5SL
-- Ports, exactly as labeled on the unit (top to bottom on one face):
-  - USB-C x3, each **PD 20W**
-  - USB-A1, USB-A2, USB-A3 (the brief's "first USB-A port is fast-charge"
-    refers to **USB-A1**)
+- Ports, per the manufacturer's spec sheet (labeled USB-A1/A2/A3 and
+  USB-C1/C2/C3 top-to-bottom on the unit):
+  - USB-C x3, each **PD 3.0, 20W** (12V/1.67A, 9V/2.22A, or 5V/3A)
+  - USB-A x3, each **15W (5V/3A)** — **all three USB-A ports are
+    electrically identical**; there is no hardware-level "fast-charge"
+    port among them (corrects the brief's earlier assumption that USB-A1
+    was uniquely fast-charge — it isn't; only device support and cable
+    quality affect actual charge speed). USB-A1 can still be *labeled* as
+    the general swappable/fast-turnaround slot for convenience, but that's
+    a labeling choice, not a spec difference.
+  - Only smartphones/tablets negotiate fast charging at all; a fast-charge
+    *cable* is required on the USB-C ports to get the rated 20W.
+- **Confirmed physical dimensions** (manufacturer spec): **6.77 in (L) x
+  4.01 in (W) x 1.41 in (H)**, weighs 0.54 lb. This is now locked in for
+  enclosure geometry — no more guessing needed. (Still worth a quick
+  hand-measurement to confirm before final print, since printed tolerances
+  matter more than a spec sheet's rounding, but this is no longer a
+  blocking unknown.)
 - **Has an integrated AC power cord** (coiled cord to a standard 2-prong
   plug) — this is *not* a direct plug-into-the-wall wart. That means the
   brick body itself can sit anywhere inside the enclosure; only its power
   cord needs a routed exit path to a wall outlet, separate from the 6
   charging-cable exit points. The enclosure design must account for this
   extra cord run/exit, not just the 6 device cables.
-- Exact physical dimensions still need to be measured by hand — not listed
-  in the product text available. Don't guess a size and lock it into the
-  final print without a callout; flag as a required measurement before
-  finalizing enclosure geometry.
 - Ventilation/heat: a GaN brick like this gets warm under load with 6 devices
   charging at once — the enclosure must include real airflow (vents/slots),
   not just a sealed decorative box.
@@ -97,8 +107,7 @@ alongside the Gakezi brick, but is not required for v1:
   service.
 - Status: the Gakezi brick's 6 ports are enough to cover all of v1's
   dedicated needs (2 watch pucks + phone rotator = 3 dedicated ports,
-  leaving 3 free including the fast-charge USB-A1 for swappable use) — see
-  Port allocation logic below. Treat the Caniifoto units as **optional
+  leaving 3 free for swappable use) — see Port allocation logic below. Treat the Caniifoto units as **optional
   headroom**, not a v1 requirement: use one only if the electronics-expert
   agent's port math says 3 spare ports isn't enough swappable capacity, or
   reserve both, unused, as the literal hardware for the "Expansion" section's
@@ -150,7 +159,8 @@ alongside the Gakezi brick, but is not required for v1:
 ## Port allocation logic (for the Electronics/Charging agent to firm up)
 
 - 6 total outputs on the confirmed Gakezi brick: **USB-C1/C2/C3 (PD 20W
-  each)** + **USB-A1 (fast-charge), USB-A2, USB-A3**.
+  each)** + **USB-A1/A2/A3 (15W each, electrically identical — no port is
+  uniquely "fast-charge")**.
 - Some devices only need charging every other day (occasional) — these are
   candidates for a shared/swappable labeled port rather than a dedicated
   permanent one.
@@ -159,11 +169,11 @@ alongside the Gakezi brick, but is not required for v1:
 - Two Galaxy Watch charging pucks will each permanently occupy one port
   (likely USB-C, confirm puck cable connector type).
 - Phone rotator cradle needs one permanently wired port.
-- That's 3 of the 6 ports spoken for, leaving 3 free (including fast-charge
-  USB-A1) as labeled swappable general-purpose slots for phones/misc devices
-  that don't charge nightly — 3 dedicated + 3 swappable comfortably fits
-  within the one confirmed brick; the optional Caniifoto supplemental
-  chargers above are not needed to make the numbers work for v1.
+- That's 3 of the 6 ports spoken for, leaving 3 free as labeled swappable
+  general-purpose slots for phones/misc devices that don't charge nightly —
+  3 dedicated + 3 swappable comfortably fits within the one confirmed brick;
+  the optional Caniifoto supplemental chargers above are not needed to make
+  the numbers work for v1.
 - Echo Dot keeps its own wall wart and does **not** need a brick port —
   it just needs physical space/venting in the design.
 - Don't forget the brick's own AC power cord needs a routed exit to a wall
