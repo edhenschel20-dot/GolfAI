@@ -71,6 +71,31 @@ Design and 3D print an enclosure/organizer ("charging station shell") that:
   charging at once — the enclosure must include real airflow (vents/slots),
   not just a sealed decorative box.
 
+#### Optional supplemental charger blocks (owned, not yet spec'd)
+
+The user already owns additional small USB-C charger blocks that could be
+used *in conjunction with* the 100W 6-port brick, rather than relying on it
+alone:
+
+- One single-unit USB-C charger block:
+  https://www.amazon.com/dp/B0D815Z5SL
+- A 2-pack of USB-C fast charger blocks:
+  https://www.amazon.com/dp/B0DKXR4TYR
+
+Amazon product pages are not reachable from this environment's network (egress
+is blocked), so wattage, port count, and physical dimensions for these are
+**not yet known** — do not design cutouts/bays for them until the user
+provides those specs. Once known, treat each as an additional small brick
+that needs its own bay + vent inside the same shell, wired into the internal
+power strip alongside the main 100W brick — this effectively raises total
+port count/capacity without a second full enclosure. Candidate uses once
+specs are confirmed: extra dedicated slot(s) if the two-watch-puck +
+phone-rotator + Echo-dot-adjacent allocation leaves the main brick's 6 ports
+too tight, or a hot-spare/backup brick for the "expansion" scenario in
+CLAUDE.md's Expansion section. The electronics-expert agent should treat
+this as an open question to resolve once dimensions/wattage are supplied,
+not assume they're needed.
+
 ### 2. Amazon Echo Dot (round smart speaker)
 - Currently just sits loose on the credenza, plugged into its own wall wart
   (not the USB brick).
