@@ -65,13 +65,20 @@ Design and 3D print an enclosure/organizer ("charging station shell") that:
 - Ports, per the manufacturer's spec sheet (labeled USB-A1/A2/A3 and
   USB-C1/C2/C3 top-to-bottom on the unit):
   - USB-C x3, each **PD 3.0, 20W** (12V/1.67A, 9V/2.22A, or 5V/3A)
-  - USB-A x3, each **15W (5V/3A)** — **all three USB-A ports are
-    electrically identical**; there is no hardware-level "fast-charge"
-    port among them (corrects the brief's earlier assumption that USB-A1
-    was uniquely fast-charge — it isn't; only device support and cable
-    quality affect actual charge speed). USB-A1 can still be *labeled* as
-    the general swappable/fast-turnaround slot for convenience, but that's
-    a labeling choice, not a spec difference.
+  - USB-A x3, generic marketing spec sheet lists all three at 15W
+    (5V/3A) with no distinction — **but the user has the physical unit
+    in hand and reports the first USB-A port is visually marked
+    differently (distinct port color) and labeled as faster than USB-A2/
+    A3.** Trust the physical unit over the generic product-listing
+    graphic: **treat USB-A1 as a genuinely faster/distinct port** (likely
+    QC/AFC-capable at a higher voltage than the plain 5V/3A on A2/A3),
+    pending exact confirmation of its rated spec. The electronics-expert
+    agent should note this discrepancy and, if useful, ask the user to
+    read the exact wattage/spec printed next to that port, but should not
+    default back to "all three are identical" — that's now known wrong for
+    this unit. USB-A1 is the natural candidate for a swappable slot that
+    benefits from faster charging (e.g., a phone), given its distinct
+    port marking.
   - Only smartphones/tablets negotiate fast charging at all; a fast-charge
     *cable* is required on the USB-C ports to get the rated 20W.
 - **Confirmed physical dimensions** (manufacturer spec): **6.77 in (L) x
@@ -159,8 +166,8 @@ alongside the Gakezi brick, but is not required for v1:
 ## Port allocation logic (for the Electronics/Charging agent to firm up)
 
 - 6 total outputs on the confirmed Gakezi brick: **USB-C1/C2/C3 (PD 20W
-  each)** + **USB-A1/A2/A3 (15W each, electrically identical — no port is
-  uniquely "fast-charge")**.
+  each)** + **USB-A1 (distinct/faster port, per physical inspection —
+  exact spec TBD), USB-A2, USB-A3 (plain 5V/3A)**.
 - Some devices only need charging every other day (occasional) — these are
   candidates for a shared/swappable labeled port rather than a dedicated
   permanent one.
