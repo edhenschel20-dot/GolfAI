@@ -58,43 +58,52 @@ Design and 3D print an enclosure/organizer ("charging station shell") that:
 
 ## Devices that need a home
 
-### 1. Charging brick (the core, must be fully enclosed)
-- Brand-marked "100W" GaN-style multi-port charger.
-- Ports: **3x USB-A + 3x USB-C**.
-- The **first USB-A port is a fast-charge port** — whatever gets plugged in
-  there should be something that benefits from fast charging (or just needs
-  the least amount of overnight time).
-- Exact physical dimensions of this brick are not yet measured — flag this
-  as a required measurement before finalizing the enclosure model. Don't
-  guess a size and lock it into the final print without a callout.
+### 1. Charging brick (the core, must be fully enclosed) — CONFIRMED main unit
+- **Brand/model: Gakezi 100W 6-Port GaN Fast Charging Brick** ("Hub Cube
+  Box"), PD 3.0. Product page:
+  https://www.amazon.com/dp/B0D815Z5SL
+- Ports, exactly as labeled on the unit (top to bottom on one face):
+  - USB-C x3, each **PD 20W**
+  - USB-A1, USB-A2, USB-A3 (the brief's "first USB-A port is fast-charge"
+    refers to **USB-A1**)
+- **Has an integrated AC power cord** (coiled cord to a standard 2-prong
+  plug) — this is *not* a direct plug-into-the-wall wart. That means the
+  brick body itself can sit anywhere inside the enclosure; only its power
+  cord needs a routed exit path to a wall outlet, separate from the 6
+  charging-cable exit points. The enclosure design must account for this
+  extra cord run/exit, not just the 6 device cables.
+- Exact physical dimensions still need to be measured by hand — not listed
+  in the product text available. Don't guess a size and lock it into the
+  final print without a callout; flag as a required measurement before
+  finalizing enclosure geometry.
 - Ventilation/heat: a GaN brick like this gets warm under load with 6 devices
   charging at once — the enclosure must include real airflow (vents/slots),
   not just a sealed decorative box.
 
-#### Optional supplemental charger blocks (owned, not yet spec'd)
+#### Optional supplemental charger — CONFIRMED, but deferred/optional
 
-The user already owns additional small USB-C charger blocks that could be
-used *in conjunction with* the 100W 6-port brick, rather than relying on it
-alone:
+The user also owns a 2-pack of supplemental chargers that *could* be added
+alongside the Gakezi brick, but is not required for v1:
 
-- One single-unit USB-C charger block:
-  https://www.amazon.com/dp/B0D815Z5SL
-- A 2-pack of USB-C fast charger blocks:
+- **Caniifoto 2-Pack USB-C Fast Charger Block**, 60W per unit, 5 ports each
+  (2x USB-C PD 30W + 3x USB-A 3.1A). Product page:
   https://www.amazon.com/dp/B0DKXR4TYR
-
-Amazon product pages are not reachable from this environment's network (egress
-is blocked), so wattage, port count, and physical dimensions for these are
-**not yet known** — do not design cutouts/bays for them until the user
-provides those specs. Once known, treat each as an additional small brick
-that needs its own bay + vent inside the same shell, wired into the internal
-power strip alongside the main 100W brick — this effectively raises total
-port count/capacity without a second full enclosure. Candidate uses once
-specs are confirmed: extra dedicated slot(s) if the two-watch-puck +
-phone-rotator + Echo-dot-adjacent allocation leaves the main brick's 6 ports
-too tight, or a hot-spare/backup brick for the "expansion" scenario in
-CLAUDE.md's Expansion section. The electronics-expert agent should treat
-this as an open question to resolve once dimensions/wattage are supplied,
-not assume they're needed.
+- Form factor: compact wall-plug cube with folding AC prongs, **no cord** —
+  it plugs directly into an outlet or a power strip, unlike the corded main
+  brick. That makes it harder to bury deep inside the enclosure unless it's
+  fed by an internal power strip; if used, plan its bay near the enclosure's
+  power-strip/cord-exit area rather than in the interior.
+- Two identical units in the pack — either or both could be pressed into
+  service.
+- Status: the Gakezi brick's 6 ports are enough to cover all of v1's
+  dedicated needs (2 watch pucks + phone rotator = 3 dedicated ports,
+  leaving 3 free including the fast-charge USB-A1 for swappable use) — see
+  Port allocation logic below. Treat the Caniifoto units as **optional
+  headroom**, not a v1 requirement: use one only if the electronics-expert
+  agent's port math says 3 spare ports isn't enough swappable capacity, or
+  reserve both, unused, as the literal hardware for the "Expansion" section's
+  future second unit. Don't design a bay for them into v1 unless a real need
+  shows up in the port-allocation pass.
 
 ### 2. Amazon Echo Dot (round smart speaker)
 - Currently just sits loose on the credenza, plugged into its own wall wart
@@ -140,8 +149,8 @@ not assume they're needed.
 
 ## Port allocation logic (for the Electronics/Charging agent to firm up)
 
-- 6 total outputs available (3x USB-A, 3x USB-C) on the brick, one USB-A is
-  fast-charge.
+- 6 total outputs on the confirmed Gakezi brick: **USB-C1/C2/C3 (PD 20W
+  each)** + **USB-A1 (fast-charge), USB-A2, USB-A3**.
 - Some devices only need charging every other day (occasional) — these are
   candidates for a shared/swappable labeled port rather than a dedicated
   permanent one.
@@ -150,11 +159,15 @@ not assume they're needed.
 - Two Galaxy Watch charging pucks will each permanently occupy one port
   (likely USB-C, confirm puck cable connector type).
 - Phone rotator cradle needs one permanently wired port.
-- Remaining ports (including the fast-charge USB-A) should be
-  labeled swappable general-purpose slots for phones/misc devices that
-  don't charge nightly.
+- That's 3 of the 6 ports spoken for, leaving 3 free (including fast-charge
+  USB-A1) as labeled swappable general-purpose slots for phones/misc devices
+  that don't charge nightly — 3 dedicated + 3 swappable comfortably fits
+  within the one confirmed brick; the optional Caniifoto supplemental
+  chargers above are not needed to make the numbers work for v1.
 - Echo Dot keeps its own wall wart and does **not** need a brick port —
   it just needs physical space/venting in the design.
+- Don't forget the brick's own AC power cord needs a routed exit to a wall
+  outlet, separate from and in addition to the 6 device-cable exits.
 - Final assignment of which physical port goes to which permanent device
   (and why) is a deliverable from the Electronics agent, not decided here.
 
