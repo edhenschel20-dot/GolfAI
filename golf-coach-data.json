@@ -1,6 +1,146 @@
 {
   "sessions": [
     {
+      "id": 1790199132307,
+      "label": "20260923_162859",
+      "golfer": "Ed",
+      "date": "2026-09-23T21:32:12.307Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "angle": "down-the-line",
+      "focus": "full",
+      "notes": null,
+      "handicap": null,
+      "typicalMiss": null,
+      "ballFlight": {
+        "start": "straight",
+        "curve": "straight",
+        "contact": "solid"
+      },
+      "promptVersion": 2,
+      "analysis": {
+        "positions": {
+          "address": {
+            "t": 10.6,
+            "note": "Rounded upper back posture, knees slightly flexed, arms hanging naturally under shoulders."
+          },
+          "takeaway": {
+            "t": 10.8,
+            "note": "Club head moves slightly inside the hand path early in the takeaway."
+          },
+          "top": {
+            "t": 11,
+            "note": "Extremely short, abbreviated backswing. Shoulder turn is limited, and the shaft is well short of parallel."
+          },
+          "downswing": {
+            "t": 11.2,
+            "note": "Transition is rushed due to the short backswing, leading to a slightly steep downswing plane."
+          },
+          "impact": {
+            "t": 11.4,
+            "note": "Solid contact, but shows slight early extension (standing up out of posture) at impact."
+          },
+          "finish": {
+            "t": 11.8,
+            "note": "Abbreviated finish, weight finishes mostly on the lead side but walks out of the balance quickly."
+          }
+        },
+        "phases": {
+          "setup": {
+            "observation": "Rounded upper back and slumped shoulders restrict athletic movement and rotation.",
+            "rating": "needs_work"
+          },
+          "backswing": {
+            "observation": "Very short backswing with limited shoulder turn, restricting potential power and depth.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "Rushed transition and slightly steep path, though managed well to square the face.",
+            "rating": "needs_work"
+          },
+          "impact": {
+            "observation": "Solid, clean contact with a relatively square face, despite some loss of posture.",
+            "rating": "good"
+          },
+          "follow_through": {
+            "observation": "Abbreviated finish, doesn't fully hold the balance.",
+            "rating": "needs_work"
+          }
+        },
+        "root_cause": "Rounded setup posture restricts thoracic mobility, leading to an extremely short backswing and a rushed, steep transition.",
+        "cause_chain": [
+          "Rounded upper back posture",
+          "Restricted shoulder turn",
+          "Abbreviated backswing",
+          "Rushed transition to generate speed",
+          "Slightly steep downswing and early extension"
+        ],
+        "what_sets_you_apart": "Despite a very short backswing and restricted turn, this golfer has excellent hand-eye coordination and timing, allowing him to deliver a square clubface and make solid contact.",
+        "ball_flight_check": "The straight, solid ball flight matches his ability to square the face at impact, but the short swing limits his distance potential.",
+        "priority_checkpoint": "At the top of the backswing, the lead shoulder should turn fully under the chin, and the hands should reach at least shoulder height.",
+        "confidence": "high",
+        "not_assessable": [
+          "weight shift",
+          "ball position"
+        ],
+        "scores": {
+          "setup": 62,
+          "backswing": 58,
+          "downswing": 64,
+          "impact": 72,
+          "follow_through": 60,
+          "tempo": 65,
+          "overall_score": 63
+        },
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Excellent hand-eye coordination",
+          "Square clubface at impact",
+          "Consistent, solid contact"
+        ],
+        "improvements": [
+          "Rounded upper back posture at address",
+          "Extremely short backswing",
+          "Rushed transition"
+        ],
+        "key_fault": "Restricted shoulder turn caused by rounded setup posture.",
+        "drill_1": {
+          "name": "Wall Posture Drill",
+          "description": "Stand with your back against a wall, heels 6 inches away. Flatten your lower and upper back against the wall, pulling your shoulders back. Hold for 30 seconds to feel a flatter spine. Reps: 5 times daily.",
+          "checkpoint": "A flatter, more athletic spine angle at address on your next video."
+        },
+        "drill_2": {
+          "name": "Shoulder Turn with Alignment Stick",
+          "description": "Hold an alignment stick across your chest. Take your setup and turn until the stick points down toward the ball (or slightly behind it). Focus on getting your lead shoulder under your chin. Reps: 15 slow practice turns.",
+          "checkpoint": "Lead shoulder fully turned under the chin at the top of the backswing."
+        },
+        "drill_3": {
+          "name": "Pause at the Top",
+          "description": "Hit 10 balls at 50% speed, pausing for a full second at the top of your backswing before starting the downswing. This combats the rushed transition.",
+          "checkpoint": "A distinct, controlled pause at the top of the swing."
+        },
+        "summary": "Your hand-eye coordination is excellent, allowing you to make solid contact despite a very short swing. Improving your setup posture will unlock a fuller shoulder turn, giving you more speed and a smoother transition.",
+        "metrics": {
+          "swing_plane": "slightly steep",
+          "tempo": "rushed transition",
+          "posture_retention": "stands up slightly through impact",
+          "balance_at_finish": "needs improvement",
+          "clubface_at_top": "square",
+          "shaft_lean_at_impact": "neutral"
+        },
+        "overall_score": 63
+      },
+      "svgDiagram": null,
+      "videoHash": "c2c06a6393609afb1a8a790fc0a347bccea089c47133b8a2629d78c029de8822",
+      "cardPath": "swing-cards/1790199132307.jpg"
+    },
+    {
       "id": 1782185157004,
       "label": "14754",
       "golfer": "Teresa",
