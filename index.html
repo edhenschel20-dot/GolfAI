@@ -364,6 +364,17 @@
     cursor: pointer;
   }
   .option-group select option { background: var(--fairway); }
+  .option-group input[type=number] {
+    width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(200,168,75,0.3); border-radius: 2px; color: var(--cream);
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; box-sizing: border-box;
+  }
+  .options-sub {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--flag); margin: 4px 0 -6px;
+  }
+  .options-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 420px) { .options-row.three { grid-template-columns: 1fr 1fr; } }
 
   .analyze-btn {
     width: 100%;
@@ -1011,6 +1022,68 @@
             </div>
           </div>
 
+          <div class="options-sub">About the golfer (optional — makes advice personal)</div>
+          <div class="options-row">
+            <div class="option-group">
+              <label>Handicap (guess is fine)</label>
+              <input type="number" id="golferHandicap" min="-5" max="54" step="1" inputmode="numeric" placeholder="e.g. 18 · shoot 90 ≈ 18">
+            </div>
+            <div class="option-group">
+              <label>Usual Miss</label>
+              <select id="typicalMiss">
+                <option value="">Not sure</option>
+                <option value="slice">Slice (curves right*)</option>
+                <option value="hook">Hook (curves left*)</option>
+                <option value="pull">Pull (straight left*)</option>
+                <option value="push">Push (straight right*)</option>
+                <option value="fat">Fat / chunk</option>
+                <option value="thin">Thin / topped</option>
+                <option value="shank">Shank / heel</option>
+                <option value="short">Short / weak</option>
+                <option value="inconsistent">All over the place</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="options-sub">What did the ball do on THIS swing? <span style="color:var(--divot)">(*right-handed)</span></div>
+          <div class="options-row three">
+            <div class="option-group">
+              <label>Started</label>
+              <select id="flightStart">
+                <option value="">Not sure</option>
+                <option value="left">Left</option>
+                <option value="straight">On line</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Curved</label>
+              <select id="flightCurve">
+                <option value="">Not sure</option>
+                <option value="hook">Hard left (hook)</option>
+                <option value="draw">A little left (draw)</option>
+                <option value="straight">Straight</option>
+                <option value="fade">A little right (fade)</option>
+                <option value="slice">Hard right (slice)</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Contact</label>
+              <select id="flightContact">
+                <option value="">Not sure</option>
+                <option value="solid">Solid</option>
+                <option value="fat">Fat</option>
+                <option value="thin">Thin / topped</option>
+                <option value="toe">Off the toe</option>
+                <option value="heel">Off the heel</option>
+                <option value="high">Skied / pop-up</option>
+                <option value="short">Putt: short</option>
+                <option value="long">Putt: long</option>
+                <option value="made">Putt: made it</option>
+              </select>
+            </div>
+          </div>
+
           <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap">
             <div style="flex:1;min-width:150px">
               <label class="form-label">Golfer <span style="color:var(--danger)">*</span></label>
@@ -1170,11 +1243,42 @@ let ghFileSHA = null;
 let syncDebounceTimer = null;
 const GH_DATA_FILE = 'golf-coach-data.json';
 
+// ---- Text repair: undo repeated UTF-8 double-encoding ("Ã¢Â€Â”" -> "—") ----
+// Safe on clean text: decoding a correct string throws or returns it unchanged.
+function repairText(s) {
+  if (typeof s !== 'string' || !/[Â-ï]/.test(s)) return s;
+  for (let i = 0; i < 20; i++) {
+    let t;
+    try { t = decodeURIComponent(escape(s)); } catch(e) { break; }
+    if (t === s) break;
+    s = t;
+  }
+  return s;
+}
+function repairDeep(v) {
+  if (typeof v === 'string') return repairText(v);
+  if (Array.isArray(v)) return v.map(repairDeep);
+  if (v && typeof v === 'object') { const o = {}; for (const k in v) o[k] = repairDeep(v[k]); return o; }
+  return v;
+}
+// Decode GitHub base64 content as UTF-8 (plain atob() was corrupting text on every load)
+function decodeGhContent(b64) {
+  const bin = atob(b64.replace(/\n/g, ''));
+  return new TextDecoder('utf-8').decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+// Merge two lists by id (union); local copy wins on duplicates
+function mergeById(localList, remoteList) {
+  const map = new Map();
+  (remoteList || []).forEach(x => map.set(String(x.id), x));
+  (localList || []).forEach(x => map.set(String(x.id), x));
+  return Array.from(map.values()).sort((a, b) => (b.id || 0) - (a.id || 0));
+}
+
 function loadState() {
   try { settings = JSON.parse(localStorage.getItem('caddieai_settings') || '{}'); } catch(e) { settings = {}; }
-  try { sessions = JSON.parse(localStorage.getItem('caddieai_sessions') || '[]'); } catch(e) { sessions = []; }
-  try { golfers = JSON.parse(localStorage.getItem('caddieai_golfers') || '[]'); } catch(e) { golfers = []; }
-  try { lessonPlans = JSON.parse(localStorage.getItem('caddieai_lessonplans') || '[]'); } catch(e) { lessonPlans = []; }
+  try { sessions = repairDeep(JSON.parse(localStorage.getItem('caddieai_sessions') || '[]')); } catch(e) { sessions = []; }
+  try { golfers = repairDeep(JSON.parse(localStorage.getItem('caddieai_golfers') || '[]')); } catch(e) { golfers = []; }
+  try { lessonPlans = repairDeep(JSON.parse(localStorage.getItem('caddieai_lessonplans') || '[]')); } catch(e) { lessonPlans = []; }
   try { ghFileSHA = localStorage.getItem('caddieai_sha') || null; } catch(e) {}
 }
 
@@ -1208,13 +1312,19 @@ async function loadFromGitHub() {
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
     ghFileSHA = data.sha; localStorage.setItem('caddieai_sha', ghFileSHA);
-    const content = JSON.parse(atob(data.content.replace(/\n/g, '')));
+    const rawText = decodeGhContent(data.content);
+    const content = repairDeep(JSON.parse(rawText));
     if (content.sessions) { sessions = content.sessions; }
     if (content.golfers) { golfers = content.golfers; }
     if (content.lessonPlans) { lessonPlans = content.lessonPlans; }
     saveSessionsToStorage();
     setSyncStatus('synced', 'github');
     renderHistory(); renderGolferSelects(); checkLessonTab(); renderSavedLessonPlans();
+    // One-time self-heal: if garbled text was repaired, write the clean copy back
+    if (JSON.stringify(content) !== JSON.stringify(JSON.parse(rawText))) {
+      console.log('Caddie AI: repaired garbled text in saved data, re-syncing clean copy');
+      scheduleSyncToGitHub();
+    }
   } catch(e) { setSyncStatus('error', 'load failed'); console.error(e); }
 }
 
@@ -1229,8 +1339,21 @@ async function syncToGitHub() {
     if (!res.ok) {
       const err = await res.json();
       if (err.message && err.message.includes('sha')) {
+        // Someone else saved first: pull their copy and MERGE, never blind-overwrite
         const getRes = await fetch(ghApiUrl(), { headers: ghHeaders() });
-        if (getRes.ok) { const d = await getRes.json(); ghFileSHA = d.sha; localStorage.setItem('caddieai_sha', ghFileSHA); body.sha = ghFileSHA; }
+        if (getRes.ok) {
+          const d = await getRes.json(); ghFileSHA = d.sha; localStorage.setItem('caddieai_sha', ghFileSHA); body.sha = ghFileSHA;
+          try {
+            const remote = repairDeep(JSON.parse(decodeGhContent(d.content)));
+            sessions = mergeById(sessions, remote.sessions);
+            lessonPlans = mergeById(lessonPlans, remote.lessonPlans);
+            golfers = Array.from(new Set([...(remote.golfers || []), ...golfers].map(g => typeof g === 'string' ? g : JSON.stringify(g))))
+              .map(g => g.startsWith('{') ? JSON.parse(g) : g);
+            saveSessionsToStorage();
+            body.content = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions, golfers, lessonPlans }, null, 2))));
+            renderHistory(); renderGolferSelects();
+          } catch(mergeErr) { console.error('merge failed', mergeErr); throw mergeErr; }
+        }
         res = await fetch(ghApiUrl(), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
         if (!res.ok) throw new Error(await res.text());
       } else throw new Error(JSON.stringify(err));
@@ -1337,8 +1460,14 @@ async function hashFile(file) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function findDuplicateSession(hash, golferName) {
-  return sessions.find(s => s.videoHash === hash && s.golfer === golferName);
+function findDuplicateSession(hash) {
+  // Check across ALL golfers so a clip filed under the wrong person is caught too
+  return hash ? sessions.find(s => s.videoHash === hash) : null;
+}
+
+function resetShotInputs() {
+  ['flightStart', 'flightCurve', 'flightContact'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const n = document.getElementById('swingNotes'); if (n) n.value = '';
 }
 
 function updateAnalyzeButtonState() {
@@ -1358,6 +1487,7 @@ function onFileSelect(e) {
   if (!file) return;
   currentFile = file;
   currentFileHash = null;
+  resetShotInputs();
   document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
   const url = URL.createObjectURL(file);
   const vid = document.getElementById('videoPreview');
@@ -1379,6 +1509,7 @@ zone.addEventListener('drop', e => {
   if (file && file.type.startsWith('video/')) {
     currentFile = file;
     currentFileHash = null;
+    resetShotInputs();
     document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
     const vid = document.getElementById('videoPreview');
     vid.src = URL.createObjectURL(file);
@@ -1393,12 +1524,14 @@ async function checkForDuplicateVideo(file) {
   if (warnEl) warnEl.style.display = 'none';
   try {
     const hash = await hashFile(file);
+    if (file !== currentFile) return; // user picked a different video meanwhile
     currentFileHash = hash;
     const golferName = document.getElementById('golferSelect')?.value || '';
-    const dup = findDuplicateSession(hash, golferName);
+    const dup = findDuplicateSession(hash);
     if (dup && warnEl) {
       const dateStr = new Date(dup.date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-      warnEl.innerHTML = `⚠️ This exact video was already analyzed for ${escHtml(golferName)} as "<strong>${escHtml(dup.label)}</strong>" on ${dateStr}. You can still analyze it again, but check History first if this was a duplicate upload.`;
+      const other = dup.golfer && golferName && dup.golfer !== golferName;
+      warnEl.innerHTML = `⚠️ This exact video was already analyzed for <strong>${escHtml(dup.golfer || 'someone')}</strong> as "<strong>${escHtml(dup.label)}</strong>" on ${dateStr}.${other ? ` You have <strong>${escHtml(golferName)}</strong> selected — make sure the right golfer is picked.` : ''} You can still analyze it again, but check History first if this was a duplicate upload.`;
       warnEl.style.display = 'block';
     }
   } catch(e) { /* hashing failed silently — not critical */ }
@@ -1423,12 +1556,27 @@ async function analyzeSwing() {
   const club  = document.getElementById('clubUsed').value;
   const focus = document.getElementById('focusArea').value;
   const notes = document.getElementById('swingNotes').value;
+  const hcpRaw = document.getElementById('golferHandicap').value.trim();
+  const handicap = hcpRaw === '' ? null : Math.max(-5, Math.min(54, parseInt(hcpRaw, 10)));
+  const typicalMiss = document.getElementById('typicalMiss').value;
+  const ballFlight = {
+    start: document.getElementById('flightStart').value,
+    curve: document.getElementById('flightCurve').value,
+    contact: document.getElementById('flightContact').value
+  };
+  const duration = document.getElementById('videoPreview')?.duration || 0;
 
   showLoading();
 
   try {
-    const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes });
-    currentAnalysis = { analysis, skill, angle, club, focus, notes, fileName: currentFile.name };
+    // Make sure the duplicate-detection fingerprint is finished before we go on
+    if (!currentFileHash) {
+      updateLoadingText('Checking video...');
+      try { currentFileHash = await hashFile(currentFile); } catch(e) {}
+    }
+    const videoHash = currentFileHash;
+    const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, duration });
+    currentAnalysis = { analysis, skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, videoHash, fileName: currentFile.name, savedId: null };
     renderResults(currentAnalysis);
 
     // If Claude key available, generate swing diagram asynchronously
@@ -1438,6 +1586,11 @@ async function analyzeSwing() {
         if (svg) {
           currentAnalysis.svgDiagram = svg;
           injectSwingDiagram(svg);
+          // If the session was saved before the diagram finished, attach it now
+          if (currentAnalysis.savedId) {
+            const saved = sessions.find(s => s.id === currentAnalysis.savedId);
+            if (saved && !saved.svgDiagram) { saved.svgDiagram = svg; saveSessionsToStorage(); scheduleSyncToGitHub(); }
+          }
         }
       }).catch(() => {}); // silent fail — diagram is bonus
     }
@@ -1462,7 +1615,7 @@ async function callGeminiAnalysis(file, opts) {
 
   const skillDescriptions = {
     beginner:     'complete beginner (just starting golf, unfamiliar with fundamentals)',
-    intermediate: 'intermediate golfer (plays regularly, knows basics, scores in the 90s-100s)',
+    intermediate: 'intermediate golfer (plays regularly, knows the basics, typically shoots 85-105 for 18 holes)',
     advanced:     'advanced golfer (low handicap, single digits, competitive amateur)',
     scratch:      'scratch or near-scratch golfer (competitive, looking for tour-level refinements)'
   };
@@ -1475,38 +1628,122 @@ async function callGeminiAnalysis(file, opts) {
     'unknown':        'unknown angle — work with whatever is visible.'
   };
 
-  const prompt = `You are an expert PGA-certified golf instructor with 20+ years of coaching experience. 
-Analyze this golf swing video carefully.
+  const isPutt = opts.club === 'putter';
+  const flightWords = {
+    start: { left: 'started left of target', straight: 'started on line', right: 'started right of target' },
+    curve: { hook: 'curved hard left (hook)', draw: 'curved slightly left (draw)', straight: 'flew straight', fade: 'curved slightly right (fade)', slice: 'curved hard right (slice)' },
+    contact: { solid: 'solid contact', fat: 'hit it fat (ground first)', thin: 'hit it thin / topped', toe: 'struck off the toe', heel: 'struck off the heel', high: 'skied / popped up', short: 'putt finished short', long: 'putt finished long', made: 'putt went in' }
+  };
+  const bf = opts.ballFlight || {};
+  const flightParts = [flightWords.start[bf.start], flightWords.curve[bf.curve], flightWords.contact[bf.contact]].filter(Boolean);
+  const flightText = flightParts.length ? flightParts.join(', ') : 'not reported';
+  const missText = opts.typicalMiss ? opts.typicalMiss : 'not reported';
+  const hcpText = (opts.handicap === null || opts.handicap === undefined || isNaN(opts.handicap)) ? 'not reported' : String(opts.handicap);
 
-Golfer profile:
-- Skill level: ${skillDescriptions[opts.skill]}
-- Club being used: ${opts.club}
+  const studentBlock = `STUDENT (right-handed unless the video shows otherwise)
+- Club: ${opts.club}
 - Camera angle: ${angleDescriptions[opts.angle] || opts.angle}
-- Focus area requested: ${opts.focus}
-${opts.notes ? `- Golfer notes: ${opts.notes}` : ''}
+- Self-reported level: ${skillDescriptions[opts.skill]}
+- Handicap: ${hcpText}
+- Usual miss on the course: ${missText}
+- What the ball did on THIS swing: ${flightText}
+- Focus requested: ${opts.focus}
+${opts.notes ? `- Notes from the golfer: ${opts.notes}` : ''}`;
 
-IMPORTANT: The camera may only show a partial view. Analyze only what is visible — do not penalize scores for phases not visible from this angle.
+  const rubric = `SCORING RUBRIC (0-100). Every score must be justified by what you observed.
+- 90-100: tour / plus-handicap quality
+- 80-89: low single-digit handicap
+- 70-79: roughly 6-12 handicap
+- 60-69: roughly 13-19 handicap
+- 50-59: roughly 20-27 handicap
+- 35-49: 28+ handicap or newer golfer with several fundamentals missing
+- under 35: just starting out
+Score each phase on its own merits: a golfer with a great setup and a poor transition should show a big gap between those scores. Use the whole range. Do NOT default to the 60s-70s. The handicap is a sanity check only — score what you see.`;
 
-Respond with ONLY a valid JSON object. No markdown, no code fences, no extra text. Use real integer values for all scores. Return this exact structure:
+  const visibility = `WHAT A PHONE VIDEO CAN AND CANNOT SHOW
+- Never output degrees, percentages, club-path numbers or tempo ratios as if measured. Use plain words ("steep", "a bit shallow", "quick from the top", "stays in posture").
+- From down-the-line you usually cannot judge sway, weight shift, ball position or head movement toward the target. List anything you could not judge in "not_assessable" instead of guessing.
+- If the view is blurry, cropped, or the golfer is small in frame, say so and set confidence to "low".`;
 
-{"overall_score":72,"scores":{"setup":75,"backswing":70,"downswing":68,"impact":72,"follow_through":74,"tempo":73},"visible_phases":["setup","backswing","downswing","impact","follow_through"],"strengths":["Good shoulder rotation","Solid stance width"],"improvements":["Early extension through impact","Over-the-top downswing path","Grip pressure too tight at top"],"key_fault":"Over-the-top swing path causing pull-draws and loss of power.","drill_1":{"name":"Headcover Drill","description":"Place a headcover just outside the ball. Practice swinging without hitting it to train an inside-out path. Do 20 slow swings."},"drill_2":{"name":"Pause at the Top","description":"Make your normal backswing then pause 2 seconds at the top before starting down. Do 15 reps with a 7-iron."},"drill_3":{"name":"Alignment Stick Path Drill","description":"Lay a stick pointing at your target and swing parallel to it through impact. 10 minutes of slow-motion swings."},"summary":"Your swing shows good fundamentals in setup and shoulder rotation. The primary issue is an over-the-top downswing path.","phases":{"setup":{"observation":"Stance width appropriate for club. Ball position slightly forward of center. Spine angle good at 35 degrees. Grip appears neutral.","rating":"good"},"backswing":{"observation":"Shoulder turn incomplete at roughly 80 degrees. Lead arm breaks down slightly past parallel. Wrist hinge is early and steep.","rating":"needs_work"},"downswing":{"observation":"Transition rushes from the top. Upper body initiates before lower body, creating over-the-top path. Hip slide excessive.","rating":"fault"},"impact":{"observation":"Early extension through the hitting zone. Hands slightly behind the ball at impact. Face appears square to slightly open.","rating":"needs_work"},"follow_through":{"observation":"Abbreviated finish due to early extension. Weight transfer to lead side incomplete. Good extension of arms through the zone.","rating":"good"}},"metrics":{"club_path_estimate":"4 degrees out-to-in","tempo_ratio":"2.8:1 (backswing:downswing)","hip_turn_estimate":"38 degrees","shoulder_turn_estimate":"82 degrees","swing_plane":"slightly steep","weight_transfer":"moderate — 60% lead side at finish","impact_position":"hands slightly behind ball"}}
+  let prompt;
+  if (!isPutt) {
+    prompt = `You are a PGA Class-A teaching professional reviewing ONE swing video of a real student. Most amateurs share symptoms (coming over the top, early extension). Your value is finding what is SPECIFIC to this golfer — the cause behind the symptoms — and how this swing differs from a typical amateur's.
 
-Now analyze the actual video and return a JSON object in exactly that format with your real observations. For phases, rating must be one of: "good", "needs_work", or "fault". Only include phases that are visible from this camera angle.`;
+${studentBlock}
 
-  const body = {
-    contents: [{
-      parts: [
-        { inline_data: { mime_type: mimeType, data: base64 } },
-        { text: prompt }
-      ]
-    }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 2500 }
+HOW TO WORK — in this order:
+1. Watch the whole clip closely. Find these positions and note the time (seconds) of each: address, takeaway (shaft parallel to ground), top, downswing (lead arm parallel), impact, finish.
+2. At each position write what you actually SEE: grip, posture, trail arm, lead wrist, club position relative to hands and body, hips and knees, head, shaft lean, balance. Say "not visible" rather than guess.
+3. THEN choose ONE root cause: the earliest thing in the motion that explains the most of the other problems. Over-the-top and early extension are usually SYMPTOMS — name what causes them for THIS golfer (for example grip, setup/posture, clubface at the top, arms-only takeaway, no trail-hip turn, lifting/standing up, sequencing, balance, or a likely mobility limit). Only make OTT or early extension the key fault if you clearly see it AND nothing earlier explains it.
+4. Check your diagnosis against the reported ball flight and usual miss. If they don't fit, say so and rethink.
+5. Score with the rubric.
+
+${visibility}
+
+${rubric}
+
+DRILLS: drill_1 must directly fix the ROOT CAUSE, drill_2 supports it, drill_3 may target a secondary issue. Each drill: reps, and a checkpoint the golfer can verify on their next video. Avoid stock drills (e.g. the pump drill) unless they are truly the best fix for this root cause.
+
+OUTPUT: Only a JSON object — no markdown, no code fences. The two examples below show the FORMAT ONLY. They describe two different imaginary golfers. Do NOT copy their faults, scores, wording or drills — neither of them is this golfer.
+
+FORMAT EXAMPLE 1 (imaginary 30-handicap):
+{"positions":{"address":{"t":0.3,"note":"Very weak grip, no knuckles visible on lead hand; standing tall with knees locked"},"takeaway":{"t":0.9,"note":"Club picked up with hands, face pointing at the sky"},"top":{"t":1.6,"note":"Short arm swing, shoulders barely turn, face wide open"},"downswing":{"t":1.8,"note":"Shoulders spin open first"},"impact":{"t":1.95,"note":"Hands behind ball, face open"},"finish":{"t":2.6,"note":"Falls back onto trail foot"}},"phases":{"setup":{"observation":"Weak grip and locked knees leave no athletic posture","rating":"fault"},"backswing":{"observation":"Hands lift the club; almost no shoulder turn","rating":"fault"},"downswing":{"observation":"Shoulders unwind first to square an open face","rating":"fault"},"impact":{"observation":"Scooping motion, hands trailing the clubhead","rating":"needs_work"},"follow_through":{"observation":"Weight stays back, unbalanced finish","rating":"needs_work"}},"root_cause":"Weak grip leaves the clubface wide open, so every move after that is an attempt to square it.","cause_chain":["Weak grip","Face open at the top","Shoulders spin open to save it","Out-to-in swipe","Weak slice"],"what_sets_you_apart":"Unlike most beginners, this golfer's tempo is smooth and unhurried — the problems are almost all grip and setup, which are the fastest things to fix.","ball_flight_check":"Reported slice matches an open face and out-to-in swipe.","priority_checkpoint":"At address, see two to three knuckles on the lead hand; at the top, the clubface should match the lead forearm angle.","confidence":"high","not_assessable":["weight shift","ball position"],"scores":{"setup":38,"backswing":35,"downswing":36,"impact":40,"follow_through":42,"tempo":58},"overall_score":39,"visible_phases":["setup","backswing","downswing","impact","follow_through"],"strengths":["Smooth, unhurried rhythm","Keeps eyes on the ball"],"improvements":["Grip far too weak","Hands lift the club instead of turning","Falls back at finish"],"key_fault":"Weak grip — the open clubface is driving the slice and the swing compensations.","drill_1":{"name":"Grip Check in Mirror","description":"Take your grip 20 times in a mirror until you see 2-3 knuckles each time. Checkpoint: same knuckles visible at address on your next video."},"drill_2":{"name":"Split-Hand Takeaway","description":"Hands 3 inches apart, turn chest to move the club back to hip height. 15 slow reps. Checkpoint: toe of club points up at hip height."},"drill_3":{"name":"Hold the Finish","description":"Hit 10 half shots and hold a balanced finish for 3 seconds on your lead foot."},"summary":"The core issue is a very weak grip; fix it first and much of the slice goes away. Your rhythm is a real asset.","metrics":{"swing_plane":"steep","tempo":"smooth and even","posture_retention":"stands up through impact","balance_at_finish":"falls back","clubface_at_top":"wide open","shaft_lean_at_impact":"backward (scooping)"}}
+
+FORMAT EXAMPLE 2 (imaginary 4-handicap):
+{"positions":{"address":{"t":0.5,"note":"Athletic posture, neutral grip"},"takeaway":{"t":1.0,"note":"One-piece, club outside hands slightly"},"top":{"t":1.7,"note":"Full turn, club a touch across the line"},"downswing":{"t":1.95,"note":"Hips stall, arms fall behind the body"},"impact":{"t":2.1,"note":"Hands flip to square the face"},"finish":{"t":2.8,"note":"Balanced, full"}},"phases":{"setup":{"observation":"Excellent athletic posture and balance","rating":"good"},"backswing":{"observation":"Full turn; club slightly across the line at the top","rating":"good"},"downswing":{"observation":"Hip rotation stalls, arms get trapped behind","rating":"fault"},"impact":{"observation":"Hands release early to save the face","rating":"needs_work"},"follow_through":{"observation":"Full, balanced finish","rating":"good"}},"root_cause":"Lead hip stops turning in the downswing, so the arms get stuck behind the body and the hands have to flip.","cause_chain":["Hips stall","Arms trapped behind","Path too far in-to-out","Hands flip to square","Blocks and quick hooks"],"what_sets_you_apart":"The opposite of most amateurs: plenty of turn and a shallow path — this golfer's miss comes from being too far from the inside, not over the top.","ball_flight_check":"Reported block-right and occasional hook fit a stuck, flip pattern.","priority_checkpoint":"At impact, belt buckle should face ahead of the ball, not at it.","confidence":"medium","not_assessable":["weight shift"],"scores":{"setup":90,"backswing":86,"downswing":74,"impact":78,"follow_through":88,"tempo":84},"overall_score":83,"visible_phases":["setup","backswing","downswing","impact","follow_through"],"strengths":["Athletic, repeatable setup","Full shoulder turn","Balanced finish"],"improvements":["Hip rotation stalls in the downswing","Early release through impact"],"key_fault":"Stalled hip rotation gets the arms stuck, causing blocks and hooks.","drill_1":{"name":"Step-Change Drill","description":"Feet together, step lead foot toward target to start the downswing. 15 reps with a mid iron. Checkpoint: belt buckle faces the target at the finish."},"drill_2":{"name":"Trail Hand Only Shots","description":"20 half swings with trail hand only, feeling the chest rotate through. Checkpoint: clubface stable, not flipping."},"drill_3":{"name":"Pre-set Impact Rehearsal","description":"Hold impact position with hips open for 5 seconds, 10 reps."},"summary":"A strong swing whose misses come from the hips stopping. Keep the body turning and the flip goes away.","metrics":{"swing_plane":"slightly shallow in transition","tempo":"quick but controlled","posture_retention":"good","balance_at_finish":"excellent","clubface_at_top":"slightly closed","shaft_lean_at_impact":"neutral"}}
+
+Now analyze the ACTUAL video. Return one JSON object in that format with your own observations. Phase rating must be "good", "needs_work" or "fault". Only include phases visible from this angle. Confidence must be "high", "medium" or "low".`;
+  } else {
+    prompt = `You are a PGA Class-A teaching professional and putting specialist reviewing ONE putting-stroke video of a real student. Do not use full-swing concepts (hip turn, downswing, weight shift, swing plane). Find what is SPECIFIC to this golfer.
+
+${studentBlock}
+
+HOW TO WORK — in this order:
+1. Find address, end of backstroke, impact, and end of follow-through; note the time (seconds) of each.
+2. At each, write what you actually SEE: eye position over the ball, grip, posture, shoulder vs. wrist motion, putter face, head and lower body stillness, stroke length back vs. through, acceleration.
+3. THEN choose ONE root cause that explains most of the other problems.
+4. Check it against the reported result (short, long, left, right, made). If it doesn't fit, say so.
+5. Score with the rubric (same 0-100 scale; judge the putting stroke only).
+
+${visibility}
+
+${rubric}
+
+DRILLS: drill_1 must fix the ROOT CAUSE. Each drill: reps and a checkpoint the golfer can verify.
+
+OUTPUT: Only a JSON object — no markdown. The example below shows the FORMAT ONLY for an imaginary golfer. Do NOT copy its content.
+
+FORMAT EXAMPLE:
+{"positions":{"address":{"t":0.4,"note":"Eyes well inside the ball, hands behind it"},"backstroke":{"t":1.0,"note":"Long backstroke, wrists hinge"},"impact":{"t":1.4,"note":"Decelerates, wrists flip"},"finish":{"t":1.8,"note":"Short follow-through, head lifts early"}},"phases":{"setup":{"observation":"Eyes inside the ball line; hands behind the ball","rating":"needs_work"},"backstroke":{"observation":"Too long for the putt, wrists hinge","rating":"fault"},"impact":{"observation":"Putter slows down and face rotates","rating":"fault"},"follow_through":{"observation":"Much shorter than backstroke; head comes up","rating":"needs_work"}},"root_cause":"Backstroke is far too long, so the golfer has to slow down into the ball, which makes the wrists flip.","cause_chain":["Backstroke too long","Deceleration","Wrist flip","Face twists","Poor distance and line"],"what_sets_you_apart":"Setup is fine for most amateurs, but the stroke length ratio is the reverse of good putters (long back, short through).","ball_flight_check":"Reported short-and-left fits deceleration with a closing face.","priority_checkpoint":"Follow-through at least as long as the backstroke.","confidence":"medium","not_assessable":["green read"],"scores":{"setup":62,"alignment":58,"stroke_path":55,"face_control":48,"head_stability":60,"tempo":45},"overall_score":54,"visible_phases":["setup","backstroke","impact","follow_through"],"strengths":["Comfortable posture"],"improvements":["Backstroke too long","Decelerates into the ball","Head lifts early"],"key_fault":"Overly long backstroke forcing deceleration and a wristy flip.","drill_1":{"name":"Tee Gate Stroke Length","description":"Two tees: one 6 in behind, one 8 in ahead. Stroke from tee to tee 20 times. Checkpoint: follow-through reaches the front tee."},"drill_2":{"name":"Metronome Putting","description":"Set 76 bpm; back on one beat, through on the next. 3 minutes."},"drill_3":{"name":"Listen, Don't Look","description":"Hit 10 three-footers and keep your eyes down until you hear the ball drop."},"summary":"Shorten the backstroke and accelerate through; that fixes the flip and the distance control.","metrics":{"eye_position":"inside the ball","stroke_ratio":"long back, short through","putter_face":"closes through impact","head_stability":"lifts early","lower_body":"still","acceleration":"decelerates"}}
+
+Now analyze the ACTUAL video. Return one JSON object in that format. Phase rating must be "good", "needs_work" or "fault". Confidence must be "high", "medium" or "low".`;
+  }
+
+  // Look at more frames so the fast part of the swing isn't missed (default is ~1 frame/sec)
+  const fps = !opts.duration ? 8 : opts.duration <= 8 ? 15 : opts.duration <= 15 ? 10 : opts.duration <= 30 ? 5 : 2;
+
+  const buildBody = (advanced) => {
+    const videoPart = { inline_data: { mime_type: mimeType, data: base64 } };
+    if (advanced) videoPart.video_metadata = { fps };
+    const gen = { temperature: 0.2, maxOutputTokens: 8192 };
+    if (advanced) gen.responseMimeType = 'application/json';
+    return { contents: [{ parts: [videoPart, { text: prompt }] }], generationConfig: gen };
   };
 
-  const res = await fetch(
+  const callOnce = (advanced) => fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${settings.geminiKey}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildBody(advanced)) }
   );
+
+  let res = await callOnce(true);
+  // Safety net: if the newer options are rejected, retry the old simple way so the app still works
+  if (res.status === 400) {
+    const peek = await res.clone().text();
+    if (/video_metadata|videoMetadata|fps|response_mime_type|responseMimeType|Unknown name|Invalid JSON payload/i.test(peek)) {
+      console.warn('Gemini rejected advanced options, retrying basic request:', peek.slice(0, 200));
+      res = await callOnce(false);
+    }
+  }
 
   if (!res.ok) {
     const errText = await res.text();
@@ -1522,21 +1759,24 @@ Now analyze the actual video and return a JSON object in exactly that format wit
   }
 
   const data = await res.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  // Join all answer parts, skipping any "thinking" parts
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const text = parts.filter(p => p.text && !p.thought).map(p => p.text).join('') || '';
+  if (!text && data.candidates?.[0]?.finishReason) {
+    throw new Error('Gemini returned no answer (reason: ' + data.candidates[0].finishReason + '). Try a shorter clip.');
+  }
 
   // Robust JSON extraction and sanitization
   let clean = text.replace(/```json|```/g, '').trim();
-  // Remove any leading/trailing non-JSON text
   const firstBrace = clean.indexOf('{');
   const lastBrace = clean.lastIndexOf('}');
   if (firstBrace > 0) clean = clean.slice(firstBrace);
-  if (lastBrace < clean.length - 1) clean = clean.slice(0, lastBrace + 1);
+  if (lastBrace >= 0 && lastBrace < clean.length - 1) clean = clean.slice(0, clean.lastIndexOf('}') + 1);
 
   let parsed;
   try {
     parsed = JSON.parse(clean);
   } catch(e) {
-    // Last resort: try to fix common issues (trailing commas, unquoted values)
     const fixed = clean
       .replace(/,\s*([}\]])/g, '$1')  // trailing commas
       .replace(/:\s*<[^>]+>/g, ': 0') // leftover placeholders like <0-100>
@@ -1544,19 +1784,23 @@ Now analyze the actual video and return a JSON object in exactly that format wit
     try {
       parsed = JSON.parse(fixed);
     } catch(e2) {
-      // Show the raw response so user can see what Gemini actually said
       const preview = text.slice(0, 300);
       throw new Error('Gemini response could not be parsed. Raw response: ' + preview);
     }
   }
 
-  // Ensure all score values are numbers
+  // Ensure all score values are sane integers 0-100
+  const clamp = v => Math.max(0, Math.min(100, parseInt(v) || 0));
   if (parsed.scores) {
-    Object.keys(parsed.scores).forEach(k => {
-      parsed.scores[k] = parseInt(parsed.scores[k]) || 0;
-    });
+    Object.keys(parsed.scores).forEach(k => { parsed.scores[k] = clamp(parsed.scores[k]); });
   }
-  if (parsed.overall_score) parsed.overall_score = parseInt(parsed.overall_score) || 0;
+  if (parsed.overall_score !== undefined) parsed.overall_score = clamp(parsed.overall_score);
+  if (!parsed.overall_score && parsed.scores) {
+    const vals = Object.values(parsed.scores).filter(v => v > 0);
+    if (vals.length) parsed.overall_score = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  }
+  if (!Array.isArray(parsed.cause_chain)) parsed.cause_chain = parsed.cause_chain ? [String(parsed.cause_chain)] : [];
+  if (!Array.isArray(parsed.not_assessable)) parsed.not_assessable = parsed.not_assessable ? [String(parsed.not_assessable)] : [];
 
   return parsed;
 }
@@ -1569,6 +1813,7 @@ async function generateSwingDiagram(analysis) {
   if (!settings.claudeKey) return null;
 
   const faultSummary = [
+    analysis.root_cause ? 'ROOT CAUSE (show this most prominently): ' + analysis.root_cause : null,
     analysis.key_fault,
     ...(analysis.improvements || []).slice(0, 3)
   ].filter(Boolean).join(' | ');
@@ -1644,6 +1889,59 @@ function injectSwingDiagram(svg) {
 // ============================================================
 // RENDER RESULTS
 // ============================================================
+// ============================================================
+// ROOT-CAUSE INSIGHTS (prompt v2) — shared by results, history and print
+// ============================================================
+function insightsHTML(a, mode) {
+  if (!a || !a.root_cause) return '';
+  const light = mode !== 'dark';
+  const c = light
+    ? { bg:'#f4f8fb', border:'#c9dbe8', title:'#2b5d7d', text:'#333', chip:'#e6eef4', accentBg:'#fff8e6', accentBorder:'#e8d49a', accentTitle:'#8a6a20' }
+    : { bg:'rgba(122,184,212,.08)', border:'rgba(122,184,212,.3)', title:'var(--sky)', text:'var(--cream)', chip:'rgba(122,184,212,.15)', accentBg:'rgba(200,168,75,.1)', accentBorder:'rgba(200,168,75,.4)', accentTitle:'var(--flag)' };
+  const label = t => `<div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:${c.title};margin-bottom:6px">${t}</div>`;
+  const conf = (a.confidence || '').toLowerCase();
+  const confColor = conf === 'high' ? '#4a8c4a' : conf === 'low' ? '#c44b2b' : '#b8860b';
+  const chain = (a.cause_chain || []).filter(Boolean);
+  return `
+    <div style="background:${c.bg};border:1px solid ${c.border};border-radius:4px;padding:14px 16px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        ${label('🎯 Root Cause')}
+        ${conf ? `<span style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:${confColor};border:1px solid ${confColor};padding:1px 7px;border-radius:2px;margin-bottom:6px">${escHtml(conf)} confidence</span>` : ''}
+      </div>
+      <div style="font-size:.95rem;line-height:1.6;color:${c.text};font-weight:600">${escHtml(a.root_cause)}</div>
+      ${chain.length > 1 ? `
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px">
+        ${chain.map((step, i) => `<span style="background:${c.chip};color:${c.text};font-size:.78rem;padding:3px 8px;border-radius:3px">${escHtml(step)}</span>${i < chain.length - 1 ? `<span style="color:${c.title}">→</span>` : ''}`).join('')}
+      </div>` : ''}
+      ${a.what_sets_you_apart ? `
+      <div style="margin-top:12px">${label('🧬 What Sets This Swing Apart')}
+        <div style="font-size:.88rem;line-height:1.6;color:${c.text}">${escHtml(a.what_sets_you_apart)}</div>
+      </div>` : ''}
+      ${a.ball_flight_check ? `
+      <div style="margin-top:12px">${label('⛳ Ball Flight Check')}
+        <div style="font-size:.85rem;line-height:1.6;color:${c.text}">${escHtml(a.ball_flight_check)}</div>
+      </div>` : ''}
+      ${a.not_assessable?.length ? `
+      <div style="margin-top:10px;font-size:.75rem;color:${light ? '#777' : 'var(--divot)'}">Couldn't judge from this angle: ${a.not_assessable.map(escHtml).join(', ')}</div>` : ''}
+    </div>
+    ${a.priority_checkpoint ? `
+    <div style="background:${c.accentBg};border:1px solid ${c.accentBorder};border-radius:4px;padding:12px 16px;margin-bottom:14px">
+      <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:${c.accentTitle};margin-bottom:6px">✅ Check This on Your Next Video</div>
+      <div style="font-size:.9rem;line-height:1.6;color:${c.text}">${escHtml(a.priority_checkpoint)}</div>
+    </div>` : ''}
+  `;
+}
+
+function shotContextText(s) {
+  const bits = [];
+  if (s.handicap !== null && s.handicap !== undefined && s.handicap !== '') bits.push('hcp ' + s.handicap);
+  if (s.typicalMiss) bits.push('usual miss: ' + s.typicalMiss);
+  const bf = s.ballFlight || {};
+  const flight = [bf.start && ('start ' + bf.start), bf.curve, bf.contact].filter(Boolean).join(' / ');
+  if (flight) bits.push('this shot: ' + flight);
+  return bits.join(' · ');
+}
+
 function renderResults(data) {
   const a = data.analysis;
   const panel = document.getElementById('resultsContent');
@@ -1685,6 +1983,8 @@ function renderResults(data) {
       <div class="notice notice-warn" style="margin-bottom:14px">
         ⚠️ <strong>Key fault:</strong> ${a.key_fault}
       </div>` : ''}
+
+      ${insightsHTML(a, 'dark')}
 
       <div class="result-section">
         <div class="result-section-title">💬 Coaching Summary</div>
@@ -1819,6 +2119,12 @@ function showError(msg) {
 // ============================================================
 function saveSession() {
   if (!currentAnalysis) return;
+  const btn = document.querySelector('.save-row .btn-gold');
+  // Block double-saves (a second tap was creating identical duplicate sessions)
+  if (currentAnalysis.savedId) {
+    if (btn) { btn.textContent = '✓ Already saved'; btn.disabled = true; }
+    return;
+  }
   const label = document.getElementById('sessionLabel')?.value || 'Session';
   const golferName = document.getElementById('golferSelect')?.value || '';
   const session = {
@@ -1829,16 +2135,21 @@ function saveSession() {
     skill: currentAnalysis.skill,
     club: currentAnalysis.club,
     angle: currentAnalysis.angle,
+    focus: currentAnalysis.focus || null,
+    notes: currentAnalysis.notes || null,
+    handicap: currentAnalysis.handicap ?? null,
+    typicalMiss: currentAnalysis.typicalMiss || null,
+    ballFlight: currentAnalysis.ballFlight || null,
+    promptVersion: 2,
     analysis: currentAnalysis.analysis,
     svgDiagram: currentAnalysis.svgDiagram || null,
-    videoHash: currentFileHash || null
+    videoHash: currentAnalysis.videoHash || currentFileHash || null
   };
+  currentAnalysis.savedId = session.id;
   sessions.unshift(session);
   saveSessionsToStorage();
   scheduleSyncToGitHub();
-  // Show saved feedback
-  const btn = document.querySelector('.save-row .btn-gold');
-  if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => btn.textContent = 'Save Session', 2000); }
+  if (btn) { btn.textContent = '✓ Saved!'; btn.disabled = true; }
 }
 
 function renderHistory() {
@@ -1907,6 +2218,7 @@ function viewSession(id) {
       <div>
         <h2 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--ink)">${escHtml(s.label)}</h2>
         <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:#888;letter-spacing:0.08em;margin-top:4px">${dateStr} · ${s.club} · ${s.skill} · ${s.angle}</p>
+        ${shotContextText(s) ? `<p style="font-family:'DM Mono',monospace;font-size:0.62rem;color:#888;letter-spacing:0.06em;margin-top:2px">${escHtml(shotContextText(s))}</p>` : ''}
       </div>
       <button class="btn btn-secondary" onclick="document.getElementById('detailModal').classList.remove('open')">Close</button>
     </div>
@@ -1925,6 +2237,8 @@ function viewSession(id) {
     </div>
 
     ${a.key_fault ? `<div style="padding:12px 14px;background:#fff0ec;border:1px solid #f5c5b5;border-radius:3px;font-size:0.85rem;color:#c44b2b;margin-bottom:14px"><strong>Key fault:</strong> ${a.key_fault}</div>` : ''}
+
+    ${insightsHTML(a, 'light')}
 
     <div style="margin-bottom:14px">
       <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:6px">Coaching Summary</div>
@@ -2106,6 +2420,12 @@ async function generateLessonPlan() {
     overall_score: s.analysis.overall_score,
     scores: s.analysis.scores,
     key_fault: s.analysis.key_fault,
+    root_cause: s.analysis.root_cause || undefined,
+    cause_chain: s.analysis.cause_chain?.length ? s.analysis.cause_chain : undefined,
+    priority_checkpoint: s.analysis.priority_checkpoint || undefined,
+    handicap: s.handicap ?? undefined,
+    usual_miss: s.typicalMiss || undefined,
+    ball_flight: s.ballFlight || undefined,
     strengths: s.analysis.strengths,
     improvements: s.analysis.improvements
   }));
@@ -2123,7 +2443,7 @@ Selected swing analysis sessions (most recent first):
 ${JSON.stringify(recentSessions, null, 2)}
 
 Based on the recurring faults and areas for improvement identified across these sessions, create a detailed ${weeks}-week lesson plan. The plan should:
-1. Address the most critical and recurring faults first
+1. Address the ROOT CAUSE first (where sessions list a root_cause, build weeks 1-2 around it; treat over-the-top/early extension as symptoms unless no earlier cause is given). Work on one thing at a time, and give a checkpoint the golfer can verify on video at the end of each week
 2. Build progressively week-over-week
 3. Include specific named drills with rep counts and timing
 4. Balance technical work with on-course feel
@@ -2390,6 +2710,11 @@ function onGolferChange() {
   if (name) {
     const last = sessions.find(s => s.golfer === name);
     if (last) document.getElementById('skillLevel').value = last.skill;
+    // Pre-fill handicap / usual miss from this golfer's most recent session that had them
+    const withHcp = sessions.find(s => s.golfer === name && s.handicap !== undefined && s.handicap !== null && s.handicap !== '');
+    document.getElementById('golferHandicap').value = withHcp ? withHcp.handicap : '';
+    const withMiss = sessions.find(s => s.golfer === name && s.typicalMiss);
+    document.getElementById('typicalMiss').value = withMiss ? withMiss.typicalMiss : '';
   }
   // Re-check duplicate now that golfer changed
   if (currentFile) checkForDuplicateVideo(currentFile);
@@ -2419,6 +2744,8 @@ function buildAnalysisSectionHTML(a, meta, golferName, dateStr) {
     </div>
 
     ${a.key_fault ? `<div style="background:#fff0ec;border:1px solid #f5c5b5;border-radius:4px;padding:12px 16px;margin-bottom:16px;font-size:13px"><strong>Key Fault:</strong> ${a.key_fault}</div>` : ''}
+
+    ${insightsHTML(a, 'light')}
 
     <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:6px">Coaching Summary</h3>
     <p style="font-size:13px;line-height:1.7;margin-bottom:18px">${a.summary || ''}</p>
