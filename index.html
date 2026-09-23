@@ -266,6 +266,15 @@
     .header-right { justify-content: space-between; }
   }
   html, body { overflow-x: hidden; max-width: 100%; }
+  /* Keep everything inside the phone width: grid/flex children may shrink below their content */
+  .analyze-layout > *, .card, .tab-panel { min-width: 0; }
+  .options-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .options-row.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 420px) { .options-row.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .options-row > * { min-width: 0; }
+  .option-group select, .option-group input, #golferSelect { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
+  .record-btn { white-space: normal; }
+  #videoPreview { max-width: 100%; }
 
   .card {
     background: rgba(10,20,10,0.7);
