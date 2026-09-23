@@ -969,6 +969,7 @@
           </div>
 
           <div id="duplicateVideoWarning" class="notice notice-info" style="display:none"></div>
+          <div id="videoSizeWarning" class="notice notice-warn" style="display:none"></div>
 
           <video id="videoPreview" controls></video>
 
@@ -1025,8 +1026,17 @@
           <div class="options-sub">About the golfer (optional — makes advice personal)</div>
           <div class="options-row">
             <div class="option-group">
-              <label>Handicap (guess is fine)</label>
-              <input type="number" id="golferHandicap" min="-5" max="54" step="1" inputmode="numeric" placeholder="e.g. 18 · shoot 90 ≈ 18">
+              <label>Usually Shoots (18 holes)</label>
+              <select id="golferHandicap">
+                <option value="">Not sure / don't keep score</option>
+                <option value="4">Under 80</option>
+                <option value="10">80 – 84</option>
+                <option value="15">85 – 89</option>
+                <option value="20">90 – 94</option>
+                <option value="25">95 – 99</option>
+                <option value="30">100 – 109</option>
+                <option value="38">110 or more</option>
+              </select>
             </div>
             <div class="option-group">
               <label>Usual Miss</label>
@@ -1338,7 +1348,7 @@ async function syncToGitHub() {
     let res = await fetch(ghApiUrl(), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
     if (!res.ok) {
       const err = await res.json();
-      if (err.message && err.message.includes('sha')) {
+      if (res.status === 409 || (err.message && err.message.includes('sha'))) {
         // Someone else saved first: pull their copy and MERGE, never blind-overwrite
         const getRes = await fetch(ghApiUrl(), { headers: ghHeaders() });
         if (getRes.ok) {
@@ -1465,6 +1475,23 @@ function findDuplicateSession(hash) {
   return hash ? sessions.find(s => s.videoHash === hash) : null;
 }
 
+function checkVideoSize(file) {
+  const el = document.getElementById('videoSizeWarning');
+  if (!el) return;
+  const msgs = [];
+  const mb = file.size / (1024 * 1024);
+  if (mb > 15) msgs.push(`This video is <strong>${mb.toFixed(0)} MB</strong>, which may be too big to send. If analysis fails, trim it to just the swing (Edit → drag the ends) or set the phone camera to 1080p instead of 4K.`);
+  const v = document.getElementById('videoPreview');
+  const showLen = () => {
+    if (v.duration && v.duration > 15) msgs.push(`This clip is <strong>${Math.round(v.duration)} seconds</strong>. Trim it to about 5 seconds around the swing — the AI looks at the swing much more closely on short clips.`);
+    el.innerHTML = msgs.map(m => '⚠️ ' + m).join('<br><br>');
+    el.style.display = msgs.length ? 'block' : 'none';
+  };
+  if (v && !isNaN(v.duration) && v.duration) showLen();
+  else if (v) v.addEventListener('loadedmetadata', showLen, { once: true });
+  else showLen();
+}
+
 function resetShotInputs() {
   ['flightStart', 'flightCurve', 'flightContact'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const n = document.getElementById('swingNotes'); if (n) n.value = '';
@@ -1488,6 +1515,7 @@ function onFileSelect(e) {
   currentFile = file;
   currentFileHash = null;
   resetShotInputs();
+  setTimeout(() => checkVideoSize(file), 0);
   document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
   const url = URL.createObjectURL(file);
   const vid = document.getElementById('videoPreview');
@@ -1510,6 +1538,7 @@ zone.addEventListener('drop', e => {
     currentFile = file;
     currentFileHash = null;
     resetShotInputs();
+    setTimeout(() => checkVideoSize(file), 0);
     document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
     const vid = document.getElementById('videoPreview');
     vid.src = URL.createObjectURL(file);
@@ -1576,8 +1605,27 @@ async function analyzeSwing() {
     }
     const videoHash = currentFileHash;
     const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, duration });
-    currentAnalysis = { analysis, skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, videoHash, fileName: currentFile.name, savedId: null };
+    currentAnalysis = { analysis, skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, videoHash, golfer: golferCheck, fileName: currentFile.name, savedId: null };
     renderResults(currentAnalysis);
+    const analysisRef = currentAnalysis;
+    captureSwingFrames(currentFile, analysis.positions).then(frames => {
+      if (frames && frames.length && currentAnalysis === analysisRef) {
+        analysisRef.frames = frames;
+        const strip = document.getElementById('positionsStrip');
+        if (strip) strip.innerHTML = positionsHTML(analysis, frames, 'dark');
+        buildSwingCard(analysis, frames, { golfer: analysisRef.golfer, club: analysisRef.club, date: Date.now() }).then(blob => {
+          if (!blob || currentAnalysis !== analysisRef) return;
+          analysisRef.cardBlob = blob;
+          const slot = document.getElementById('cardButtonSlot');
+          if (slot) slot.innerHTML = cardButtonHTML('current');
+          // If they already tapped Save, attach the picture to that session now
+          if (analysisRef.savedId) {
+            const saved = sessions.find(x => x.id === analysisRef.savedId);
+            if (saved && !saved.cardPath) uploadSwingCard(saved, blob).then(ok => { if (ok) { saveSessionsToStorage(); scheduleSyncToGitHub(); } });
+          }
+        }).catch(e => console.warn('card build failed', e));
+      }
+    }).catch(e => console.warn('frame capture failed', e));
 
     // If Claude key available, generate swing diagram asynchronously
     if (settings.claudeKey && (analysis.key_fault || analysis.phases)) {
@@ -1644,7 +1692,7 @@ async function callGeminiAnalysis(file, opts) {
 - Club: ${opts.club}
 - Camera angle: ${angleDescriptions[opts.angle] || opts.angle}
 - Self-reported level: ${skillDescriptions[opts.skill]}
-- Handicap: ${hcpText}
+- Approximate handicap (estimated from their usual score): ${hcpText}
 - Usual miss on the course: ${missText}
 - What the ball did on THIS swing: ${flightText}
 - Focus requested: ${opts.focus}
@@ -1932,9 +1980,283 @@ function insightsHTML(a, mode) {
   `;
 }
 
+// ============================================================
+// SWING POSITION PHOTOS — grab stills at the times Gemini reported
+// (shown live only; not stored, to keep the GitHub data file small)
+// ============================================================
+const POSITION_LABELS = { address:'Address', takeaway:'Takeaway', top:'Top', downswing:'Downswing', impact:'Impact', finish:'Finish', backstroke:'Backstroke' };
+
+async function captureSwingFrames(file, positions) {
+  if (!file || !positions || typeof positions !== 'object') return [];
+  const entries = Object.entries(positions).filter(([, p]) => p && typeof p.t === 'number' && p.t >= 0);
+  if (!entries.length) return [];
+  const v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto';
+  const url = URL.createObjectURL(file);
+  v.src = url;
+  const waitFor = (ev, ms) => new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error('timeout ' + ev)), ms);
+    v.addEventListener(ev, () => { clearTimeout(t); res(); }, { once: true });
+  });
+  try {
+    await waitFor('loadeddata', 8000);
+    try { await v.play(); v.pause(); } catch(e) {} // iOS needs a play() before frames draw
+    const scale = Math.min(1, 540 / Math.max(v.videoWidth, v.videoHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(v.videoWidth * scale); canvas.height = Math.round(v.videoHeight * scale);
+    const ctx = canvas.getContext('2d');
+    const out = [];
+    for (const [key, p] of entries) {
+      const target = Math.min(Math.max(0, p.t), Math.max(0, (v.duration || p.t) - 0.05));
+      const seeked = waitFor('seeked', 4000);
+      v.currentTime = target;
+      try { await seeked; } catch(e) { continue; }
+      ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+      out.push({ key, t: p.t, note: p.note || '', img: canvas.toDataURL('image/jpeg', 0.8) });
+    }
+    return out;
+  } finally {
+    URL.revokeObjectURL(url);
+    v.removeAttribute('src'); v.load();
+  }
+}
+
+function positionsHTML(a, frames, mode) {
+  const positions = a && a.positions && typeof a.positions === 'object' ? a.positions : null;
+  if (!positions || !Object.keys(positions).length) return '';
+  const light = mode !== 'dark';
+  const txt = light ? '#333' : 'var(--cream)', sub = light ? '#888' : 'var(--divot)', card = light ? '#f9f7f2' : 'rgba(0,0,0,.25)', bord = light ? '#e0ddd5' : 'rgba(200,168,75,.2)', ttl = light ? '#8a6a20' : 'var(--flag)';
+  const byKey = {}; (frames || []).forEach(f => byKey[f.key] = f);
+  const cards = Object.entries(positions).map(([key, p]) => {
+    const f = byKey[key];
+    return `<div style="flex:0 0 150px;scroll-snap-align:start;background:${card};border:1px solid ${bord};border-radius:4px;overflow:hidden">
+      ${f ? `<img src="${f.img}" alt="${escHtml(POSITION_LABELS[key] || key)}" style="display:block;width:100%;height:auto;background:#000">` : ''}
+      <div style="padding:8px 10px">
+        <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:${ttl}">${escHtml(POSITION_LABELS[key] || key.replace(/_/g,' '))}${typeof p?.t === 'number' ? ` <span style="color:${sub}">${p.t.toFixed(1)}s</span>` : ''}</div>
+        <div style="font-size:.8rem;line-height:1.45;color:${txt};margin-top:4px">${escHtml(p?.note || '')}</div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div style="margin-bottom:14px">
+    <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:${ttl};margin-bottom:8px">📸 Swing Positions ${frames && frames.length ? '<span style="color:' + sub + ';letter-spacing:.05em;text-transform:none">· swipe →</span>' : ''}</div>
+    <div style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;-webkit-overflow-scrolling:touch">${cards}</div>
+  </div>`;
+}
+
+// ============================================================
+// VS. LAST TIME — compare with this golfer's previous saved session
+// ============================================================
+function previousSessionHTML(golfer, a, excludeId, beforeDate, mode) {
+  if (!golfer || !a) return '';
+  const cutoff = beforeDate ? new Date(beforeDate).getTime() : Infinity;
+  const prev = sessions.find(s => s.golfer === golfer && s.id !== excludeId && new Date(s.date).getTime() < cutoff);
+  if (!prev || !prev.analysis) return '';
+  const light = mode !== 'dark';
+  const p = prev.analysis;
+  const diff = (a.overall_score || 0) - (p.overall_score || 0);
+  const arrow = diff > 0 ? `<span style="color:#4a8c4a">▲ ${diff}</span>` : diff < 0 ? `<span style="color:#c44b2b">▼ ${-diff}</span>` : '<span>no change</span>';
+  const dateStr = new Date(prev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const oldCause = p.root_cause || p.key_fault || '';
+  const oldScale = !prev.promptVersion ? ' <span style="opacity:.7">(older scoring)</span>' : '';
+  return `<div style="border:1px dashed ${light ? '#ccc' : 'rgba(200,168,75,.3)'};border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;line-height:1.55;color:${light ? '#555' : 'var(--cream)'}">
+    <strong>vs. last time</strong> (${escHtml(dateStr)}, ${escHtml(prev.club || '')}): ${p.overall_score} → ${a.overall_score} ${arrow}${oldScale}
+    ${oldCause ? `<div style="margin-top:4px;opacity:.85">Last time's main issue: ${escHtml(oldCause)}</div>` : ''}
+  </div>`;
+}
+
+// ============================================================
+// SHARE — text the results to the golfer
+// ============================================================
+function buildShareText(a, meta) {
+  const lines = [];
+  lines.push(`⛳ Caddie AI swing check${meta.golfer ? ' — ' + meta.golfer : ''}${meta.club ? ' (' + meta.club + ')' : ''}`);
+  lines.push(`Score: ${a.overall_score}/100`);
+  if (a.root_cause) lines.push(`\n🎯 Root cause: ${a.root_cause}`);
+  else if (a.key_fault) lines.push(`\n⚠️ Key fault: ${a.key_fault}`);
+  if (a.what_sets_you_apart) lines.push(`\n🧬 ${a.what_sets_you_apart}`);
+  if (a.strengths?.length) lines.push(`\n✅ Strength: ${a.strengths[0]}`);
+  if (a.priority_checkpoint) lines.push(`\n👀 Check on your next video: ${a.priority_checkpoint}`);
+  const drills = [a.drill_1, a.drill_2, a.drill_3].filter(Boolean);
+  if (drills.length) {
+    lines.push('\n🏌️ Drills:');
+    drills.forEach((d, i) => lines.push(`${i + 1}. ${d.name} — ${d.description}\n   ▶ https://www.youtube.com/results?search_query=golf+${encodeURIComponent(d.name)}`));
+  }
+  return lines.join('\n');
+}
+
+async function shareAnalysis(which) {
+  let a, meta;
+  if (which === 'current') { if (!currentAnalysis) return; a = currentAnalysis.analysis; meta = { golfer: currentAnalysis.golfer, club: currentAnalysis.club }; }
+  else { const s = sessions.find(x => x.id === which); if (!s) return; a = s.analysis; meta = { golfer: s.golfer, club: s.club }; }
+  const text = buildShareText(a, meta);
+  const blob = which === 'current' ? currentAnalysis?.cardBlob : cardCache[which];
+  try {
+    if (blob && navigator.canShare) {
+      const file = new File([blob], swingCardFileName({ ...meta, date: which === 'current' ? Date.now() : sessions.find(x => x.id === which)?.date }), { type: 'image/jpeg' });
+      if (navigator.canShare({ files: [file], text })) { await navigator.share({ files: [file], text, title: 'Caddie AI swing check' }); return; }
+    }
+    if (navigator.share) { await navigator.share({ title: 'Caddie AI swing check', text }); return; }
+  } catch(e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); alertShare('Copied — paste it into a text or email.'); }
+  catch(e) { alertShare('Could not share on this device.'); }
+}
+function alertShare(msg) {
+  document.querySelectorAll('.share-status').forEach(el => { el.textContent = msg; setTimeout(() => el.textContent = '', 3000); });
+}
+
+// ============================================================
+// SWING PHOTO CARD — one picture with all positions + the key coaching points.
+// Saved to the phone via the share sheet, and to the GitHub repo as swing-cards/<id>.jpg
+// ============================================================
+const cardCache = {}; // sessionId -> Blob (history view)
+
+function loadImg(src) {
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+}
+function wrapLines(ctx, text, maxW) {
+  const words = String(text || '').split(/\s+/); const lines = []; let line = '';
+  words.forEach(w => { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; });
+  if (line) lines.push(line);
+  return lines;
+}
+
+async function buildSwingCard(a, frames, meta) {
+  if (!frames || !frames.length) return null;
+  const imgs = await Promise.all(frames.map(f => loadImg(f.img)));
+  const W = 1080, PAD = 40, GAP = 18, COLS = 3;
+  const cellW = Math.floor((W - PAD * 2 - GAP * (COLS - 1)) / COLS);
+  const aspect = imgs[0].height / imgs[0].width;
+  const cellH = Math.round(cellW * aspect);
+  const rows = Math.ceil(frames.length / COLS);
+  const LABEL = 44;
+  // measure text blocks first
+  const m = document.createElement('canvas').getContext('2d');
+  const TW = W - PAD * 2;
+  m.font = 'bold 34px Georgia, serif'; const rootLines = wrapLines(m, a.root_cause || a.key_fault || '', TW);
+  m.font = '28px -apple-system, Helvetica, Arial, sans-serif'; const cpLines = a.priority_checkpoint ? wrapLines(m, a.priority_checkpoint, TW) : [];
+  const drills = [a.drill_1, a.drill_2, a.drill_3].filter(Boolean).map((d, i) => `${i + 1}. ${d.name}`);
+  const H = PAD + 150 + rows * (cellH + LABEL + GAP) + 40 + 40 + rootLines.length * 44 + (cpLines.length ? 60 + cpLines.length * 38 : 0) + (drills.length ? 60 + drills.length * 38 : 0) + 70;
+
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#1a2e1a'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#c8a84b'; ctx.fillRect(0, 0, W, 8);
+  // header
+  ctx.fillStyle = '#f5f0e8'; ctx.font = 'bold 50px Georgia, serif';
+  ctx.fillText(meta.golfer || 'Swing Check', PAD, PAD + 52);
+  ctx.fillStyle = '#8a7a5a'; ctx.font = '26px -apple-system, Helvetica, Arial, sans-serif';
+  const dateStr = new Date(meta.date || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  ctx.fillText([meta.club, dateStr, 'Caddie AI'].filter(Boolean).join('  ·  '), PAD, PAD + 96);
+  // score badge
+  const sc = a.overall_score || 0;
+  ctx.fillStyle = sc >= 80 ? '#6abf6a' : sc >= 60 ? '#c8a84b' : '#e87a5a';
+  ctx.font = 'bold 86px Georgia, serif'; ctx.textAlign = 'right';
+  ctx.fillText(String(sc), W - PAD, PAD + 80);
+  ctx.fillStyle = '#8a7a5a'; ctx.font = '22px -apple-system, Helvetica, Arial, sans-serif';
+  ctx.fillText('SCORE', W - PAD, PAD + 112); ctx.textAlign = 'left';
+  // photos
+  let y = PAD + 150;
+  frames.forEach((f, i) => {
+    const col = i % COLS, row = Math.floor(i / COLS);
+    const x = PAD + col * (cellW + GAP), yy = y + row * (cellH + LABEL + GAP);
+    ctx.drawImage(imgs[i], x, yy, cellW, cellH);
+    ctx.strokeStyle = 'rgba(200,168,75,.5)'; ctx.lineWidth = 2; ctx.strokeRect(x, yy, cellW, cellH);
+    ctx.fillStyle = '#c8a84b'; ctx.font = 'bold 26px -apple-system, Helvetica, Arial, sans-serif';
+    ctx.fillText((POSITION_LABELS[f.key] || f.key).toUpperCase(), x, yy + cellH + 32);
+  });
+  y += rows * (cellH + LABEL + GAP) + 40;
+  // root cause
+  ctx.fillStyle = '#7ab8d4'; ctx.font = 'bold 24px -apple-system, Helvetica, Arial, sans-serif';
+  ctx.fillText(a.root_cause ? 'ROOT CAUSE' : 'KEY FAULT', PAD, y); y += 40;
+  ctx.fillStyle = '#f5f0e8'; ctx.font = 'bold 34px Georgia, serif';
+  rootLines.forEach(l => { ctx.fillText(l, PAD, y); y += 44; });
+  if (cpLines.length) {
+    y += 26; ctx.fillStyle = '#c8a84b'; ctx.font = 'bold 24px -apple-system, Helvetica, Arial, sans-serif';
+    ctx.fillText('CHECK ON YOUR NEXT VIDEO', PAD, y); y += 38;
+    ctx.fillStyle = '#f5f0e8'; ctx.font = '28px -apple-system, Helvetica, Arial, sans-serif';
+    cpLines.forEach(l => { ctx.fillText(l, PAD, y); y += 38; });
+  }
+  if (drills.length) {
+    y += 26; ctx.fillStyle = '#c8a84b'; ctx.font = 'bold 24px -apple-system, Helvetica, Arial, sans-serif';
+    ctx.fillText('DRILLS', PAD, y); y += 38;
+    ctx.fillStyle = '#f5f0e8'; ctx.font = '28px -apple-system, Helvetica, Arial, sans-serif';
+    drills.forEach(l => { ctx.fillText(l, PAD, y); y += 38; });
+  }
+  return await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85));
+}
+
+function swingCardFileName(meta) {
+  const d = new Date(meta.date || Date.now());
+  const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return `swing-${(meta.golfer || 'golfer').replace(/[^a-z0-9]+/gi, '-')}-${meta.club || ''}-${ds}.jpg`.replace(/-+/g, '-').replace('-.jpg', '.jpg');
+}
+
+// Must run straight from a tap (iOS needs the tap for the share sheet), so the picture is built beforehand
+async function saveSwingPhotos(which) {
+  let blob, meta;
+  if (which === 'current') { blob = currentAnalysis?.cardBlob; meta = { golfer: currentAnalysis?.golfer, club: currentAnalysis?.club, date: Date.now() }; }
+  else { blob = cardCache[which]; const s = sessions.find(x => x.id === which); meta = { golfer: s?.golfer, club: s?.club, date: s?.date }; }
+  if (!blob) { alertShare('Swing photos are still being prepared — try again in a moment.'); return; }
+  const file = new File([blob], swingCardFileName(meta), { type: 'image/jpeg' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Swing photos' });
+      return;
+    }
+  } catch(e) { if (e && e.name === 'AbortError') return; }
+  // Fallback: download the picture
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a'); link.href = url; link.download = file.name;
+  document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  alertShare('Picture downloaded.');
+}
+
+function blobToBase64(blob) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+}
+function ghFileUrl(path) { return `https://api.github.com/repos/${settings.ghUser}/${settings.ghRepo}/contents/${path}`; }
+
+async function uploadSwingCard(session, blob) {
+  if (!hasGitHub() || !blob) return false;
+  const path = `swing-cards/${session.id}.jpg`;
+  const body = JSON.stringify({ message: `Caddie AI swing photos ${session.golfer || ''} ${session.id}`, content: await blobToBase64(blob) });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch(ghFileUrl(path), { method: 'PUT', headers: ghHeaders(), body });
+    if (res.ok) { session.cardPath = path; return true; }
+    if (res.status !== 409) { console.warn('swing card upload failed', res.status, await res.text()); return false; }
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  return false;
+}
+
+async function loadSwingCard(session) {
+  if (cardCache[session.id]) return cardCache[session.id];
+  if (!session.cardPath || !hasGitHub()) return null;
+  const res = await fetch(ghFileUrl(session.cardPath), { headers: { ...ghHeaders(), 'Accept': 'application/vnd.github.raw' } });
+  if (!res.ok) return null;
+  const blob = await res.blob();
+  cardCache[session.id] = blob;
+  return blob;
+}
+
+async function deleteSwingCard(session) {
+  if (!session?.cardPath || !hasGitHub()) return;
+  try {
+    const r = await fetch(ghFileUrl(session.cardPath), { headers: ghHeaders() });
+    if (!r.ok) return;
+    const { sha } = await r.json();
+    await fetch(ghFileUrl(session.cardPath), { method: 'DELETE', headers: ghHeaders(), body: JSON.stringify({ message: 'Caddie AI remove swing photos ' + session.id, sha }) });
+  } catch(e) { console.warn('could not delete swing card', e); }
+}
+
+function cardButtonHTML(which, light) {
+  return `<button class="btn btn-gold" style="width:100%;margin-top:10px;padding:11px;font-size:.68rem" onclick="saveSwingPhotos(${which === 'current' ? "'current'" : which})">📸 Save / Share Swing Photos</button>`;
+}
+
 function shotContextText(s) {
   const bits = [];
-  if (s.handicap !== null && s.handicap !== undefined && s.handicap !== '') bits.push('hcp ' + s.handicap);
+  if (s.handicap !== null && s.handicap !== undefined && s.handicap !== '') bits.push('~' + s.handicap + ' hcp');
   if (s.typicalMiss) bits.push('usual miss: ' + s.typicalMiss);
   const bf = s.ballFlight || {};
   const flight = [bf.start && ('start ' + bf.start), bf.curve, bf.contact].filter(Boolean).join(' / ');
@@ -1986,6 +2308,9 @@ function renderResults(data) {
 
       ${insightsHTML(a, 'dark')}
 
+      ${previousSessionHTML(data.golfer, a, data.savedId, null, 'dark')}
+      <div id="positionsStrip">${positionsHTML(a, data.frames || null, 'dark')}</div>
+
       <div class="result-section">
         <div class="result-section-title">💬 Coaching Summary</div>
         <div class="result-text">${a.summary || ''}</div>
@@ -2030,6 +2355,9 @@ function renderResults(data) {
         <input type="text" id="sessionLabel" placeholder="Name this session (e.g. Driver practice)..." value="${data.fileName ? data.fileName.replace(/\.[^.]+$/,'') : ''}">
         <button class="btn btn-gold" onclick="saveSession()">Save Session</button>
       </div>
+      <div id="cardButtonSlot">${data.cardBlob ? cardButtonHTML('current') : ''}</div>
+      <button class="btn btn-secondary" style="width:100%;margin-top:10px;padding:11px;font-size:.68rem" onclick="shareAnalysis('current')">📤 Text These Results to the Golfer</button>
+      <div class="share-status" style="text-align:center;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--sky);min-height:1em;margin-top:4px"></div>
 
       ${(a.phases || a.metrics) ? `
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(200,168,75,.15)">
@@ -2148,7 +2476,15 @@ function saveSession() {
   currentAnalysis.savedId = session.id;
   sessions.unshift(session);
   saveSessionsToStorage();
-  scheduleSyncToGitHub();
+  if (currentAnalysis.cardBlob && hasGitHub()) {
+    cardCache[session.id] = currentAnalysis.cardBlob;
+    uploadSwingCard(session, currentAnalysis.cardBlob)
+      .then(ok => { if (ok) saveSessionsToStorage(); })
+      .catch(e => console.warn(e))
+      .finally(() => scheduleSyncToGitHub());
+  } else {
+    scheduleSyncToGitHub();
+  }
   if (btn) { btn.textContent = '✓ Saved!'; btn.disabled = true; }
 }
 
@@ -2240,6 +2576,11 @@ function viewSession(id) {
 
     ${insightsHTML(a, 'light')}
 
+    ${previousSessionHTML(s.golfer, a, s.id, s.date, 'light')}
+    ${s.cardPath || cardCache[s.id] ? `<div id="cardSlot-${s.id}" style="margin-bottom:14px;font-family:'DM Mono',monospace;font-size:.62rem;color:#888">⏳ Loading swing photos...</div>` : positionsHTML(a, null, 'light')}
+    <button class="btn btn-secondary" style="width:100%;margin-bottom:6px;padding:10px;font-size:.66rem" onclick="shareAnalysis(${s.id})">📤 Text These Results</button>
+    <div class="share-status" style="text-align:center;font-family:'DM Mono',monospace;font-size:.62rem;color:#1a73e8;min-height:1em;margin-bottom:10px"></div>
+
     <div style="margin-bottom:14px">
       <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:6px">Coaching Summary</div>
       <p style="font-size:0.95rem;line-height:1.7;color:var(--ink-light)">${a.summary||''}</p>
@@ -2285,10 +2626,21 @@ function viewSession(id) {
     </div>` : ''}
   `;
   document.getElementById('detailModal').classList.add('open');
+  if (s.cardPath || cardCache[s.id]) {
+    (cardCache[s.id] ? Promise.resolve(cardCache[s.id]) : loadSwingCard(s)).then(blob => {
+      const slot = document.getElementById('cardSlot-' + s.id);
+      if (!slot) return;
+      if (!blob) { slot.innerHTML = positionsHTML(a, null, 'light'); return; }
+      slot.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="Swing photos" style="display:block;width:100%;height:auto;border-radius:4px;border:1px solid #e0ddd5">` + cardButtonHTML(s.id) + '<div style="margin-top:14px"></div>' + positionsHTML(a, null, 'light');
+    }).catch(() => { const slot = document.getElementById('cardSlot-' + s.id); if (slot) slot.innerHTML = positionsHTML(a, null, 'light'); });
+  }
 }
 
 function deleteSession(id) {
   if (!confirm('Delete this session?')) return;
+  const doomed = sessions.find(s => s.id === id);
+  if (doomed?.cardPath) deleteSwingCard(doomed);
+  delete cardCache[id];
   sessions = sessions.filter(s => s.id !== id);
   saveSessionsToStorage();
   scheduleSyncToGitHub();
