@@ -257,7 +257,15 @@
     .analyze-layout { grid-template-columns: 1fr; }
     header { padding: 16px 20px; flex-wrap: wrap; gap: 12px; }
     .logo-title { font-size: 1.5rem; }
+    .header-right { flex-wrap: wrap; gap: 8px; width: 100%; }
+    .header-right .nav-tabs { order: 3; width: 100%; display: flex; }
+    .header-right .nav-tabs .nav-tab { flex: 1; }
   }
+  @media (max-width: 480px) {
+    .logo-subtitle { display: none; }
+    .header-right { justify-content: space-between; }
+  }
+  html, body { overflow-x: hidden; max-width: 100%; }
 
   .card {
     background: rgba(10,20,10,0.7);
@@ -322,6 +330,16 @@
     color: var(--flag);
     word-break: break-all;
   }
+
+  .record-btn { display:block; width:100%; margin-top:10px; padding:12px; text-align:center; cursor:pointer; box-sizing:border-box; }
+  .video-controls { display:none; margin-top:8px; }
+  .video-controls .vc-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:6px; }
+  .video-controls .vc-label { font-family:'DM Mono',monospace; font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; color:var(--divot); margin-right:2px; }
+  .vc-btn { font-family:'DM Mono',monospace; font-size:.66rem; padding:7px 10px; min-height:34px; border-radius:3px; border:1px solid rgba(200,168,75,.4); background:rgba(0,0,0,.35); color:var(--cream); cursor:pointer; }
+  .vc-btn.active { background:var(--flag); color:var(--fairway); border-color:var(--flag); }
+  .vc-btn.pos { border-color:rgba(122,184,212,.45); color:var(--sky); }
+  .quick-golfer { display:none; gap:8px; margin:8px 0 4px; }
+  .quick-golfer input { flex:1; padding:9px 10px; background:rgba(0,0,0,.4); border:1px solid rgba(200,168,75,.4); border-radius:2px; color:var(--cream); font-family:'DM Mono',monospace; font-size:.78rem; }
 
   /* video preview */
   #videoPreview {
@@ -968,10 +986,23 @@
             <div class="upload-filename" id="uploadFilename"></div>
           </div>
 
+          <label class="btn btn-gold record-btn">🎥 Record a Swing Now
+            <input type="file" accept="video/*" capture="environment" onchange="onFileSelect(event)" style="display:none">
+          </label>
+
           <div id="duplicateVideoWarning" class="notice notice-info" style="display:none"></div>
           <div id="videoSizeWarning" class="notice notice-warn" style="display:none"></div>
 
-          <video id="videoPreview" controls></video>
+          <video id="videoPreview" controls playsinline></video>
+          <div class="video-controls" id="videoControls">
+            <div class="vc-row">
+              <span class="vc-label">Speed</span>
+              <button class="vc-btn" data-rate="1" onclick="setVideoSpeed(1)">1×</button>
+              <button class="vc-btn" data-rate="0.5" onclick="setVideoSpeed(0.5)">½×</button>
+              <button class="vc-btn active" data-rate="0.25" onclick="setVideoSpeed(0.25)">¼× slow-mo</button>
+            </div>
+            <div class="vc-row" id="positionJumps"></div>
+          </div>
 
           <div style="background:rgba(122,184,212,.08);border:1px solid rgba(122,184,212,.2);border-radius:3px;padding:10px 13px;margin:12px 0;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--sky);letter-spacing:.04em;line-height:1.6">
             📐 <strong>Camera tip:</strong> Place your phone on a tripod, golf bag, or chair behind your trail hip pointing toward the target. Never film face-on when hitting real shots.
@@ -1104,6 +1135,14 @@
             <button class="btn btn-secondary" style="padding:9px 14px;font-size:.65rem;white-space:nowrap" onclick="openManageGolfers()">Manage Golfers</button>
           </div>
 
+          <div id="currentFixBanner" class="notice notice-info" style="display:none;line-height:1.55"></div>
+
+          <div class="quick-golfer" id="quickGolferRow">
+            <input type="text" id="quickGolferName" placeholder="New golfer's name" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddGolfer();}">
+            <button class="btn btn-gold" style="padding:9px 14px;font-size:.65rem" onclick="quickAddGolfer()">Add</button>
+            <button class="btn btn-secondary" style="padding:9px 12px;font-size:.65rem" onclick="cancelQuickGolfer()">✕</button>
+          </div>
+
           <div id="noGolferWarning" class="notice notice-warn" style="display:none">
             ⚠️ Select a golfer above before analyzing — this keeps sessions from being tagged to the wrong person.
           </div>
@@ -1148,6 +1187,7 @@
         <button class="btn btn-danger" onclick="clearAllHistory()" id="clearAllBtn" style="display:none">Clear All</button>
       </div>
     </div>
+    <div id="historyProgress"></div>
     <div id="historyGrid" class="history-grid"></div>
   </div>
 
@@ -1515,6 +1555,7 @@ function onFileSelect(e) {
   currentFile = file;
   currentFileHash = null;
   resetShotInputs();
+  showVideoControls();
   setTimeout(() => checkVideoSize(file), 0);
   document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
   const url = URL.createObjectURL(file);
@@ -1538,6 +1579,7 @@ zone.addEventListener('drop', e => {
     currentFile = file;
     currentFileHash = null;
     resetShotInputs();
+    showVideoControls();
     setTimeout(() => checkVideoSize(file), 0);
     document.getElementById('uploadFilename').textContent = '📎 ' + file.name;
     const vid = document.getElementById('videoPreview');
@@ -1604,9 +1646,12 @@ async function analyzeSwing() {
       try { currentFileHash = await hashFile(currentFile); } catch(e) {}
     }
     const videoHash = currentFileHash;
-    const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, duration });
+    const currentFix = getCurrentFix(golferCheck);
+    const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, duration, currentFix });
+    if (currentFix && analysis.fix_progress && typeof analysis.fix_progress === 'object') analysis.fix_progress.fix = currentFix.root_cause;
     currentAnalysis = { analysis, skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, videoHash, golfer: golferCheck, fileName: currentFile.name, savedId: null };
     renderResults(currentAnalysis);
+    renderPositionJumps(analysis.positions);
     const analysisRef = currentAnalysis;
     captureSwingFrames(currentFile, analysis.positions).then(frames => {
       if (frames && frames.length && currentAnalysis === analysisRef) {
@@ -1696,7 +1741,12 @@ async function callGeminiAnalysis(file, opts) {
 - Usual miss on the course: ${missText}
 - What the ball did on THIS swing: ${flightText}
 - Focus requested: ${opts.focus}
-${opts.notes ? `- Notes from the golfer: ${opts.notes}` : ''}`;
+${opts.notes ? `- Notes from the golfer: ${opts.notes}` : ''}${opts.currentFix ? `
+
+CURRENT FIX this golfer has been working on (chosen from an earlier lesson):
+- Problem: ${opts.currentFix.root_cause}
+${opts.currentFix.checkpoint ? `- Checkpoint: ${opts.currentFix.checkpoint}\n` : ''}Analyze this swing independently first — do NOT let this bias your choice of root cause. Then judge this specific fix and add this field to your JSON:
+"fix_progress":{"status":"fixed|improving|same|worse|not_visible","evidence":"one or two sentences on exactly what you saw at the checkpoint"}` : ''}`;
 
   const rubric = `SCORING RUBRIC (0-100). Every score must be justified by what you observed.
 - 90-100: tour / plus-handicap quality
@@ -1941,7 +1991,7 @@ function injectSwingDiagram(svg) {
 // ROOT-CAUSE INSIGHTS (prompt v2) — shared by results, history and print
 // ============================================================
 function insightsHTML(a, mode) {
-  if (!a || !a.root_cause) return '';
+  if (!a || !a.root_cause) return fixProgressHTML(a, mode);
   const light = mode !== 'dark';
   const c = light
     ? { bg:'#f4f8fb', border:'#c9dbe8', title:'#2b5d7d', text:'#333', chip:'#e6eef4', accentBg:'#fff8e6', accentBorder:'#e8d49a', accentTitle:'#8a6a20' }
@@ -1950,7 +2000,7 @@ function insightsHTML(a, mode) {
   const conf = (a.confidence || '').toLowerCase();
   const confColor = conf === 'high' ? '#4a8c4a' : conf === 'low' ? '#c44b2b' : '#b8860b';
   const chain = (a.cause_chain || []).filter(Boolean);
-  return `
+  return fixProgressHTML(a, mode) + `
     <div style="background:${c.bg};border:1px solid ${c.border};border-radius:4px;padding:14px 16px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
         ${label('🎯 Root Cause')}
@@ -2029,7 +2079,8 @@ function positionsHTML(a, frames, mode) {
   const byKey = {}; (frames || []).forEach(f => byKey[f.key] = f);
   const cards = Object.entries(positions).map(([key, p]) => {
     const f = byKey[key];
-    return `<div style="flex:0 0 150px;scroll-snap-align:start;background:${card};border:1px solid ${bord};border-radius:4px;overflow:hidden">
+    const tap = !light && typeof p?.t === 'number' ? ` onclick="jumpToPosition(${Number(p.t)})" role="button"` : '';
+    return `<div${tap} style="flex:0 0 150px;scroll-snap-align:start;background:${card};border:1px solid ${bord};border-radius:4px;overflow:hidden;${tap ? 'cursor:pointer' : ''}">
       ${f ? `<img src="${f.img}" alt="${escHtml(POSITION_LABELS[key] || key)}" style="display:block;width:100%;height:auto;background:#000">` : ''}
       <div style="padding:8px 10px">
         <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:${ttl}">${escHtml(POSITION_LABELS[key] || key.replace(/_/g,' '))}${typeof p?.t === 'number' ? ` <span style="color:${sub}">${p.t.toFixed(1)}s</span>` : ''}</div>
@@ -2038,7 +2089,7 @@ function positionsHTML(a, frames, mode) {
     </div>`;
   }).join('');
   return `<div style="margin-bottom:14px">
-    <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:${ttl};margin-bottom:8px">📸 Swing Positions ${frames && frames.length ? '<span style="color:' + sub + ';letter-spacing:.05em;text-transform:none">· swipe →</span>' : ''}</div>
+    <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:${ttl};margin-bottom:8px">📸 Swing Positions <span style="color:${sub};letter-spacing:.05em;text-transform:none">${light ? '' : '· tap one to see it in your video'}${frames && frames.length ? ' · swipe →' : ''}</span></div>
     <div style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;-webkit-overflow-scrolling:touch">${cards}</div>
   </div>`;
 }
@@ -2071,6 +2122,7 @@ function buildShareText(a, meta) {
   const lines = [];
   lines.push(`⛳ Caddie AI swing check${meta.golfer ? ' — ' + meta.golfer : ''}${meta.club ? ' (' + meta.club + ')' : ''}`);
   lines.push(`Score: ${a.overall_score}/100`);
+  if (a.fix_progress?.status) { const st = FIX_STATUS[String(a.fix_progress.status).toLowerCase()]; lines.push(`\n📌 Current fix: ${st ? st.icon + ' ' + st.label : a.fix_progress.status}${a.fix_progress.evidence ? ' — ' + a.fix_progress.evidence : ''}`); }
   if (a.root_cause) lines.push(`\n🎯 Root cause: ${a.root_cause}`);
   else if (a.key_fault) lines.push(`\n⚠️ Key fault: ${a.key_fault}`);
   if (a.what_sets_you_apart) lines.push(`\n🧬 ${a.what_sets_you_apart}`);
@@ -2254,6 +2306,220 @@ function cardButtonHTML(which, light) {
   return `<button class="btn btn-gold" style="width:100%;margin-top:10px;padding:11px;font-size:.68rem" onclick="saveSwingPhotos(${which === 'current' ? "'current'" : which})">📸 Save / Share Swing Photos</button>`;
 }
 
+// ============================================================
+// CURRENT FIX — pin one root cause per golfer; next analysis judges progress on it
+// Stored on the session itself (session.pinnedFix) so the data file shape doesn't change
+// ============================================================
+function getCurrentFix(golfer) {
+  if (!golfer) return null;
+  const s = sessions.find(x => x.golfer === golfer && x.pinnedFix);
+  return s ? { ...s.pinnedFix, sessionId: s.id } : null;
+}
+function pinFix(sessionId) {
+  const s = sessions.find(x => x.id === sessionId);
+  if (!s || !s.analysis) return;
+  const a = s.analysis;
+  sessions.forEach(x => { if (x.golfer === s.golfer && x.pinnedFix) delete x.pinnedFix; });
+  s.pinnedFix = {
+    root_cause: a.root_cause || a.key_fault || '',
+    checkpoint: a.priority_checkpoint || '',
+    drill: a.drill_1?.name || '',
+    date: s.date
+  };
+  saveSessionsToStorage(); scheduleSyncToGitHub();
+  renderCurrentFixBanner();
+}
+function clearFix(golfer) {
+  sessions.forEach(x => { if (x.golfer === golfer && x.pinnedFix) delete x.pinnedFix; });
+  saveSessionsToStorage(); scheduleSyncToGitHub();
+  renderCurrentFixBanner();
+}
+function clearFixFromBanner() {
+  const golfer = document.getElementById('golferSelect')?.value || '';
+  if (golfer) clearFix(golfer);
+}
+function pinFromResults() {
+  if (!currentAnalysis) return;
+  if (!currentAnalysis.savedId) saveSession();
+  if (!currentAnalysis.savedId) return;
+  pinFix(currentAnalysis.savedId);
+  const b = document.getElementById('pinFixBtn');
+  if (b) { b.textContent = `📌 Pinned as ${currentAnalysis.golfer || 'this golfer'}'s current fix`; b.disabled = true; }
+}
+function pinFromHistory(id) {
+  pinFix(id); viewSession(id); renderHistory();
+}
+function unpinFromHistory(id) {
+  const s = sessions.find(x => x.id === id); if (!s) return;
+  clearFix(s.golfer); viewSession(id); renderHistory();
+}
+function renderCurrentFixBanner() {
+  const el = document.getElementById('currentFixBanner');
+  if (!el) return;
+  const golfer = document.getElementById('golferSelect')?.value || '';
+  const fix = getCurrentFix(golfer);
+  if (!fix) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const d = new Date(fix.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  el.innerHTML = `📌 <strong>${escHtml(golfer)} is working on</strong> (since ${escHtml(d)}): ${escHtml(fix.root_cause)}
+    ${fix.checkpoint ? `<div style="margin-top:4px;opacity:.9">Checkpoint: ${escHtml(fix.checkpoint)}</div>` : ''}
+    <div style="margin-top:6px;opacity:.85">This swing will be checked against it.
+      <button onclick="clearFixFromBanner()" style="background:none;border:none;color:var(--sky);text-decoration:underline;cursor:pointer;font:inherit;padding:0 0 0 6px">Clear it</button></div>`;
+  el.style.display = 'block';
+}
+const FIX_STATUS = {
+  fixed:       { label: 'Fixed',           color: '#4a8c4a', icon: '✅' },
+  improving:   { label: 'Improving',       color: '#4a8c4a', icon: '📈' },
+  same:        { label: 'No change yet',   color: '#b8860b', icon: '➖' },
+  worse:       { label: 'Worse',           color: '#c44b2b', icon: '📉' },
+  not_visible: { label: "Couldn't see it", color: '#888',    icon: '👁' }
+};
+function fixProgressHTML(a, mode) {
+  const fp = a && a.fix_progress;
+  if (!fp || !fp.status) return '';
+  const st = FIX_STATUS[String(fp.status).toLowerCase()] || { label: fp.status, color: '#888', icon: '📌' };
+  const light = mode !== 'dark';
+  return `<div style="border:2px solid ${st.color};border-radius:4px;padding:12px 16px;margin-bottom:14px;background:${light ? '#fafaf7' : 'rgba(0,0,0,.2)'}">
+    <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:${light ? '#555' : 'var(--divot)'};margin-bottom:6px">📌 Current Fix Check</div>
+    <div style="font-size:1rem;font-weight:700;color:${st.color}">${st.icon} ${escHtml(st.label)}</div>
+    ${fp.fix ? `<div style="font-size:.8rem;margin-top:4px;color:${light ? '#666' : 'var(--divot)'}">Working on: ${escHtml(fp.fix)}</div>` : ''}
+    ${fp.evidence ? `<div style="font-size:.88rem;line-height:1.55;margin-top:6px;color:${light ? '#333' : 'var(--cream)'}">${escHtml(fp.evidence)}</div>` : ''}
+  </div>`;
+}
+
+// ============================================================
+// PROGRESS CHART — one golfer's overall score over time (History tab)
+// ============================================================
+let progressTips = [];
+function showProgTip(i) {
+  const el = document.getElementById('progTip');
+  if (el && progressTips[i]) el.textContent = progressTips[i];
+}
+function progressChartHTML(golfer) {
+  const list = sessions.filter(s => s.golfer === golfer && s.analysis && typeof s.analysis.overall_score === 'number')
+    .slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (list.length < 2) return '';
+  const W = 640, H = 220, L = 34, R = 16, T = 22, B = 30;
+  const vals = list.map(s => s.analysis.overall_score);
+  let lo = Math.max(0, Math.floor((Math.min(...vals) - 8) / 10) * 10), hi = Math.min(100, Math.ceil((Math.max(...vals) + 8) / 10) * 10);
+  if (hi - lo < 20) { lo = Math.max(0, lo - 10); hi = Math.min(100, hi + 10); }
+  const x = i => L + i * (W - L - R) / (list.length - 1);
+  const y = v => T + (hi - v) * (H - T - B) / (hi - lo);
+  const grid = [];
+  for (let g = lo; g <= hi; g += 10) grid.push(`<line x1="${L}" x2="${W - R}" y1="${y(g)}" y2="${y(g)}" stroke="rgba(245,240,232,.08)" stroke-width="1"/><text x="${L - 6}" y="${y(g) + 4}" text-anchor="end" font-size="11" fill="#8a7a5a" font-family="DM Mono, monospace">${g}</text>`);
+  const path = list.map((s, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(s.analysis.overall_score).toFixed(1)}`).join(' ');
+  const fmt = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  progressTips = list.map(s => `${fmt(s.date)} · ${s.club} · ${s.analysis.overall_score}${!s.promptVersion ? ' (older scoring)' : ''} — tap again to open`);
+  const dots = list.map((s, i) => {
+    const v = s.analysis.overall_score, cx = x(i), cy = y(v);
+    const hollow = !s.promptVersion;
+    return `<g style="cursor:pointer" onclick="viewSession(${s.id})" onmouseenter="showProgTip(${i})" ontouchstart="showProgTip(${i})">
+      <circle cx="${cx}" cy="${cy}" r="16" fill="transparent"/>
+      <circle cx="${cx}" cy="${cy}" r="5" fill="${hollow ? '#1a2e1a' : '#c8a84b'}" stroke="${hollow ? '#c8a84b' : '#1a2e1a'}" stroke-width="2"/>
+      <title>${escHtml(progressTips[i])}</title>
+    </g>`;
+  }).join('');
+  const lab = (i, anchor) => `<text x="${x(i)}" y="${y(vals[i]) - 10}" text-anchor="${anchor}" font-size="12" fill="#f5f0e8" font-family="DM Mono, monospace">${vals[i]}</text>`;
+  const first = list[0], last = list[list.length - 1];
+  const fix = getCurrentFix(golfer);
+  return `<div style="background:rgba(0,0,0,.2);border:1px solid rgba(200,168,75,.2);border-radius:4px;padding:14px 14px 10px;margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <div style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--flag)">📈 ${escHtml(golfer)} · Overall Score Over Time</div>
+      <div id="progTip" style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--divot)">Tap a dot to open that session</div>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin-top:6px" role="img" aria-label="${escHtml(golfer)} overall score from ${vals[0]} to ${vals[vals.length - 1]} over ${list.length} sessions">
+      ${grid.join('')}
+      <path d="${path}" fill="none" stroke="#c8a84b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+      ${lab(0, 'start')}${lab(list.length - 1, 'end')}
+      <text x="${L}" y="${H - 8}" font-size="11" fill="#8a7a5a" font-family="DM Mono, monospace">${fmt(first.date)}</text>
+      <text x="${W - R}" y="${H - 8}" text-anchor="end" font-size="11" fill="#8a7a5a" font-family="DM Mono, monospace">${fmt(last.date)}</text>
+    </svg>
+    <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--divot);margin-top:4px">● new scoring &nbsp; ○ older scoring (not directly comparable)</div>
+    ${fix ? `<div style="font-size:.82rem;color:var(--cream);margin-top:10px">📌 <strong>Current fix:</strong> ${escHtml(fix.root_cause)}</div>` : ''}
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px;padding:10px;font-size:.66rem" onclick="openCompare(${list[list.length - 2].id}, ${last.id})">⚖️ Compare Last Two Sessions</button>
+  </div>`;
+}
+
+// ============================================================
+// SIDE-BY-SIDE COMPARE — two sessions of the same golfer
+// ============================================================
+function openCompare(idA, idB) {
+  let A = sessions.find(s => s.id === idA), B = sessions.find(s => s.id === idB);
+  if (!A && !B) return;
+  if (!A || !B) {
+    const base = A || B;
+    const other = sessions.find(s => s.golfer === base.golfer && s.id !== base.id);
+    if (!other) { alertShare('No other session for this golfer to compare with yet.'); return; }
+    A = other; B = base;
+  }
+  if (new Date(A.date) > new Date(B.date)) [A, B] = [B, A]; // A = older (before), B = newer (after)
+  const golferSessions = sessions.filter(s => s.golfer === A.golfer);
+  const fmt = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const opt = sel => golferSessions.map(s => `<option value="${s.id}" ${s.id === sel.id ? 'selected' : ''}>${escHtml(fmt(s.date))} · ${escHtml(s.club)} · ${s.analysis?.overall_score ?? ''}</option>`).join('');
+  const a = A.analysis || {}, b = B.analysis || {};
+  const delta = (va, vb) => {
+    if (typeof va !== 'number' || typeof vb !== 'number') return '';
+    const d = vb - va;
+    return d > 0 ? `<span style="color:#2e7d32">▲${d}</span>` : d < 0 ? `<span style="color:#c44b2b">▼${-d}</span>` : '<span style="color:#888">=</span>';
+  };
+  const keys = Array.from(new Set([...Object.keys(a.scores || {}), ...Object.keys(b.scores || {})]));
+  const posKeys = Array.from(new Set([...Object.keys(a.positions || {}), ...Object.keys(b.positions || {})]));
+  const cell = 'padding:7px 8px;border-bottom:1px solid #eee;font-size:.82rem;vertical-align:top';
+  const oldNote = (!A.promptVersion) !== (!B.promptVersion) ? `<p style="font-size:.75rem;color:#b8860b;margin:6px 0 0">⚠️ One of these used the older scoring, so the score change isn't a fair comparison. Compare the notes and photos instead.</p>` : '';
+  const hasCard = sx => !!(sx.cardPath || cardCache[sx.id]);
+  document.getElementById('detailContent').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px">
+      <div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--ink)">⚖️ ${escHtml(A.golfer || 'Compare')}: Before vs After</h2>
+        ${oldNote}
+      </div>
+      <button class="btn btn-secondary" onclick="document.getElementById('detailModal').classList.remove('open')">Close</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><div style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;color:#888;text-transform:uppercase">Before</div>
+        <select id="cmpSelA" onchange="openCompare(Number(this.value), ${B.id})" style="width:100%;padding:7px;font-size:.75rem;margin-top:3px">${opt(A)}</select></div>
+      <div><div style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;color:#888;text-transform:uppercase">After</div>
+        <select id="cmpSelB" onchange="openCompare(${A.id}, Number(this.value))" style="width:100%;padding:7px;font-size:.75rem;margin-top:3px">${opt(B)}</select></div>
+    </div>
+    ${(hasCard(A) || hasCard(B)) ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div id="cmpCardA" style="font-size:.7rem;color:#888">${hasCard(A) ? '⏳ Loading photos…' : 'No photos for this one'}</div>
+      <div id="cmpCardB" style="font-size:.7rem;color:#888">${hasCard(B) ? '⏳ Loading photos…' : 'No photos for this one'}</div>
+    </div>` : ''}
+    ${fixProgressHTML(b, 'light')}
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+      <thead><tr><th style="${cell};text-align:left;color:#888;font-weight:normal">Score</th><th style="${cell};color:#888;font-weight:normal">Before</th><th style="${cell};color:#888;font-weight:normal">After</th><th style="${cell};color:#888;font-weight:normal">Change</th></tr></thead>
+      <tbody>
+        <tr><td style="${cell};font-weight:700">Overall</td><td style="${cell};text-align:center;font-weight:700">${a.overall_score ?? '–'}</td><td style="${cell};text-align:center;font-weight:700">${b.overall_score ?? '–'}</td><td style="${cell};text-align:center">${delta(a.overall_score, b.overall_score)}</td></tr>
+        ${keys.map(k => `<tr><td style="${cell}">${escHtml(k.replace(/_/g, ' '))}</td><td style="${cell};text-align:center">${a.scores?.[k] ?? '–'}</td><td style="${cell};text-align:center">${b.scores?.[k] ?? '–'}</td><td style="${cell};text-align:center">${delta(a.scores?.[k], b.scores?.[k])}</td></tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${[a, b].map((xx, i) => `<div style="background:${i ? '#f0f7f0' : '#f9f7f2'};border-radius:4px;padding:10px 12px">
+        <div style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;color:#888;text-transform:uppercase;margin-bottom:4px">${i ? 'After' : 'Before'} · main issue</div>
+        <div style="font-size:.84rem;line-height:1.5;color:#333">${escHtml(xx.root_cause || xx.key_fault || '–')}</div></div>`).join('')}
+    </div>
+    ${posKeys.length ? `
+    <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#8a6a20;margin-bottom:8px">Position by Position</div>
+    ${posKeys.map(k => `<div style="margin-bottom:10px">
+      <div style="font-weight:700;font-size:.8rem;color:#8a6a20;margin-bottom:4px">${escHtml(POSITION_LABELS[k] || k)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="font-size:.8rem;line-height:1.45;color:#444;background:#f9f7f2;padding:7px 9px;border-radius:3px">${escHtml(a.positions?.[k]?.note || '–')}</div>
+        <div style="font-size:.8rem;line-height:1.45;color:#444;background:#f0f7f0;padding:7px 9px;border-radius:3px">${escHtml(b.positions?.[k]?.note || '–')}</div>
+      </div></div>`).join('')}` : `<p style="font-size:.78rem;color:#888">Position-by-position notes appear for swings analyzed with the new version.</p>`}
+  `;
+  document.getElementById('detailModal').classList.add('open');
+  [[A, 'cmpCardA'], [B, 'cmpCardB']].forEach(([sx, slotId]) => {
+    if (!hasCard(sx)) return;
+    (cardCache[sx.id] ? Promise.resolve(cardCache[sx.id]) : loadSwingCard(sx)).then(blob => {
+      const slot = document.getElementById(slotId); if (!slot) return;
+      if (!blob) { slot.textContent = 'Photos unavailable'; return; }
+      const url = URL.createObjectURL(blob);
+      slot.innerHTML = `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="Swing photos" style="width:100%;height:auto;display:block;border-radius:3px;border:1px solid #ddd"></a><div style="font-size:.6rem;color:#888;margin-top:3px;text-align:center">tap to enlarge</div>`;
+    }).catch(() => { const slot = document.getElementById(slotId); if (slot) slot.textContent = 'Photos unavailable'; });
+  });
+}
+
 function shotContextText(s) {
   const bits = [];
   if (s.handicap !== null && s.handicap !== undefined && s.handicap !== '') bits.push('~' + s.handicap + ' hcp');
@@ -2356,6 +2622,7 @@ function renderResults(data) {
         <button class="btn btn-gold" onclick="saveSession()">Save Session</button>
       </div>
       <div id="cardButtonSlot">${data.cardBlob ? cardButtonHTML('current') : ''}</div>
+      ${a.root_cause || a.key_fault ? `<button class="btn btn-secondary" id="pinFixBtn" style="width:100%;margin-top:10px;padding:11px;font-size:.68rem" onclick="pinFromResults()">📌 Make This ${escHtml(data.golfer || 'Their')}'s Current Fix</button>` : ''}
       <button class="btn btn-secondary" style="width:100%;margin-top:10px;padding:11px;font-size:.68rem" onclick="shareAnalysis('current')">📤 Text These Results to the Golfer</button>
       <div class="share-status" style="text-align:center;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--sky);min-height:1em;margin-top:4px"></div>
 
@@ -2495,6 +2762,8 @@ function renderHistory() {
   const filterEl = document.getElementById('historyGolferFilter');
   const filterVal = filterEl ? filterEl.value : '';
   const filtered = filterVal ? sessions.filter(s => s.golfer === filterVal) : sessions;
+  const prog = document.getElementById('historyProgress');
+  if (prog) prog.innerHTML = filterVal ? progressChartHTML(filterVal) : (sessions.length ? `<p style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--divot);margin:-10px 0 16px">Pick a golfer above to see their progress chart and compare sessions.</p>` : '');
 
   if (!sessions.length) {
     count.textContent = 'No sessions yet';
@@ -2525,6 +2794,8 @@ function renderHistory() {
         </div>
         <div class="history-card-meta">
           ${s.golfer ? `<span class="meta-tag" style="background:rgba(122,184,212,.15);border-color:rgba(122,184,212,.3);color:var(--sky)">👤 ${escHtml(s.golfer)}</span>` : ''}
+          ${s.pinnedFix ? '<span class="meta-tag" style="border-color:var(--flag);color:var(--flag)">📌 current fix</span>' : ''}
+          ${s.analysis?.fix_progress?.status && FIX_STATUS[String(s.analysis.fix_progress.status).toLowerCase()] ? `<span class="meta-tag">${FIX_STATUS[String(s.analysis.fix_progress.status).toLowerCase()].icon} ${FIX_STATUS[String(s.analysis.fix_progress.status).toLowerCase()].label}</span>` : ''}
           <span class="meta-tag">${s.club}</span>
           <span class="meta-tag">${s.skill}</span>
           <span class="meta-tag">${s.angle}</span>
@@ -2580,6 +2851,12 @@ function viewSession(id) {
     ${s.cardPath || cardCache[s.id] ? `<div id="cardSlot-${s.id}" style="margin-bottom:14px;font-family:'DM Mono',monospace;font-size:.62rem;color:#888">⏳ Loading swing photos...</div>` : positionsHTML(a, null, 'light')}
     <button class="btn btn-secondary" style="width:100%;margin-bottom:6px;padding:10px;font-size:.66rem" onclick="shareAnalysis(${s.id})">📤 Text These Results</button>
     <div class="share-status" style="text-align:center;font-family:'DM Mono',monospace;font-size:.62rem;color:#1a73e8;min-height:1em;margin-bottom:10px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      ${s.pinnedFix
+        ? `<button class="btn btn-secondary" style="padding:10px;font-size:.62rem" onclick="unpinFromHistory(${s.id})">📌 Unpin Current Fix</button>`
+        : `<button class="btn btn-secondary" style="padding:10px;font-size:.62rem" onclick="pinFromHistory(${s.id})">📌 Make Current Fix</button>`}
+      <button class="btn btn-secondary" style="padding:10px;font-size:.62rem" onclick="openCompare(${s.id}, null)">⚖️ Compare</button>
+    </div>
 
     <div style="margin-bottom:14px">
       <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:6px">Coaching Summary</div>
@@ -2981,6 +3258,55 @@ document.getElementById('golfersModal').addEventListener('click', function(e) {
 // ============================================================
 // GOLFER MANAGEMENT
 // ============================================================
+function quickAddGolfer() {
+  const inp = document.getElementById('quickGolferName');
+  const name = (inp.value || '').trim();
+  if (!name) { inp.focus(); return; }
+  const existing = golfers.find(g => g.toLowerCase() === name.toLowerCase());
+  const finalName = existing || name;
+  if (!existing) { golfers.push(name); saveSessionsToStorage(); scheduleSyncToGitHub(); }
+  renderGolferSelects();
+  const sel = document.getElementById('golferSelect');
+  sel.value = finalName;
+  document.getElementById('quickGolferRow').style.display = 'none';
+  onGolferChange();
+}
+function cancelQuickGolfer() {
+  document.getElementById('quickGolferRow').style.display = 'none';
+}
+
+// ---- Video speed + jump to swing positions ----
+let videoSpeed = 0.25;
+function setVideoSpeed(rate) {
+  videoSpeed = rate;
+  const v = document.getElementById('videoPreview');
+  document.querySelectorAll('#videoControls .vc-btn[data-rate]').forEach(b => b.classList.toggle('active', Number(b.dataset.rate) === rate));
+  if (v && v.src) { v.playbackRate = rate; v.play().catch(() => {}); }
+}
+function jumpToPosition(t) {
+  const v = document.getElementById('videoPreview');
+  if (!v || !v.src || typeof t !== 'number') return;
+  v.pause();
+  v.playbackRate = videoSpeed;
+  try { v.currentTime = Math.max(0, t); } catch(e) {}
+  v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function renderPositionJumps(positions) {
+  const box = document.getElementById('positionJumps');
+  if (!box) return;
+  const list = positions && typeof positions === 'object' ? Object.entries(positions).filter(([, p]) => p && typeof p.t === 'number') : [];
+  box.innerHTML = list.length
+    ? '<span class="vc-label">Jump to</span>' + list.map(([k, p]) => `<button class="vc-btn pos" onclick="jumpToPosition(${Number(p.t)})">${escHtml(POSITION_LABELS[k] || k)}</button>`).join('')
+    : '';
+}
+function showVideoControls() {
+  const c = document.getElementById('videoControls');
+  if (c) c.style.display = 'block';
+  renderPositionJumps(null);
+  const v = document.getElementById('videoPreview');
+  if (v) v.playbackRate = videoSpeed;
+}
+
 function openManageGolfers() {
   renderGolferList();
   document.getElementById('golfersModal').classList.add('open');
@@ -3026,7 +3352,7 @@ function renderGolferSelects() {
   const analyzeSelect = document.getElementById('golferSelect');
   if (analyzeSelect) {
     const prevVal = analyzeSelect.value;
-    analyzeSelect.innerHTML = options;
+    analyzeSelect.innerHTML = options + '<option value="__new__">➕ Add a new golfer…</option>';
     if (prevVal && golfers.includes(prevVal)) analyzeSelect.value = prevVal;
     else analyzeSelect.selectedIndex = 0;
     updateGolferSelectStyle();
@@ -3054,7 +3380,20 @@ function updateGolferSelectStyle() {
   sel.style.borderColor = sel.value ? 'rgba(200,168,75,.4)' : 'var(--danger)';
 }
 
+let lastGolferChoice = '';
 function onGolferChange() {
+  const sel = document.getElementById('golferSelect');
+  if (sel.value === '__new__') {
+    sel.value = lastGolferChoice || '';
+    if (!sel.value) sel.selectedIndex = 0;
+    const row = document.getElementById('quickGolferRow');
+    row.style.display = 'flex';
+    const inp = document.getElementById('quickGolferName'); inp.value = ''; inp.focus();
+    updateGolferSelectStyle();
+    return;
+  }
+  lastGolferChoice = sel.value;
+  renderCurrentFixBanner();
   updateGolferSelectStyle();
   updateAnalyzeButtonState();
   // Pre-fill skill level from golfer's last session
