@@ -1040,6 +1040,7 @@
             <div class="option-group">
               <label>Club Used</label>
               <select id="clubUsed">
+                <option value="auto" selected>🤖 Let AI decide</option>
                 <option value="driver">Driver</option>
                 <option value="3-wood">3-Wood</option>
                 <option value="hybrid">Hybrid</option>
@@ -1164,6 +1165,11 @@
           <button class="analyze-btn" id="analyzeBtn" onclick="analyzeSwing()" style="margin-top:16px" disabled>
             Analyze My Swing
           </button>
+
+          <label class="btn btn-secondary" style="display:block;text-align:center;margin-top:12px;padding:12px;font-size:.66rem;cursor:pointer">📚 Analyze Several Videos from My Gallery
+            <input type="file" accept="video/*" multiple style="display:none" onchange="onBatchSelect(event)">
+          </label>
+          <div id="batchPanel" style="display:none;margin-top:12px"></div>
         </div>
       </div>
 
@@ -1633,7 +1639,8 @@ async function analyzeSwing() {
 
   const skill = document.getElementById('skillLevel').value;
   const angle = document.getElementById('cameraAngle').value;
-  const club  = document.getElementById('clubUsed').value;
+  let club = document.getElementById('clubUsed').value;
+  let clubAuto = null;
   const focus = document.getElementById('focusArea').value;
   const notes = document.getElementById('swingNotes').value;
   const hcpRaw = document.getElementById('golferHandicap').value.trim();
@@ -1655,12 +1662,26 @@ async function analyzeSwing() {
       try { currentFileHash = await hashFile(currentFile); } catch(e) {}
     }
     const videoHash = currentFileHash;
+    if (club === 'auto') {
+      updateLoadingText('Figuring out which club…');
+      try { clubAuto = await detectClub(currentFile); } catch(e) { clubAuto = null; }
+      if (clubAuto) club = clubAuto.club;
+    }
     const currentFix = getCurrentFix(golferCheck);
     const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, duration, currentFix });
     if (currentFix && analysis.fix_progress && typeof analysis.fix_progress === 'object') analysis.fix_progress.fix = currentFix.root_cause;
-    currentAnalysis = { analysis, skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, videoHash, golfer: golferCheck, fileName: currentFile.name, savedId: null };
+    if (club === 'auto') {
+      const d = String(analysis.club_detected || '').toLowerCase();
+      club = CLUB_KEYS.includes(d) ? d : 'auto';
+      clubAuto = { club, confidence: CLUB_KEYS.includes(d) ? 'medium' : 'low' };
+    }
+    currentAnalysis = { analysis, skill, angle, club, clubAuto, focus, notes, handicap, typicalMiss, ballFlight, videoHash, golfer: golferCheck, fileName: currentFile.name, savedId: null };
     renderResults(currentAnalysis);
     renderPositionJumps(analysis.positions);
+    // Auto-save every analysis so nothing is lost if Save isn't tapped
+    try { saveSession(); } catch(e) { console.warn('auto-save failed', e); }
+    const sb = document.querySelector('.save-row .btn-gold');
+    if (sb && currentAnalysis.savedId) { sb.textContent = '✓ Saved automatically'; sb.disabled = true; }
     const analysisRef = currentAnalysis;
     captureSwingFrames(currentFile, analysis.positions).then(frames => {
       if (frames && frames.length && currentAnalysis === analysisRef) {
@@ -1699,6 +1720,47 @@ async function analyzeSwing() {
   } catch(err) {
     showError(err.message || 'Analysis failed. Check your API key and try again.');
   }
+}
+
+// ============================================================
+// AUTO CLUB — quick first look to identify the club, so the right analysis
+// (full swing vs putting) runs. Used when the club is left on "Let AI decide".
+// ============================================================
+const CLUB_NAMES = { driver: 'Driver', '3-wood': '3-Wood', hybrid: 'Hybrid', 'long-iron': 'Long Iron', 'mid-iron': 'Mid Iron', 'short-iron': 'Short Iron', wedge: 'Wedge', putter: 'Putter', auto: 'Not sure' };
+const CLUB_KEYS = ['driver', '3-wood', 'hybrid', 'long-iron', 'mid-iron', 'short-iron', 'wedge', 'putter'];
+function clubLabel(c) { return CLUB_NAMES[c] || c || ''; }
+function readFileBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.onerror = () => reject(new Error('Could not read video file'));
+    r.readAsDataURL(file);
+  });
+}
+async function detectClub(file) {
+  const base64 = await readFileBase64(file);
+  const prompt = `Look at this golf video and identify which club the golfer is using.
+Clues: putter = short pendulum stroke, usually on a green, ball rolls along the ground. Wedge = short shaft, often a partial swing near a green or from sand/rough. Driver = longest club with a large round head, ball teed up high, wide stance, ball forward in stance. Fairway wood / hybrid = long club, ball on the grass or a low tee. Irons = medium-length shaft, ball on the ground, a divot is likely.
+Respond with ONLY JSON: {"club":"driver|3-wood|hybrid|long-iron|mid-iron|short-iron|wedge|putter","confidence":"high|medium|low"}. If unsure which iron, answer "mid-iron".`;
+  const call = advanced => fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${settings.geminiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+      contents: [{ parts: [
+        Object.assign({ inline_data: { mime_type: file.type || 'video/mp4', data: base64 } }, advanced ? { video_metadata: { fps: 2 } } : {}),
+        { text: prompt }
+      ] }],
+      generationConfig: Object.assign({ temperature: 0, maxOutputTokens: 2048 }, advanced ? { responseMimeType: 'application/json' } : {})
+    }) });
+  let res = await call(true);
+  if (res.status === 400) res = await call(false);
+  if (!res.ok) return null;
+  const data = await res.json();
+  const text = (data.candidates?.[0]?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join('');
+  const m = text.match(/"club"\s*:\s*"([a-z0-9-]+)"/i);
+  const c = m && m[1].toLowerCase();
+  if (!CLUB_KEYS.includes(c)) return null;
+  const conf = (text.match(/"confidence"\s*:\s*"(high|medium|low)"/i) || [])[1] || '';
+  return { club: c, confidence: conf.toLowerCase() };
 }
 
 async function callGeminiAnalysis(file, opts) {
@@ -1743,7 +1805,7 @@ async function callGeminiAnalysis(file, opts) {
   const hcpText = (opts.handicap === null || opts.handicap === undefined || isNaN(opts.handicap)) ? 'not reported' : String(opts.handicap);
 
   const studentBlock = `STUDENT (right-handed unless the video shows otherwise)
-- Club: ${opts.club}
+- Club: ${opts.club === 'auto' ? 'not specified — identify it from the video and add "club_detected":"driver|3-wood|hybrid|long-iron|mid-iron|short-iron|wedge|putter" to your JSON' : opts.club}
 - Camera angle: ${angleDescriptions[opts.angle] || opts.angle}
 - Self-reported level: ${skillDescriptions[opts.skill]}
 - Approximate handicap (estimated from their usual score): ${hcpText}
@@ -2529,6 +2591,204 @@ function openCompare(idA, idB) {
   });
 }
 
+// ============================================================
+// REPLAY — watch a saved session's swing again in slow motion.
+// The app never stores videos, so the golfer picks the original clip from the gallery;
+// its fingerprint is checked against the session and the saved positions drive "Jump to".
+// ============================================================
+let replaySpeedRate = 0.25;
+async function loadReplay(id, file) {
+  const s = sessions.find(x => x.id === id);
+  const box = document.getElementById('replayBox-' + id);
+  if (!s || !box || !file) return;
+  box.innerHTML = '<div style="font-size:.75rem;color:var(--divot);padding:6px 0">Checking video…</div>';
+  let hash = null;
+  try { hash = await hashFile(file); } catch(e) {}
+  let note = '';
+  if (s.videoHash && hash && s.videoHash !== hash) {
+    const other = sessions.find(x => x.videoHash === hash);
+    note = `⚠️ This isn't the video from this session${other ? ` — it matches <strong>${escHtml(other.golfer || '')}</strong> "${escHtml(other.label)}"` : ''}. The Jump buttons may not line up.`;
+  } else if (!s.videoHash) {
+    note = 'This session is older, so the app can\'t confirm it\'s the same video.';
+  } else {
+    note = '✓ Same video as this session.';
+  }
+  const url = URL.createObjectURL(file);
+  const pos = s.analysis?.positions && typeof s.analysis.positions === 'object'
+    ? Object.entries(s.analysis.positions).filter(([, p]) => p && typeof p.t === 'number') : [];
+  box.innerHTML = `
+    <div style="font-size:.72rem;color:${note.startsWith('⚠️') ? '#e8a87a' : 'var(--sky)'};margin:8px 0">${note}</div>
+    <video id="replayVideo" src="${url}" controls playsinline style="width:100%;max-height:320px;background:#000;border-radius:3px"></video>
+    <div class="vc-row" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px">
+      <span class="vc-label" style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--divot)">Speed</span>
+      ${[1, 0.5, 0.25].map(r => `<button class="vc-btn replay-rate ${r === replaySpeedRate ? 'active' : ''}" data-rate="${r}" onclick="replaySpeed(${r})">${r === 1 ? '1×' : r === 0.5 ? '½×' : '¼× slow-mo'}</button>`).join('')}
+    </div>
+    ${pos.length ? `<div class="vc-row" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
+      <span class="vc-label" style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--divot)">Jump to</span>
+      ${pos.map(([k, p]) => `<button class="vc-btn pos" onclick="replayJump(${Number(p.t)})">${escHtml(POSITION_LABELS[k] || k)}</button>`).join('')}
+    </div>` : `<div style="font-size:.7rem;color:var(--divot);margin-top:6px">Jump buttons need a swing analyzed with the new version.</div>`}`;
+  const v = document.getElementById('replayVideo');
+  if (v) v.playbackRate = replaySpeedRate;
+}
+function replaySpeed(rate) {
+  replaySpeedRate = rate;
+  const v = document.getElementById('replayVideo');
+  document.querySelectorAll('.replay-rate').forEach(b => b.classList.toggle('active', Number(b.dataset.rate) === rate));
+  if (v) { v.playbackRate = rate; v.play().catch(() => {}); }
+}
+function replayJump(t) {
+  const v = document.getElementById('replayVideo');
+  if (!v) return;
+  v.pause(); v.playbackRate = replaySpeedRate;
+  try { v.currentTime = Math.max(0, t); } catch(e) {}
+}
+function replayBlockHTML(s) {
+  return `<div style="background:#1a2e1a;border-radius:4px;padding:12px;margin-bottom:14px">
+    <label class="btn btn-gold" style="display:block;text-align:center;padding:11px;font-size:.66rem;cursor:pointer">▶ Replay Swing in Slow Motion
+      <input type="file" accept="video/*" style="display:none" onchange="loadReplay(${s.id}, this.files[0])">
+    </label>
+    <div style="font-size:.66rem;color:var(--divot);margin-top:6px;text-align:center">Pick the original clip from your gallery — nothing is re-analyzed</div>
+    <div id="replayBox-${s.id}"></div>
+  </div>`;
+}
+
+// ============================================================
+// BATCH — pick several gallery videos, tag golfer + club, analyze & save them in a row
+// ============================================================
+let batchItems = [];
+let batchRunning = false;
+let batchWakeLock = null;
+
+function onBatchSelect(e) {
+  const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('video/') || /\.(mov|mp4|m4v|webm|3gp)$/i.test(f.name));
+  e.target.value = '';
+  if (!files.length) return;
+  const defGolfer = document.getElementById('golferSelect')?.value;
+  const defClub = document.getElementById('clubUsed')?.value || 'driver';
+  files.sort((a, b) => (a.lastModified || 0) - (b.lastModified || 0));
+  files.forEach(f => batchItems.push({ file: f, golfer: defGolfer && defGolfer !== '__new__' ? defGolfer : '', club: defClub, status: 'ready', msg: '', sessionId: null }));
+  renderBatch();
+}
+function batchSet(i, field, value) { if (batchItems[i]) { batchItems[i][field] = value; renderBatch(); } }
+function batchRemove(i) { if (!batchRunning) { batchItems.splice(i, 1); renderBatch(); } }
+function batchClearDone() { batchItems = batchItems.filter(x => x.status !== 'done'); renderBatch(); }
+
+function renderBatch() {
+  const panel = document.getElementById('batchPanel');
+  if (!panel) return;
+  if (!batchItems.length) { panel.style.display = 'none'; panel.innerHTML = ''; return; }
+  panel.style.display = 'block';
+  const clubOpts = document.getElementById('clubUsed').innerHTML.replace(/ selected(="[^"]*")?/g, '');
+  const gOpts = sel => `<option value="" ${!sel ? 'selected' : ''} disabled>Pick golfer…</option>` + golfers.map(g => `<option value="${escHtml(g)}" ${g === sel ? 'selected' : ''}>${escHtml(g)}</option>`).join('');
+  const ready = batchItems.filter(x => x.status === 'ready' || x.status === 'failed');
+  const missing = ready.filter(x => !x.golfer).length;
+  const statusText = it => ({
+    ready: '', working: '⏳ ' + (it.msg || 'Analyzing…'),
+    done: `✅ ${it.msg}`, failed: `❌ ${it.msg}`, skipped: `⏭ ${it.msg}`
+  })[it.status] || '';
+  panel.innerHTML = `
+    <div style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--flag);margin-bottom:8px">📚 Batch · ${batchItems.length} video${batchItems.length === 1 ? '' : 's'}</div>
+    <div style="font-size:.72rem;color:var(--divot);margin-bottom:10px;line-height:1.5">Pick the golfer and club for each. Skill level, camera angle and focus come from the form above. Keep this screen open while it runs.</div>
+    ${batchItems.map((it, i) => {
+      const d = it.file.lastModified ? new Date(it.file.lastModified).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+      const locked = batchRunning || it.status === 'done' || it.status === 'working';
+      return `<div style="border:1px solid rgba(200,168,75,.25);border-radius:4px;padding:10px;margin-bottom:8px;background:rgba(0,0,0,.2)">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+          <div style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${i + 1}. ${escHtml(it.file.name)} ${d ? `<span style="color:var(--divot)">· ${d}</span>` : ''}</div>
+          ${locked ? '' : `<button onclick="batchRemove(${i})" style="background:none;border:1px solid rgba(232,122,90,.5);color:#e87a5a;border-radius:3px;padding:4px 9px;font-size:.7rem;cursor:pointer;flex-shrink:0">✕</button>`}
+        </div>
+        ${locked ? `<div style="font-size:.74rem;color:var(--divot);margin-top:4px">${escHtml(it.golfer)} · ${it.detected ? '🤖 ' + escHtml(clubLabel(it.detected)) : escHtml(clubLabel(it.club))}</div>` : `
+        <div class="options-row" style="margin:8px 0 0">
+          <div class="option-group"><select onchange="batchSet(${i}, 'golfer', this.value)" style="${it.golfer ? '' : 'border-color:var(--danger)'}">${gOpts(it.golfer)}</select></div>
+          <div class="option-group"><select onchange="batchSet(${i}, 'club', this.value)">${clubOpts.replace(`value="${it.club}"`, `value="${it.club}" selected`)}</select></div>
+        </div>`}
+        ${statusText(it) ? `<div style="font-size:.76rem;margin-top:6px;color:${it.status === 'failed' ? '#e87a5a' : it.status === 'done' ? '#6abf6a' : 'var(--sky)'};line-height:1.45">${statusText(it)}
+          ${it.sessionId ? ` <button onclick="viewSession(${it.sessionId})" style="background:none;border:none;color:var(--sky);text-decoration:underline;cursor:pointer;font:inherit;padding:0">open</button>` : ''}</div>` : ''}
+      </div>`;
+    }).join('')}
+    ${missing ? `<div class="notice notice-warn" style="margin:6px 0">Pick a golfer for ${missing} video${missing === 1 ? '' : 's'} first.</div>` : ''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-gold" style="flex:2;min-width:160px;padding:12px;font-size:.68rem" onclick="runBatch()" ${batchRunning || !ready.length || missing ? 'disabled' : ''}>${batchRunning ? '⏳ Working… keep this screen open' : `▶ Analyze & Save ${ready.length}`}</button>
+      ${!batchRunning && batchItems.some(x => x.status === 'done') ? `<button class="btn btn-secondary" style="flex:1;padding:12px;font-size:.62rem" onclick="batchClearDone()">Clear finished</button>` : ''}
+    </div>`;
+}
+
+async function runBatch() {
+  if (batchRunning) return;
+  if (!settings.geminiKey) { alertShare('Add your Gemini key in Settings first.'); return; }
+  batchRunning = true;
+  try { if (navigator.wakeLock) batchWakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+  const skill = document.getElementById('skillLevel').value;
+  const angle = document.getElementById('cameraAngle').value;
+  const focus = document.getElementById('focusArea').value;
+  renderBatch();
+  for (const it of batchItems) {
+    if (!(it.status === 'ready' || it.status === 'failed') || !it.golfer) continue;
+    it.status = 'working'; it.msg = 'Checking video…'; renderBatch();
+    try {
+      let hash = null;
+      try { hash = await hashFile(it.file); } catch(e) {}
+      const dup = findDuplicateSession(hash);
+      if (dup) { it.status = 'skipped'; it.msg = `Already analyzed for ${dup.golfer} ("${dup.label}")`; it.sessionId = dup.id; renderBatch(); continue; }
+      const prevHcp = sessions.find(s => s.golfer === it.golfer && s.handicap !== undefined && s.handicap !== null && s.handicap !== '');
+      const prevMiss = sessions.find(s => s.golfer === it.golfer && s.typicalMiss);
+      const duration = await new Promise(res => {
+        const v = document.createElement('video'); v.preload = 'metadata';
+        const u = URL.createObjectURL(it.file);
+        const done = d => { URL.revokeObjectURL(u); res(d || 0); };
+        v.onloadedmetadata = () => done(v.duration); v.onerror = () => done(0);
+        setTimeout(() => done(0), 5000); v.src = u;
+      });
+      let club = it.club;
+      if (club === 'auto') {
+        it.msg = 'Figuring out which club…'; renderBatch();
+        let dc = null;
+        try { dc = await detectClub(it.file); } catch(e) {}
+        if (dc) { club = dc.club; it.detected = dc.club; }
+      }
+      const currentFix = getCurrentFix(it.golfer);
+      const opts = { skill, angle, club, focus, notes: '', handicap: prevHcp ? prevHcp.handicap : null, typicalMiss: prevMiss ? prevMiss.typicalMiss : '', ballFlight: {}, duration, currentFix };
+      it.msg = 'Analyzing (about a minute)…'; renderBatch();
+      const analysis = await callGeminiAnalysis(it.file, opts);
+      if (currentFix && analysis.fix_progress && typeof analysis.fix_progress === 'object') analysis.fix_progress.fix = currentFix.root_cause;
+      if (club === 'auto') {
+        const d = String(analysis.club_detected || '').toLowerCase();
+        if (CLUB_KEYS.includes(d)) { club = d; it.detected = d; }
+      }
+      it.msg = 'Grabbing swing photos…'; renderBatch();
+      let cardBlob = null;
+      try {
+        const frames = await captureSwingFrames(it.file, analysis.positions);
+        if (frames.length) cardBlob = await buildSwingCard(analysis, frames, { golfer: it.golfer, club: clubLabel(club), date: it.file.lastModified || Date.now() });
+      } catch(e) { console.warn('batch frames failed', e); }
+      const recorded = it.file.lastModified && it.file.lastModified < Date.now() && it.file.lastModified > Date.now() - 365 * 864e5 ? new Date(it.file.lastModified) : new Date();
+      const session = {
+        id: Date.now(), label: it.file.name.replace(/\.[^.]+$/, ''), golfer: it.golfer, date: recorded.toISOString(),
+        skill, club, clubAuto: it.club === 'auto' ? true : undefined, angle, focus, notes: null,
+        handicap: opts.handicap, typicalMiss: opts.typicalMiss || null, ballFlight: null,
+        promptVersion: 2, batch: true, analysis, svgDiagram: null, videoHash: hash
+      };
+      sessions.unshift(session);
+      sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+      saveSessionsToStorage();
+      if (cardBlob) {
+        cardCache[session.id] = cardBlob;
+        if (hasGitHub()) { it.msg = 'Saving photos…'; renderBatch(); try { if (await uploadSwingCard(session, cardBlob)) saveSessionsToStorage(); } catch(e) {} }
+      }
+      scheduleSyncToGitHub();
+      it.status = 'done'; it.sessionId = session.id;
+      it.msg = `${it.detected ? '🤖 ' + clubLabel(it.detected) + ' · ' : ''}${analysis.overall_score}/100 — ${(analysis.root_cause || analysis.key_fault || '').slice(0, 90)}`;
+    } catch(err) {
+      it.status = 'failed'; it.msg = (err && err.message ? err.message : 'Analysis failed').slice(0, 160);
+    }
+    renderBatch(); renderHistory();
+    await new Promise(r => setTimeout(r, 1200));
+  }
+  batchRunning = false;
+  try { if (batchWakeLock) { await batchWakeLock.release(); batchWakeLock = null; } } catch(e) {}
+  renderBatch(); renderHistory();
+}
+
 function shotContextText(s) {
   const bits = [];
   if (s.handicap !== null && s.handicap !== undefined && s.handicap !== '') bits.push('~' + s.handicap + ' hcp');
@@ -2575,6 +2835,9 @@ function renderResults(data) {
       <div class="notice notice-info" style="margin-bottom:10px">
         👁 Visible from this angle: ${a.visible_phases.join(', ')}
       </div>` : ''}
+
+      ${data.clubAuto ? `
+      <div class="notice notice-info" style="margin-bottom:10px">🤖 AI picked the club: <strong>${escHtml(clubLabel(data.club))}</strong>${data.clubAuto.confidence ? ` (${escHtml(data.clubAuto.confidence)} confidence)` : ''}. Wrong? Choose the club on the form and analyze again.</div>` : ''}
 
       ${a.key_fault ? `
       <div class="notice notice-warn" style="margin-bottom:14px">
@@ -2627,7 +2890,7 @@ function renderResults(data) {
       </div>` : ''}
 
       <div class="save-row">
-        <input type="text" id="sessionLabel" placeholder="Name this session (e.g. Driver practice)..." value="${data.fileName ? data.fileName.replace(/\.[^.]+$/,'') : ''}">
+        <input type="text" id="sessionLabel" placeholder="Name this session (e.g. Driver practice)..." value="${data.fileName ? data.fileName.replace(/\.[^.]+$/,'') : ''}" onchange="renameCurrentSession(this.value)">
         <button class="btn btn-gold" onclick="saveSession()">Save Session</button>
       </div>
       <div id="cardButtonSlot">${data.cardBlob ? cardButtonHTML('current') : ''}</div>
@@ -2721,6 +2984,14 @@ function showError(msg) {
 // ============================================================
 // SESSION SAVE / HISTORY
 // ============================================================
+function renameCurrentSession(label) {
+  if (!currentAnalysis || !currentAnalysis.savedId) return;
+  const s = sessions.find(x => x.id === currentAnalysis.savedId);
+  if (!s || !label.trim()) return;
+  s.label = label.trim();
+  saveSessionsToStorage(); scheduleSyncToGitHub(); renderHistory();
+}
+
 function saveSession() {
   if (!currentAnalysis) return;
   const btn = document.querySelector('.save-row .btn-gold');
@@ -2738,6 +3009,7 @@ function saveSession() {
     date: new Date().toISOString(),
     skill: currentAnalysis.skill,
     club: currentAnalysis.club,
+    clubAuto: currentAnalysis.clubAuto ? true : undefined,
     angle: currentAnalysis.angle,
     focus: currentAnalysis.focus || null,
     notes: currentAnalysis.notes || null,
@@ -2805,7 +3077,7 @@ function renderHistory() {
           ${s.golfer ? `<span class="meta-tag" style="background:rgba(122,184,212,.15);border-color:rgba(122,184,212,.3);color:var(--sky)">👤 ${escHtml(s.golfer)}</span>` : ''}
           ${s.pinnedFix ? '<span class="meta-tag" style="border-color:var(--flag);color:var(--flag)">📌 current fix</span>' : ''}
           ${s.analysis?.fix_progress?.status && FIX_STATUS[String(s.analysis.fix_progress.status).toLowerCase()] ? `<span class="meta-tag">${FIX_STATUS[String(s.analysis.fix_progress.status).toLowerCase()].icon} ${FIX_STATUS[String(s.analysis.fix_progress.status).toLowerCase()].label}</span>` : ''}
-          <span class="meta-tag">${s.club}</span>
+          <span class="meta-tag">${s.clubAuto ? '🤖 ' : ''}${escHtml(clubLabel(s.club))}</span>
           <span class="meta-tag">${s.skill}</span>
           <span class="meta-tag">${s.angle}</span>
         </div>
@@ -2866,6 +3138,7 @@ function viewSession(id) {
         : `<button class="btn btn-secondary" style="padding:10px;font-size:.62rem" onclick="pinFromHistory(${s.id})">📌 Make Current Fix</button>`}
       <button class="btn btn-secondary" style="padding:10px;font-size:.62rem" onclick="openCompare(${s.id}, null)">⚖️ Compare</button>
     </div>
+    ${replayBlockHTML(s)}
 
     <div style="margin-bottom:14px">
       <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:6px">Coaching Summary</div>
