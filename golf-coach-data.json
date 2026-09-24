@@ -1,6 +1,142 @@
 {
   "sessions": [
     {
+      "id": 1790212669759,
+      "label": "21188",
+      "golfer": "Ed",
+      "date": "2026-09-24T01:14:21.618Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "clubAuto": true,
+      "angle": "down-the-line",
+      "focus": "full",
+      "notes": null,
+      "handicap": null,
+      "typicalMiss": null,
+      "ballFlight": null,
+      "promptVersion": 2,
+      "batch": true,
+      "analysis": {
+        "positions": {
+          "address": {
+            "t": 7.7,
+            "note": "Upright posture, hands hanging relatively low, neutral grip visible."
+          },
+          "takeaway": {
+            "t": 7.9,
+            "note": "Clubhead is pulled sharply inside the hand path immediately; hands push outward away from the body."
+          },
+          "top": {
+            "t": 8.1,
+            "note": "Short, flat, and laid-off position. Shoulder turn is limited."
+          },
+          "downswing": {
+            "t": 8.3,
+            "note": "Over-the-top transition; the shaft steepens significantly as the shoulders spin open."
+          },
+          "impact": {
+            "t": 8.5,
+            "note": "Early extension is prominent; hips move toward the ball, spine angle is lost, and hands are high."
+          },
+          "finish": {
+            "t": 9,
+            "note": "Stands very tall, slightly unbalanced with weight hanging back."
+          }
+        },
+        "phases": {
+          "setup": {
+            "observation": "Posture is slightly upright but stable; hands are in a decent starting position.",
+            "rating": "needs_work"
+          },
+          "backswing": {
+            "observation": "The takeaway is extremely flat and inside, leading to a short, laid-off position at the top.",
+            "rating": "fault"
+          },
+          "downswing": {
+            "observation": "An over-the-top move steepens the shaft to compensate for the flat backswing.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Severe early extension and an out-to-in path at impact.",
+            "rating": "fault"
+          },
+          "follow_through": {
+            "observation": "Stands up completely through the finish, losing some balance.",
+            "rating": "needs_work"
+          }
+        },
+        "root_cause": "An extremely inside takeaway where the clubhead is pulled behind the body immediately, leaving no room to turn and forcing an over-the-top steepening move on the downswing.",
+        "cause_chain": [
+          "Inside takeaway",
+          "Flat, laid-off top of backswing",
+          "Over-the-top transition to reach the ball",
+          "Steep downswing path",
+          "Early extension to make room for the steep club"
+        ],
+        "what_sets_you_apart": "Unlike many players with an over-the-top path, this golfer has a very deliberate, patient pre-shot routine and does not rush the transition.",
+        "ball_flight_check": "The inside-to-over-the-top path typically produces a high slice or a pull-left, consistent with this swing signature.",
+        "priority_checkpoint": "At takeaway (shaft parallel to the ground), the clubhead must be directly in line with or slightly outside the hands, not behind the trail hip.",
+        "confidence": "high",
+        "not_assessable": [
+          "weight shift",
+          "face angle at impact"
+        ],
+        "scores": {
+          "setup": 65,
+          "backswing": 48,
+          "downswing": 45,
+          "impact": 46,
+          "follow_through": 52,
+          "tempo": 72
+        },
+        "overall_score": 51,
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Deliberate and patient pre-shot routine",
+          "Smooth transition tempo"
+        ],
+        "improvements": [
+          "Clubhead pulled too far inside on takeaway",
+          "Over-the-top downswing path",
+          "Early extension at impact"
+        ],
+        "key_fault": "Inside takeaway forcing an over-the-top downswing.",
+        "drill_1": {
+          "name": "Wall Takeaway Drill",
+          "description": "Stand with your rear about 1 to 1.5 feet away from a wall. Practice your takeaway without letting the clubhead touch the wall. Reps: 20 slow rehearsals. Checkpoint: Clubhead stays in front of your hands.",
+          "reps": 20
+        },
+        "drill_2": {
+          "name": "Alignment Stick Gate",
+          "description": "Place an alignment stick in the ground 3 feet behind your ball, angled along your target line. Practice taking the club back outside of the stick. Reps: 15 swings.",
+          "reps": 15
+        },
+        "drill_3": {
+          "name": "Pump and Shallow Drill",
+          "description": "Take the club to the top, pause, and let your arms drop straight down to hip height before rotating through. Reps: 15 practice swings.",
+          "reps": 15
+        },
+        "summary": "The primary issue is the takeaway. By pulling the club inside immediately, you force an over-the-top move to get back to the ball. Fix the takeaway to keep the club in front of your chest, and the downswing will naturally shallow out.",
+        "metrics": {
+          "swing_plane": "steep in transition",
+          "tempo": "deliberate",
+          "posture_retention": "early extension",
+          "balance_at_finish": "slightly back",
+          "clubface_at_top": "shut",
+          "shaft_lean_at_impact": "neutral to backward"
+        }
+      },
+      "svgDiagram": null,
+      "videoHash": "11a860bb89623bfc5f91ec49919aa65c8b67dbafd68d469578b74aab5b9db600",
+      "cardPath": "swing-cards/1790212669759.jpg"
+    },
+    {
       "id": 1790212622015,
       "label": "21199",
       "golfer": "Ed",
