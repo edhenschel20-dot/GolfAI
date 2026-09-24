@@ -1,6 +1,127 @@
 {
   "sessions": [
     {
+      "id": 1790212578335,
+      "label": "21214",
+      "golfer": "Ed",
+      "date": "2026-09-24T01:14:21.598Z",
+      "skill": "intermediate",
+      "club": "putter",
+      "clubAuto": true,
+      "angle": "down-the-line",
+      "focus": "full",
+      "notes": null,
+      "handicap": null,
+      "typicalMiss": null,
+      "ballFlight": null,
+      "promptVersion": 2,
+      "batch": true,
+      "analysis": {
+        "positions": {
+          "address": {
+            "t": 1.5,
+            "note": "Comfortable posture, eyes slightly inside the target line, hands positioned under the shoulders."
+          },
+          "backstroke": {
+            "t": 1.8,
+            "note": "Short, quick backstroke dominated by hand and wrist movement rather than shoulder rotation."
+          },
+          "impact": {
+            "t": 2.1,
+            "note": "Hands flip slightly at impact to accelerate the putter head, leading to inconsistent face angle."
+          },
+          "finish": {
+            "t": 2.4,
+            "note": "Abrupt, short follow-through with the head rotating early to watch the ball."
+          }
+        },
+        "phases": {
+          "setup": {
+            "observation": "Good posture with arms hanging naturally, eyes slightly inside the ball line.",
+            "rating": "good"
+          },
+          "backstroke": {
+            "observation": "Short and quick, initiated primarily by the wrists/hands rather than a shoulder-driven rocking motion.",
+            "rating": "needs_work"
+          },
+          "impact": {
+            "observation": "Active hands/wrists flipping through impact to generate speed, causing face angle instability.",
+            "rating": "fault"
+          },
+          "follow_through": {
+            "observation": "Short, jabby finish with early head rotation toward the target.",
+            "rating": "needs_work"
+          }
+        },
+        "root_cause": "Excessive wrist activity and a lack of shoulder-driven motion lead to a short, jabby stroke where the hands must flip at impact to control distance and face angle.",
+        "cause_chain": [
+          "Wrist-dominated stroke initiation",
+          "Short, quick backstroke",
+          "Hand flip at impact to compensate",
+          "Inconsistent face angle and speed control",
+          "Early head turn to watch the result"
+        ],
+        "what_sets_you_apart": "Your setup posture is solid and athletic, but the stroke relies too heavily on the small muscles of the hands and wrists rather than the larger muscles of the shoulders and torso.",
+        "ball_flight_check": "The jabby, wristy motion often leads to inconsistent distance control (leaving putts short or blowing them past) and pushed/pulled putts due to face rotation.",
+        "priority_checkpoint": "Keep the wrists completely quiet throughout the stroke, letting the shoulders control the putter's movement.",
+        "confidence": "high",
+        "not_assessable": [
+          "green read",
+          "exact eye alignment"
+        ],
+        "scores": {
+          "setup": 75,
+          "alignment": 70,
+          "stroke_path": 60,
+          "face_control": 55,
+          "head_stability": 58,
+          "tempo": 50
+        },
+        "overall_score": 61,
+        "visible_phases": [
+          "setup",
+          "backstroke",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Athletic posture",
+          "Good arm hang at setup",
+          "Quiet lower body"
+        ],
+        "improvements": [
+          "Reduce wrist action",
+          "Control stroke with shoulders",
+          "Keep head still through impact"
+        ],
+        "key_fault": "Active wrists causing a jabby, inconsistent impact.",
+        "drill_1": {
+          "name": "Split-Hand Putting Drill",
+          "description": "Grip the putter with your lead hand at the top of the handle and your trail hand 3-4 inches lower on the shaft. Practice making strokes keeping the shaft aligned with your lead forearm. This prevents the wrists from flipping. Do 20 reps daily."
+        },
+        "drill_2": {
+          "name": "Coin Under the Ball",
+          "description": "Place a small coin directly under your ball. Hit a putt and focus on keeping your eyes on the coin until well after the ball is gone. This prevents early head rotation. Do 15 reps."
+        },
+        "drill_3": {
+          "name": "Shoulder-Only Strokes",
+          "description": "Place an alignment stick or club across your chest, holding it with your arms crossed. Practice rocking your shoulders to move the stick back and through without moving your hips or hands. Do 10 reps before putting."
+        },
+        "summary": "Focus on rocking the shoulders to control the putter rather than using your wrists, and keep your head down through impact to improve consistency.",
+        "metrics": {
+          "eye_position": "slightly inside the ball",
+          "stroke_ratio": "short back, short through",
+          "putter_face": "unstable due to wrist flip",
+          "head_stability": "rotates early",
+          "lower_body": "still",
+          "acceleration": "abrupt/jabby"
+        }
+      },
+      "svgDiagram": null,
+      "videoHash": "c8796760979022ed40e8ac3d2d157100a3188dc446ee45f507cc741e3d29781f",
+      "cardPath": "swing-cards/1790212578335.jpg"
+    },
+    {
       "id": 1790212541233,
       "label": "21221",
       "golfer": "Ed",
