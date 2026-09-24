@@ -1,6 +1,142 @@
 {
   "sessions": [
     {
+      "id": 1790212541233,
+      "label": "21221",
+      "golfer": "Ed",
+      "date": "2026-09-24T01:14:21.582Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "clubAuto": true,
+      "angle": "down-the-line",
+      "focus": "full",
+      "notes": null,
+      "handicap": null,
+      "typicalMiss": null,
+      "ballFlight": null,
+      "promptVersion": 2,
+      "batch": true,
+      "analysis": {
+        "positions": {
+          "address": {
+            "t": 8.5,
+            "note": "Slightly upright posture, knees gently flexed. Hands are positioned low, and the club is grounded behind the ball."
+          },
+          "takeaway": {
+            "t": 8.8,
+            "note": "Club is taken back primarily with the hands and arms. The clubhead moves slightly outside the hands with very little chest rotation."
+          },
+          "top": {
+            "t": 9,
+            "note": "Extremely short backswing. There is minimal shoulder turn and almost no hip rotation. The arms simply lift the club, leaving it well short of parallel."
+          },
+          "downswing": {
+            "t": 9.2,
+            "note": "Due to the lack of depth at the top, the downswing is steep and comes over the top. The lead arm is parallel to the ground but the shaft is steep."
+          },
+          "impact": {
+            "t": 9.4,
+            "note": "Early extension is visible as the golfer stands up through impact. The hips stall and move toward the ball."
+          },
+          "finish": {
+            "t": 9.8,
+            "note": "Upright finish, weight is mostly on the lead foot but the posture is very tall and slightly unstable."
+          }
+        },
+        "phases": {
+          "setup": {
+            "observation": "Decent athletic posture, though slightly upright. Balance looks reasonable at address.",
+            "rating": "needs_work"
+          },
+          "backswing": {
+            "observation": "Very restricted turn. The hips and shoulders barely rotate, resulting in an arms-only lift.",
+            "rating": "fault"
+          },
+          "downswing": {
+            "observation": "Steep, over-the-top transition caused by the lack of depth in the backswing.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension and standing up through the ball to make contact.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "Stands up very tall, finishing with a high hand position but limited rotation through the target.",
+            "rating": "needs_work"
+          }
+        },
+        "root_cause": "A severe lack of hip and shoulder rotation in the backswing. Because the golfer only lifts the arms and does not turn the body, there is no depth at the top, forcing a steep, over-the-top downswing path.",
+        "cause_chain": [
+          "Minimal hip and shoulder turn",
+          "Arms-only lift to the top",
+          "No depth or space created",
+          "Steep, over-the-top downswing",
+          "Early extension to find the ball"
+        ],
+        "what_sets_you_apart": "Despite the lack of rotation, the golfer maintains a relatively stable head position during the backswing and does not sway off the ball.",
+        "ball_flight_check": "A steep, out-to-in path with a driver typically results in a slice or a pull, which is very common for this swing profile.",
+        "priority_checkpoint": "At the top of the backswing, the lead shoulder should be turned fully under the chin, and the trail hip should have rotated backward.",
+        "confidence": "high",
+        "not_assessable": [
+          "grip strength",
+          "exact clubface angle at impact"
+        ],
+        "scores": {
+          "setup": 65,
+          "backswing": 42,
+          "downswing": 45,
+          "impact": 48,
+          "follow_through": 52,
+          "tempo": 58
+        },
+        "overall_score": 50,
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Stable head position during the backswing",
+          "Decent posture at address"
+        ],
+        "improvements": [
+          "Extremely limited hip and shoulder rotation",
+          "Steep, over-the-top downswing transition",
+          "Early extension and standing up at impact"
+        ],
+        "key_fault": "Lack of body rotation in the backswing, leading to an arms-only lift.",
+        "drill_1": {
+          "name": "Wall Turn Drill",
+          "description": "Stand with your trail hip about 2 inches from a wall. Practice your backswing, focusing on rotating your trail hip back until it touches the wall. Perform 20 reps daily to feel proper hip depth.",
+          "checkpoint": "On video, the trail hip should visibly move backward away from the target line during the backswing."
+        },
+        "drill_2": {
+          "name": "Club Across Chest Turn",
+          "description": "Hold a club across your shoulders. Practice turning your shoulders until the grip end of the club points down toward the ground behind the ball. Perform 15 slow, deliberate turns.",
+          "checkpoint": "The shoulders should rotate close to 90 degrees relative to the target line."
+        },
+        "drill_3": {
+          "name": "Pause at the Top",
+          "description": "Hit half-shots with a mid-iron, pausing for a full second at the top of your backswing to ensure you have completed a full turn before starting down.",
+          "checkpoint": "A distinct pause is visible on video, showing a fully rotated torso before the downswing begins."
+        },
+        "summary": "Your swing is heavily restricted by a lack of rotation in the backswing. By training your hips and shoulders to turn fully, you will create the depth needed to naturally shallow the club and swing from the inside.",
+        "metrics": {
+          "swing_plane": "steep",
+          "tempo": "abrupt",
+          "posture_retention": "early extension",
+          "balance_at_finish": "upright and slightly unstable",
+          "clubface_at_top": "neutral but extremely short",
+          "shaft_lean_at_impact": "neutral to backward"
+        }
+      },
+      "svgDiagram": null,
+      "videoHash": "4ffc68545257c348d69cabc79bfbe8cb9d8bffbdd9771e8552e6509534649e7a",
+      "cardPath": "swing-cards/1790212541233.jpg"
+    },
+    {
       "id": 1790199132307,
       "label": "20260923_162859",
       "golfer": "Ed",
