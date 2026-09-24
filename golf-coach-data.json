@@ -1,6 +1,140 @@
 {
   "sessions": [
     {
+      "id": 1790212709550,
+      "label": "21193",
+      "golfer": "Ed",
+      "date": "2026-09-24T01:14:21.622Z",
+      "skill": "intermediate",
+      "club": "wedge",
+      "clubAuto": true,
+      "angle": "down-the-line",
+      "focus": "full",
+      "notes": null,
+      "handicap": null,
+      "typicalMiss": null,
+      "ballFlight": null,
+      "promptVersion": 2,
+      "batch": true,
+      "analysis": {
+        "positions": {
+          "address": {
+            "t": 8.3,
+            "note": "Upright posture, feet close together for a short chip/pitch. Club aligned with the yellow ball."
+          },
+          "takeaway": {
+            "t": 8.5,
+            "note": "Club taken back primarily with the hands and arms; minimal chest rotation."
+          },
+          "top": {
+            "t": 8.6,
+            "note": "Short backswing appropriate for a chip, but wrist is slightly cupped and body turn is inactive."
+          },
+          "downswing": {
+            "t": 8.7,
+            "note": "Arms pull down; hips and shoulders remain square to the ball."
+          },
+          "impact": {
+            "t": 9,
+            "note": "Hands flip slightly at impact to scoop the ball; shaft lean is neutral to slightly backward."
+          },
+          "finish": {
+            "t": 9.3,
+            "note": "Abbreviated finish; chest is still facing the ball rather than rotating toward the target."
+          }
+        },
+        "phases": {
+          "setup": {
+            "observation": "Narrow stance and upright posture are reasonable for a short game shot, but setup is a bit static.",
+            "rating": "needs_work"
+          },
+          "backswing": {
+            "observation": "Handsy takeaway with very little shoulder or torso turn.",
+            "rating": "needs_work"
+          },
+          "downswing": {
+            "observation": "Lack of lower body rotation; swing is dominated by the arms and hands.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Scooping motion at impact with minimal forward shaft lean, risking inconsistent contact.",
+            "rating": "fault"
+          },
+          "follow_through": {
+            "observation": "Stalled rotation at finish; chest remains facing the ball.",
+            "rating": "needs_work"
+          }
+        },
+        "root_cause": "Lack of body rotation (pivot) through the shot, forcing the hands to flip and scoop to get the ball airborne.",
+        "cause_chain": [
+          "No chest rotation through impact",
+          "Hands stall and flip",
+          "Scooping motion at impact",
+          "Inconsistent contact and poor distance control"
+        ],
+        "what_sets_you_apart": "The golfer maintains a relatively calm tempo and doesn't rush the transition, which is a great foundation for short game control once the pivot is introduced.",
+        "ball_flight_check": "A scooping motion typically leads to high, short, or inconsistent chips (duffs and thins).",
+        "priority_checkpoint": "At the finish, the chest and belt buckle should face the target, not the ball.",
+        "confidence": "high",
+        "not_assessable": [
+          "weight shift"
+        ],
+        "scores": {
+          "setup": 65,
+          "backswing": 58,
+          "downswing": 50,
+          "impact": 48,
+          "follow_through": 52,
+          "tempo": 70
+        },
+        "overall_score": 57,
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Smooth, unhurried tempo",
+          "Good eye contact and focus on the ball"
+        ],
+        "improvements": [
+          "Incorporate chest rotation into the chip shot",
+          "Avoid scooping/flipping the wrists at impact",
+          "Rotate chest to face the target at finish"
+        ],
+        "key_fault": "Static body pivot leading to a handsy, scooping impact.",
+        "drill_1": {
+          "name": "Chest-Led Chipping Drill",
+          "description": "Place a glove under your lead armpit. Practice short chips keeping the glove secure by rotating your chest through the shot. Reps: 20.",
+          "checkpoint": "The glove should not fall out during the swing, and your chest should face the target at the finish."
+        },
+        "drill_2": {
+          "name": "Alignment Stick Extension Drill",
+          "description": "Hold an alignment stick along the shaft of your wedge extending past your lead hip. Chip without letting the stick hit your lead side. Reps: 15.",
+          "checkpoint": "The stick must stay clear of your lead side through impact, forcing forward shaft lean."
+        },
+        "drill_3": {
+          "name": "Tummy-to-Target Finish",
+          "description": "Hit 10 short chips focusing solely on finishing with your stomach facing the target. Hold the finish for 2 seconds.",
+          "checkpoint": "Verify on video that your torso has fully rotated toward the target at the end of the swing."
+        },
+        "summary": "The main issue with your short game is a lack of body rotation, which causes you to scoop the ball with your wrists. By rotating your chest through the shot, you will achieve much cleaner and more consistent contact.",
+        "metrics": {
+          "swing_plane": "neutral",
+          "tempo": "smooth",
+          "posture_retention": "good",
+          "balance_at_finish": "static",
+          "clubface_at_top": "square",
+          "shaft_lean_at_impact": "backward (scooping)"
+        }
+      },
+      "svgDiagram": null,
+      "videoHash": "766ed2210495e9b5f98186621959c55686dc4c8cf6aa46323f91f3a27efb210f",
+      "cardPath": "swing-cards/1790212709550.jpg"
+    },
+    {
       "id": 1790212669759,
       "label": "21188",
       "golfer": "Ed",
