@@ -1,6 +1,143 @@
 {
   "sessions": [
     {
+      "id": 1790212622015,
+      "label": "21199",
+      "golfer": "Ed",
+      "date": "2026-09-24T01:14:21.602Z",
+      "skill": "intermediate",
+      "club": "driver",
+      "clubAuto": true,
+      "angle": "down-the-line",
+      "focus": "full",
+      "notes": null,
+      "handicap": null,
+      "typicalMiss": null,
+      "ballFlight": null,
+      "promptVersion": 2,
+      "batch": true,
+      "analysis": {
+        "positions": {
+          "address": {
+            "t": 5.9,
+            "note": "Posture is slightly hunched in the upper back. Hands are reaching slightly, creating a wide gap between the thighs and the butt of the club."
+          },
+          "takeaway": {
+            "t": 6.2,
+            "note": "Club is pulled sharply inside the target line immediately. The club head is well behind the hands and body, with the face slightly closed."
+          },
+          "top": {
+            "t": 6.7,
+            "note": "Very flat and short backswing. The lead arm is low across the chest, and the shoulder turn is limited."
+          },
+          "downswing": {
+            "t": 6.8,
+            "note": "The club is re-routed over the top. The shaft is steep, cutting across the shoulder plane."
+          },
+          "impact": {
+            "t": 7,
+            "note": "The golfer early extends (stands up), losing spine angle to make room for the steep path. Hands flip to square the face."
+          },
+          "finish": {
+            "t": 7.4,
+            "note": "Stands very tall at finish, with weight mostly on the lead side but posture completely lost."
+          }
+        },
+        "phases": {
+          "setup": {
+            "observation": "Slightly hunched posture and reaching hands at address.",
+            "rating": "needs_work"
+          },
+          "backswing": {
+            "observation": "Immediate inside takeaway leads to a flat, trapped position at the top.",
+            "rating": "fault"
+          },
+          "downswing": {
+            "observation": "Steep, over-the-top transition to compensate for the flat backswing.",
+            "rating": "fault"
+          },
+          "impact": {
+            "observation": "Early extension and hand-flip to rescue the steep path.",
+            "rating": "needs_work"
+          },
+          "follow_through": {
+            "observation": "High finish but lacks posture retention.",
+            "rating": "needs_work"
+          }
+        },
+        "root_cause": "An immediate inside takeaway dominated by the hands/arms. This traps the club behind the body, forcing an over-the-top move on the downswing to reach the ball.",
+        "cause_chain": [
+          "Inside takeaway",
+          "Club trapped behind body",
+          "Over-the-top transition",
+          "Steep downswing path",
+          "Early extension to avoid digging",
+          "Flipped hands / Pull-slice"
+        ],
+        "what_sets_you_apart": "Unlike many players who struggle with over-the-top swings, this golfer has good hand-eye coordination and maintains decent speed through impact despite the severe path compensations.",
+        "ball_flight_check": "The steep, out-to-in downswing path strongly correlates with a typical slice or a direct pull to the left.",
+        "priority_checkpoint": "At the takeaway (shaft parallel to the ground), the club head must be directly in line with or slightly outside the hands from the down-the-line view.",
+        "confidence": "high",
+        "not_assessable": [
+          "weight shift",
+          "ball position"
+        ],
+        "scores": {
+          "setup": 65,
+          "backswing": 50,
+          "downswing": 52,
+          "impact": 55,
+          "follow_through": 60,
+          "tempo": 65
+        },
+        "overall_score": 56,
+        "visible_phases": [
+          "setup",
+          "backswing",
+          "downswing",
+          "impact",
+          "follow_through"
+        ],
+        "strengths": [
+          "Good hand speed through impact",
+          "Decent athletic base at setup"
+        ],
+        "improvements": [
+          "Takeaway is too far inside",
+          "Steep transition (over-the-top)",
+          "Early extension / standing up at impact"
+        ],
+        "key_fault": "Inside takeaway trapping the club behind the body.",
+        "drill_1": {
+          "name": "Hands In, Club Head Out Takeaway",
+          "description": "Place an alignment stick on the ground along your target line. Practice taking the club back slowly so that when the shaft is parallel to the ground, the club head is directly over or slightly outside the alignment stick, while your hands stay closer to your thighs. Perform 20 slow rehearsals before hitting shots.",
+          "checkpoint": "On video, the club head should obscure your hands at the takeaway position."
+        },
+        "drill_2": {
+          "name": "Split-Hand Takeaway Drill",
+          "description": "Grip the club with your lead hand normally, and place your trail hand 3 inches down the shaft. Practice taking the club back to hip height using only your torso rotation. This prevents the trail hand from snatching the club inside. Do 15 reps.",
+          "checkpoint": "The club shaft should point straight down the target line at hip height."
+        },
+        "drill_3": {
+          "name": "Butt-to-Wall Drill",
+          "description": "Stand without a club, placing your glutes against a wall. Rehearse a swing, ensuring your trail glute stays against the wall on the backswing, and your lead glute stays against the wall during the downswing and impact. Do 15 reps.",
+          "checkpoint": "Maintains spine angle and prevents early extension through impact."
+        },
+        "summary": "The primary issue is the takeaway. By pulling the club inside immediately, you force yourself into an over-the-top downswing. Correcting the takeaway path will naturally shallow out your downswing and reduce the need to early extend at impact.",
+        "metrics": {
+          "swing_plane": "steep in transition",
+          "tempo": "slightly rushed transition",
+          "posture_retention": "stands up through impact",
+          "balance_at_finish": "fair",
+          "clubface_at_top": "slightly closed",
+          "shaft_lean_at_impact": "neutral to backward"
+        }
+      },
+      "svgDiagram": null,
+      "videoHash": "5dfa9d24947c0137e46ab601ea539fa515567904cbb49eab34c389ac4a8b2c9e",
+      "cardPath": "swing-cards/1790212622015.jpg"
+    },
+    {
       "id": 1790212578335,
       "label": "21214",
       "golfer": "Ed",
