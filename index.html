@@ -350,6 +350,25 @@
   .quick-golfer { display:none; gap:8px; margin:8px 0 4px; }
   .quick-golfer input { flex:1; padding:9px 10px; background:rgba(0,0,0,.4); border:1px solid rgba(200,168,75,.4); border-radius:2px; color:var(--cream); font-family:'DM Mono',monospace; font-size:.78rem; }
 
+
+  /* ===== Full-screen swing viewer ===== */
+  #swingViewer { position:fixed; inset:0; z-index:2000; background:#000; display:none; flex-direction:column; }
+  #swingViewer.open { display:flex; }
+  #swingViewer .sv-top { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#0d170d; border-bottom:1px solid rgba(200,168,75,.25); }
+  #swingViewer .sv-title { font-family:'DM Mono',monospace; font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; color:var(--flag); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #swingViewer .sv-close { width:44px; height:44px; border-radius:50%; border:1px solid rgba(245,240,232,.3); background:rgba(255,255,255,.08); color:#fff; font-size:1.2rem; cursor:pointer; flex-shrink:0; }
+  #swingViewer .sv-stage { position:relative; flex:1; min-height:0; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  #swingViewer video { width:100%; height:100%; object-fit:contain; background:#000; transition:transform .15s ease; }
+  #swingViewer .sv-hint { display:none; position:absolute; left:10px; right:10px; bottom:10px; background:rgba(13,23,13,.85); color:var(--cream); font-size:.82rem; line-height:1.45; padding:8px 10px; border-radius:4px; border-left:3px solid var(--sky); pointer-events:none; }
+  #swingViewer .sv-bottom { background:#0d170d; border-top:1px solid rgba(200,168,75,.25); padding:8px 10px calc(10px + env(safe-area-inset-bottom)); }
+  #swingViewer input[type=range] { width:100%; height:32px; accent-color:var(--flag); }
+  #swingViewer .sv-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:6px; }
+  #swingViewer .sv-pos { flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
+  #swingViewer .sv-btn { flex:1; min-height:46px; font-family:'DM Mono',monospace; font-size:.72rem; border-radius:4px; border:1px solid rgba(200,168,75,.45); background:rgba(255,255,255,.06); color:var(--cream); cursor:pointer; }
+  #swingViewer .sv-play { flex:1.3; background:var(--flag); color:var(--fairway); border-color:var(--flag); font-weight:700; }
+  #swingViewer .sv-chip { min-height:38px; padding:6px 11px; font-family:'DM Mono',monospace; font-size:.68rem; border-radius:19px; border:1px solid rgba(122,184,212,.45); background:transparent; color:var(--sky); cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  #swingViewer .sv-chip.active { background:var(--sky); color:#0d170d; border-color:var(--sky); }
+
   /* video preview */
   #videoPreview {
     width: 100%;
@@ -1010,6 +1029,7 @@
               <button class="vc-btn" data-rate="0.5" onclick="setVideoSpeed(0.5)">½×</button>
               <button class="vc-btn active" data-rate="0.25" onclick="setVideoSpeed(0.25)">¼× slow-mo</button>
             </div>
+            <div class="vc-row"><button class="vc-btn" style="flex:1;border-color:var(--flag);color:var(--flag)" onclick="jumpToPosition()">⛶ Open Big Swing Viewer (frame by frame)</button></div>
             <div class="vc-row" id="positionJumps"></div>
           </div>
 
@@ -1696,6 +1716,7 @@ async function analyzeSwing() {
           // If they already tapped Save, attach the picture to that session now
           if (analysisRef.savedId) {
             const saved = sessions.find(x => x.id === analysisRef.savedId);
+            if (saved) cardCache[saved.id] = blob;
             if (saved && !saved.cardPath) uploadSwingCard(saved, blob).then(ok => { if (ok) { saveSessionsToStorage(); scheduleSyncToGitHub(); } });
           }
         }).catch(e => console.warn('card build failed', e));
@@ -2601,6 +2622,7 @@ async function loadReplay(id, file) {
   const s = sessions.find(x => x.id === id);
   const box = document.getElementById('replayBox-' + id);
   if (!s || !box || !file) return;
+  replaySessionId = id;
   box.innerHTML = '<div style="font-size:.75rem;color:var(--divot);padding:6px 0">Checking video…</div>';
   let hash = null;
   try { hash = await hashFile(file); } catch(e) {}
@@ -2623,6 +2645,7 @@ async function loadReplay(id, file) {
       <span class="vc-label" style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--divot)">Speed</span>
       ${[1, 0.5, 0.25].map(r => `<button class="vc-btn replay-rate ${r === replaySpeedRate ? 'active' : ''}" data-rate="${r}" onclick="replaySpeed(${r})">${r === 1 ? '1×' : r === 0.5 ? '½×' : '¼× slow-mo'}</button>`).join('')}
     </div>
+    <button class="vc-btn" style="width:100%;margin-top:8px;border-color:var(--flag);color:var(--flag)" onclick="replayJump()">⛶ Open Big Swing Viewer (frame by frame)</button>
     ${pos.length ? `<div class="vc-row" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
       <span class="vc-label" style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--divot)">Jump to</span>
       ${pos.map(([k, p]) => `<button class="vc-btn pos" onclick="replayJump(${Number(p.t)})">${escHtml(POSITION_LABELS[k] || k)}</button>`).join('')}
@@ -2636,11 +2659,13 @@ function replaySpeed(rate) {
   document.querySelectorAll('.replay-rate').forEach(b => b.classList.toggle('active', Number(b.dataset.rate) === rate));
   if (v) { v.playbackRate = rate; v.play().catch(() => {}); }
 }
+let replaySessionId = null;
 function replayJump(t) {
   const v = document.getElementById('replayVideo');
   if (!v) return;
-  v.pause(); v.playbackRate = replaySpeedRate;
-  try { v.currentTime = Math.max(0, t); } catch(e) {}
+  v.pause();
+  const s = sessions.find(x => x.id === replaySessionId);
+  openSwingViewer(v.src, s?.analysis?.positions, typeof t === 'number' ? t : undefined, s ? [s.golfer, clubLabel(s.club)].filter(Boolean).join(' · ') : 'Swing');
 }
 function replayBlockHTML(s) {
   return `<div style="background:#1a2e1a;border-radius:4px;padding:12px;margin-bottom:14px">
@@ -3557,6 +3582,161 @@ function cancelQuickGolfer() {
   document.getElementById('quickGolferRow').style.display = 'none';
 }
 
+// ============================================================
+// SWING VIEWER — full-screen player for studying positions.
+// No native controls (so no big play button covering the frame), large picture,
+// frame-by-frame stepping, scrub bar, speed, position chips and 2× zoom.
+// ============================================================
+const SV = { v: null, positions: [], speed: 0.25, zoom: false, origin: '50% 50%', raf: null, pushed: false };
+
+function ensureSwingViewer() {
+  if (document.getElementById('swingViewer')) return;
+  const el = document.createElement('div');
+  el.id = 'swingViewer';
+  el.innerHTML = `
+    <div class="sv-top">
+      <div class="sv-title" id="svTitle">Swing</div>
+      <button class="sv-close" onclick="closeSwingViewer()" aria-label="Close">✕</button>
+    </div>
+    <div class="sv-stage" id="svStage">
+      <video id="svVideo" playsinline muted preload="auto"></video>
+      <div class="sv-hint" id="svHint"></div>
+    </div>
+    <div class="sv-bottom">
+      <input type="range" id="svScrub" min="0" max="1000" value="0" step="1" aria-label="Scrub">
+      <div class="sv-row">
+        <button class="sv-btn" onclick="svStep(-1)" aria-label="Back one frame">⏮ 1 frame</button>
+        <button class="sv-btn sv-play" id="svPlay" onclick="svTogglePlay()">▶ Play</button>
+        <button class="sv-btn" onclick="svStep(1)" aria-label="Forward one frame">1 frame ⏭</button>
+      </div>
+      <div class="sv-row">
+        ${[1, 0.5, 0.25, 0.1].map(r => `<button class="sv-chip sv-rate" data-rate="${r}" onclick="svSetSpeed(${r})">${r === 1 ? '1×' : r === 0.5 ? '½×' : r === 0.25 ? '¼×' : '⅒×'}</button>`).join('')}
+        <button class="sv-chip" id="svZoomBtn" onclick="svToggleZoom()">🔍 Zoom 2×</button>
+      </div>
+      <div class="sv-row sv-pos" id="svPositions"></div>
+    </div>`;
+  document.body.appendChild(el);
+  const v = document.getElementById('svVideo');
+  SV.v = v;
+  const scrub = document.getElementById('svScrub');
+  scrub.addEventListener('input', () => {
+    if (!v.duration) return;
+    v.pause(); svSyncPlayBtn();
+    v.currentTime = (scrub.value / 1000) * v.duration;
+  });
+  v.addEventListener('timeupdate', svSyncScrub);
+  v.addEventListener('seeked', svSyncScrub);
+  v.addEventListener('play', () => { svSyncPlayBtn(); svLoop(); });
+  v.addEventListener('pause', svSyncPlayBtn);
+  v.addEventListener('ended', svSyncPlayBtn);
+  document.getElementById('svStage').addEventListener('click', e => {
+    if (e.target.closest('button')) return;
+    if (SV.zoom) {
+      const r = v.getBoundingClientRect();
+      const x = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
+      const y = Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100));
+      SV.origin = `${x.toFixed(0)}% ${y.toFixed(0)}%`;
+      v.style.transformOrigin = SV.origin;
+    } else {
+      svTogglePlay();
+    }
+  });
+  window.addEventListener('popstate', () => { if (SV.pushed) { SV.pushed = false; closeSwingViewer(true); } });
+}
+
+function openSwingViewer(src, positions, startT, title) {
+  if (!src) return;
+  ensureSwingViewer();
+  const v = SV.v;
+  SV.positions = positions && typeof positions === 'object'
+    ? Object.entries(positions).filter(([, p]) => p && typeof p.t === 'number') : [];
+  if (v.src !== src) v.src = src;
+  v.playbackRate = SV.speed;
+  document.getElementById('svTitle').textContent = title || 'Swing';
+  document.getElementById('svPositions').innerHTML = SV.positions.map(([k, p]) =>
+    `<button class="sv-chip sv-poschip" data-t="${Number(p.t)}" onclick="svJump(${Number(p.t)}, '${k}')">${escHtml(POSITION_LABELS[k] || k)}</button>`).join('');
+  document.querySelectorAll('#swingViewer .sv-rate').forEach(b => b.classList.toggle('active', Number(b.dataset.rate) === SV.speed));
+  document.getElementById('swingViewer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (!SV.pushed) { try { history.pushState({ swingViewer: 1 }, ''); SV.pushed = true; } catch(e) {} }
+  const go = () => {
+    if (typeof startT === 'number') {
+      const key = (SV.positions.find(([, p]) => Math.abs(p.t - startT) < 0.001) || [])[0];
+      svJump(startT, key);
+    } else { svSyncScrub(); }
+  };
+  if (v.readyState >= 1) go(); else v.addEventListener('loadedmetadata', go, { once: true });
+}
+
+function closeSwingViewer(fromBack) {
+  const el = document.getElementById('swingViewer');
+  if (!el) return;
+  SV.v.pause();
+  el.classList.remove('open');
+  document.body.style.overflow = '';
+  if (!fromBack && SV.pushed) { SV.pushed = false; try { history.back(); } catch(e) {} }
+}
+
+function svJump(t, key) {
+  const v = SV.v;
+  v.pause();
+  try { v.currentTime = Math.max(0, Math.min(t, (v.duration || t) - 0.02)); } catch(e) {}
+  const label = key ? (POSITION_LABELS[key] || key) : '';
+  const note = key ? (SV.positions.find(([k]) => k === key)?.[1]?.note || '') : '';
+  const hint = document.getElementById('svHint');
+  hint.innerHTML = label ? `<strong>${escHtml(label)}</strong>${note ? ' — ' + escHtml(note) : ''}` : '';
+  hint.style.display = label ? 'block' : 'none';
+  document.querySelectorAll('#svPositions .sv-poschip').forEach(b => b.classList.toggle('active', Math.abs(Number(b.dataset.t) - t) < 0.001));
+  svSyncPlayBtn();
+}
+
+function svStep(dir) {
+  const v = SV.v;
+  v.pause();
+  const fps = 30;
+  try { v.currentTime = Math.max(0, Math.min((v.duration || 0), v.currentTime + dir / fps)); } catch(e) {}
+  document.getElementById('svHint').style.display = 'none';
+}
+
+function svTogglePlay() {
+  const v = SV.v;
+  if (v.paused) {
+    if (v.ended || (v.duration && v.currentTime >= v.duration - 0.05)) v.currentTime = 0;
+    v.playbackRate = SV.speed;
+    document.getElementById('svHint').style.display = 'none';
+    v.play().catch(() => {});
+  } else v.pause();
+}
+
+function svSetSpeed(r) {
+  SV.speed = r;
+  SV.v.playbackRate = r;
+  document.querySelectorAll('#swingViewer .sv-rate').forEach(b => b.classList.toggle('active', Number(b.dataset.rate) === r));
+}
+
+function svToggleZoom() {
+  SV.zoom = !SV.zoom;
+  SV.v.style.transform = SV.zoom ? 'scale(2)' : '';
+  SV.v.style.transformOrigin = SV.origin;
+  const b = document.getElementById('svZoomBtn');
+  b.classList.toggle('active', SV.zoom);
+  b.textContent = SV.zoom ? '🔍 Zoom on — tap to aim' : '🔍 Zoom 2×';
+}
+
+function svSyncScrub() {
+  const v = SV.v; if (!v || !v.duration) return;
+  document.getElementById('svScrub').value = Math.round((v.currentTime / v.duration) * 1000);
+}
+function svSyncPlayBtn() {
+  const b = document.getElementById('svPlay'); if (!b) return;
+  b.textContent = SV.v.paused ? '▶ Play' : '⏸ Pause';
+}
+function svLoop() {
+  cancelAnimationFrame(SV.raf);
+  const tick = () => { svSyncScrub(); if (!SV.v.paused) SV.raf = requestAnimationFrame(tick); };
+  SV.raf = requestAnimationFrame(tick);
+}
+
 // ---- Video speed + jump to swing positions ----
 let videoSpeed = 0.25;
 function setVideoSpeed(rate) {
@@ -3567,11 +3747,10 @@ function setVideoSpeed(rate) {
 }
 function jumpToPosition(t) {
   const v = document.getElementById('videoPreview');
-  if (!v || !v.src || typeof t !== 'number') return;
+  if (!v || !v.src) return;
   v.pause();
-  v.playbackRate = videoSpeed;
-  try { v.currentTime = Math.max(0, t); } catch(e) {}
-  v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const title = [currentAnalysis?.golfer, currentAnalysis?.club ? clubLabel(currentAnalysis.club) : ''].filter(Boolean).join(' · ') || 'Swing';
+  openSwingViewer(v.src, currentAnalysis?.analysis?.positions, typeof t === 'number' ? t : undefined, title);
 }
 function renderPositionJumps(positions) {
   const box = document.getElementById('positionJumps');
