@@ -1905,6 +1905,12 @@ ${rubric}
 
 DRILLS: drill_1 must directly fix the ROOT CAUSE, drill_2 supports it, drill_3 may target a secondary issue. Each drill: reps, and a checkpoint the golfer can verify on their next video. Avoid stock drills (e.g. the pump drill) unless they are truly the best fix for this root cause.
 
+SETUP CHANGE: If a change to the stance or body setup would make the root cause easier to fix (especially for limited rotation, a restricted turn, or back concerns), add this field:
+"setup_fix":{"changes":[...],"body":[...],"summary":"one plain sentence telling the golfer what to change","why":"one sentence on how it helps THIS swing"}
+- "changes" may only contain: "flare_feet" (turn both toes out 20-30 degrees), "trail_foot_back" (pull trail foot 3-4 inches farther from the ball line, slightly closed stance), "wider_stance" (feet a few inches wider).
+- "body" may only contain: "lead_heel_lift" (let the lead heel rise in the backswing), "hips_turn_freely" (let the hips turn with the shoulders instead of resisting), "stand_taller" (a little less bend at the waist, more knee flex), "shorter_swing" (three-quarter backswing), "step_through_finish" (let the trail foot walk through after impact).
+- Use empty arrays for anything that does not apply. If no setup change would help, set "setup_fix": null.
+
 OUTPUT: Only a JSON object — no markdown, no code fences. The two examples below show the FORMAT ONLY. They describe two different imaginary golfers. Do NOT copy their faults, scores, wording or drills — neither of them is this golfer.
 
 FORMAT EXAMPLE 1 (imaginary 30-handicap):
@@ -2022,6 +2028,7 @@ Now analyze the ACTUAL video. Return one JSON object in that format. Phase ratin
   }
   if (!Array.isArray(parsed.cause_chain)) parsed.cause_chain = parsed.cause_chain ? [String(parsed.cause_chain)] : [];
   if (!Array.isArray(parsed.not_assessable)) parsed.not_assessable = parsed.not_assessable ? [String(parsed.not_assessable)] : [];
+  if ('setup_fix' in parsed) parsed.setup_fix = cleanSetupFix(parsed.setup_fix);
 
   return parsed;
 }
@@ -2118,21 +2125,28 @@ async function generateDrillDiagrams(analysis, physicalNotes) {
 The golfer's main problem: ${analysis.root_cause || analysis.key_fault || 'not given'}
 Assume a right-handed golfer. "Trail" = right side, "lead" = left side, target is to the golfer's left.${physicalNotes ? `\nGolfer's physical notes (keep the drawn positions realistic for them): ${physicalNotes}` : ''}
 
-Draw ONE SVG diagram for EACH drill below, in the same order (${drills.length} SVGs total).
+Draw ONE SVG diagram for EACH drill below, in the same order (${drills.length} SVGs total).${analysis.setup_fix && analysis.setup_fix.summary ? `\nThe student is also changing their setup: ${analysis.setup_fix.summary} Show the feet in that new setup where feet are drawn.` : ''}
 
 ${list}
 
-Each SVG must:
-- Use viewBox="0 0 400 300" and start with a background rect fill="#1a2e1a"
-- Choose the view that makes the drill easiest to understand: OVERHEAD (looking down at feet, ball, target line, alignment sticks — best for stance, foot position and alignment drills) or SIDE / DOWN-THE-LINE (stick figure — best for posture, turn and club-position drills). Write the view name small in the top-right corner (e.g. "overhead view").
-- Stick figures: thick lines (stroke-width 3), circles for head and joints, cream #f5f0e8. Club as a thinner line. From overhead, show feet as ovals with toes marked, the ball as a small circle, and the target line as a dashed line with an arrow labelled "target".
-- Show any equipment the drill uses (alignment stick, wall, chair, tee, towel, headcover) as simple shapes.
-- Show the MOVEMENT or CHANGE with GREEN (#6abf6a) arrows. If something moves from a start to an end position, draw the start as a faint dashed outline and the end in solid color.
-- If the drill has an order of steps, number them 1, 2, 3 in small gold circles next to what happens.
-- Put the drill name at the top in gold (#c8a84b), font-size 15, bold, monospace.
-- Add 2-4 short labels (max 5 words each) in gold, font-size 12, monospace. Labels must not overlap each other or the drawing.
-- At the bottom, one line in cream, font-size 11, saying what to feel or check (max 10 words).
-- Only basic SVG shapes, lines, paths, text and <marker> arrowheads. No images, no scripts, no clipPath, no fonts other than monospace.
+The student finds OVERHEAD footprint diagrams much easier to read than stick figures. Draw OVERHEAD (looking straight down) whenever the drill can be shown that way. That covers stance, feet, alignment, ball position, AND rotation: from above, show the shoulders as a line and the hips as a second line across the body, turning from a dashed start position to a solid end position. Use a SIDE view only when the drill truly can't be shown from above (for example spine angle or a wall behind the golfer).
+
+FIXED LAYOUT (follow exactly so nothing overlaps). Each SVG uses viewBox="0 0 400 320":
+- Background rect width 400 height 320 fill="#1a2e1a".
+- Title: the drill name at x=20 y=28, gold #c8a84b, monospace, font-size 14, bold. View name ("looking down" or "side view") at x=380 y=28, text-anchor end, #9a9890, font-size 11.
+- DRAWING ZONE: x 20–260, y 45–235. Everything drawn goes here, with no text inside this zone except "target" and "Trail"/"Lead" foot labels.
+- LABEL COLUMN: x 272–390, y 55–230. Up to 3 labels, each at most 3 short lines of 14px spacing, cream #f5f0e8, monospace, font-size 11, at least 50px apart vertically. If a label points at something, draw a thin dashed #9a9890 leader line from the label's left edge to the object.
+- STEPS: if the drill has steps, put numbers in 9px-radius gold circles at the start of each label, and the same number in a gold circle next to the matching part of the drawing.
+- BOTTOM: a one-line "Feel:" cue at x=20 y=262, #c8a84b, font-size 12, max 45 characters; reps at x=20 y=284, #9a9890, font-size 11.
+
+HOW TO DRAW:
+- Overhead feet: ellipses rx 11 ry 24 with a filled 5px circle at the toe end; new/correct position filled #24533f with #6abf6a stroke; old position as a dashed #9a9890 outline with no fill. Ball: white circle r 5. Target line: dashed #9a9890 line with an arrow and the word "target".
+- Overhead body: head as a circle r 12 between the feet, shoulders as a thick line (stroke-width 5) across it, hips as a thinner line (stroke-width 3). Rotation = the dashed start line plus the solid end line and a curved green arrow between them.
+- Side view: stick figure in cream #f5f0e8, stroke-width 3, head circle r 14; club as a thinner line.
+- Movement: green #6abf6a arrows (stroke-width 2) with a marker arrowhead. At most 3 arrows.
+- Equipment the drill uses (alignment stick, wall, chair, tee, towel, headcover) as simple shapes: sticks as thick orange #e0a040 lines, walls as a grey bar.
+- Keep it sparse: under about 40 shapes. Big, simple and readable on a phone beats detailed.
+- Only rect, line, path, circle, ellipse, polygon, text, g and marker. No images, scripts, clipPath, filters or other fonts.
 
 Return ONLY the ${drills.length} complete <svg>...</svg> elements one after another, nothing else.`;
 
@@ -2190,6 +2204,166 @@ async function drawDrillsForSession(id) {
   scheduleSyncToGitHub();
   if (btn) btn.remove();
   injectDrillDiagrams(svgs, 'histDrillDiagram');
+}
+
+// ============================================================
+// SETUP CHANGE — built-in overhead footprint diagram (drawn by code, same every time)
+// ============================================================
+const SETUP_CHANGES = {
+  flare_feet:      'Turn both toes out 20–30°',
+  trail_foot_back: 'Trail foot 3–4 in farther back',
+  wider_stance:    'Stance a few inches wider'
+};
+const SETUP_BODY = {
+  lead_heel_lift:      ['Let your lead heel lift', 'In the backswing, let your front heel come off the ground. It adds turn without twisting your back.'],
+  hips_turn_freely:    ['Let your hips turn', 'Turn your hips along with your shoulders instead of holding them still. Less strain on the lower back.'],
+  stand_taller:        ['Stand a little taller', 'Less bend at the waist, a bit more knee flex, so your arms can swing past your body.'],
+  shorter_swing:       ['Use a ¾ swing', 'Stop the backswing where it feels comfortable. Solid contact beats a longer swing.'],
+  step_through_finish: ['Walk through the finish', 'After impact let your trail foot step toward the target, so you don\'t have to hold a twisted finish.']
+};
+let stanceSvgCount = 0;
+function stanceDiagramSVG(changes) {
+  const has = k => changes.includes(k);
+  const id = 'stArr' + (++stanceSvgCount);
+  const flare = has('flare_feet'), back = has('trail_foot_back'), wide = has('wider_stance');
+  const tx = wide ? 135 : 160, lx = wide ? 265 : 240, ty = back ? 84 : 108, ly = 108;
+  const tA = flare ? 25 : 0, lA = flare ? -25 : 0;
+  const foot = (x, y, a, old) => old
+    ? `<g transform="translate(${x},${y}) rotate(${a})"><ellipse rx="11" ry="24" fill="none" stroke="#9a9890" stroke-width="1.2" stroke-dasharray="4 3"/></g>`
+    : `<g transform="translate(${x},${y}) rotate(${a})"><ellipse rx="11" ry="24" fill="#24533f" stroke="#6abf6a" stroke-width="1.5"/><circle cy="17" r="5" fill="#6abf6a"/></g>`;
+  const lines = changes.map(k => SETUP_CHANGES[k]).filter(Boolean);
+  const H = 236 + lines.length * 22 + 20;
+  let svg = `<svg viewBox="0 0 400 ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Overhead view of the new stance: ${lines.join('; ')}">
+  <defs><marker id="${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" fill="#6abf6a"/></marker>
+  <marker id="${id}g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9z" fill="#9a9890"/></marker></defs>
+  <rect width="400" height="${H}" fill="#1a2e1a"/>
+  <text x="20" y="28" font-family="monospace" font-size="14" font-weight="bold" fill="#c8a84b">YOUR SETUP CHANGE</text>
+  <text x="380" y="28" font-family="monospace" font-size="11" fill="#9a9890" text-anchor="end">looking down</text>
+  <g transform="translate(-40,-10) scale(1.2)">
+  <text x="${tx}" y="${Math.min(ty, ly) - 38}" font-family="monospace" font-size="11" fill="#f5f0e8" text-anchor="middle">Trail</text>
+  <text x="${lx}" y="${Math.min(ty, ly) - 38}" font-family="monospace" font-size="11" fill="#f5f0e8" text-anchor="middle">Lead</text>`;
+  // old stance as dashed outlines where something moved or turned
+  if (back || wide || flare) svg += foot(160, 108, 0, true) + foot(240, 108, 0, true);
+  svg += foot(tx, ty, tA) + foot(lx, ly, lA);
+  if (back) svg += `<line x1="${tx - 30}" y1="112" x2="${tx - 30}" y2="84" stroke="#6abf6a" stroke-width="2" marker-end="url(#${id})"/>`;
+  if (wide) svg += `<line x1="170" y1="146" x2="${tx + 4}" y2="146" stroke="#6abf6a" stroke-width="2" marker-end="url(#${id})"/><line x1="230" y1="146" x2="${lx - 4}" y2="146" stroke="#6abf6a" stroke-width="2" marker-end="url(#${id})"/>`;
+  // ball, target line, target
+  svg += `<line x1="40" y1="176" x2="288" y2="176" stroke="#9a9890" stroke-width="1" stroke-dasharray="5 4"/>
+  <circle cx="200" cy="176" r="5" fill="#f5f0e8"/>
+  <line x1="296" y1="176" x2="346" y2="176" stroke="#9a9890" stroke-width="1.5" marker-end="url(#${id}g)"/>
+  <text x="321" y="166" font-family="monospace" font-size="11" fill="#9a9890" text-anchor="middle">target</text></g>`;
+  lines.forEach((t, i) => {
+    const y = 240 + i * 22;
+    svg += `<circle cx="28" cy="${y - 4}" r="8" fill="#c8a84b"/><text x="28" y="${y}" font-family="monospace" font-size="11" font-weight="bold" fill="#1a2e1a" text-anchor="middle">${i + 1}</text>
+    <text x="44" y="${y}" font-family="monospace" font-size="12" fill="#f5f0e8">${escHtml(t)}</text>`;
+  });
+  svg += `<text x="20" y="${H - 10}" font-family="monospace" font-size="11" fill="#9a9890">dashed = your old stance · green = new</text></svg>`;
+  return svg;
+}
+function cleanSetupFix(sf) {
+  if (!sf || typeof sf !== 'object') return null;
+  const changes = (Array.isArray(sf.changes) ? sf.changes : []).filter(k => SETUP_CHANGES[k]);
+  const body = (Array.isArray(sf.body) ? sf.body : []).filter(k => SETUP_BODY[k]);
+  if (!changes.length && !body.length && !sf.summary) return null;
+  return { changes, body, summary: sf.summary || '', why: sf.why || '' };
+}
+function setupFixHTML(a, mode) {
+  const sf = cleanSetupFix(a && a.setup_fix);
+  if (!sf) return '';
+  const dark = mode === 'dark', print = mode === 'print';
+  const ink = dark ? 'var(--cream)' : '#333', muted = dark ? 'var(--divot)' : '#666', gold = dark ? 'var(--flag)' : '#8a6a20';
+  const bodyList = sf.body.map(k => `<li style="margin:6px 0;line-height:1.5"><strong style="color:${gold}">${SETUP_BODY[k][0]}</strong> — <span style="color:${ink}">${SETUP_BODY[k][1]}</span></li>`).join('');
+  const inner = `
+    ${sf.summary ? `<div style="font-size:${print ? '13px' : '.95rem'};color:${ink};line-height:1.55;margin-bottom:4px">${escHtml(sf.summary)}</div>` : ''}
+    ${sf.why ? `<div style="font-size:${print ? '11px' : '.8rem'};color:${muted};line-height:1.5;margin-bottom:8px">${escHtml(sf.why)}</div>` : ''}
+    ${sf.changes.length ? `<div class="drill-diagram" style="margin:8px 0;max-width:420px;border-radius:4px;overflow:hidden;border:1px solid ${dark ? 'rgba(200,168,75,.2)' : '#e0ddd5'};page-break-inside:avoid">${stanceDiagramSVG(sf.changes)}</div>` : ''}
+    ${bodyList ? `<ul style="list-style:none;padding:0;margin:6px 0 0;font-size:${print ? '12px' : '.88rem'}">${bodyList}</ul>` : ''}`;
+  if (dark) return `<div class="result-section"><div class="result-section-title">🦶 Setup Change</div>${inner}</div>`;
+  if (print) return `<h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:0 0 8px">Setup Change</h3><div style="margin-bottom:18px">${inner}</div>`;
+  return `<div style="margin-bottom:16px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:8px">🦶 Setup Change</div>${inner}</div>`;
+}
+
+// ============================================================
+// UPDATE ADVICE WITH MY NOTES — re-coach a saved swing using the golfer's body notes (no video needed)
+// ============================================================
+function canRecoach(s) {
+  const notes = getGolferNotes(s && s.golfer);
+  return !!(settings.claudeKey && notes && s.analysis && s.analysis.recoached?.notes !== notes);
+}
+async function recoachSession(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s || !s.analysis) return;
+  const notes = getGolferNotes(s.golfer);
+  const a = s.analysis;
+  const btn = document.getElementById('recoachBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '🔄 Updating advice for your body (about 30 sec)…'; }
+  const observed = {
+    club: s.club, positions: a.positions, phases: a.phases, root_cause: a.root_cause, cause_chain: a.cause_chain,
+    key_fault: a.key_fault, metrics: a.metrics, strengths: a.strengths, improvements: a.improvements,
+    ball_flight_check: a.ball_flight_check, old_drills: [a.drill_1, a.drill_2, a.drill_3].filter(Boolean)
+  };
+  const prompt = `You are a PGA teaching professional who specializes in golfers with limited mobility. A video analysis of this student's swing was done earlier WITHOUT knowing about their body. Rewrite the coaching advice so it fits them. Do not change what was observed — only the advice.
+
+WHAT WAS OBSERVED IN THE VIDEO:
+${JSON.stringify(observed, null, 1)}${physicalNotesPrompt(notes)}
+
+Return ONLY a JSON object, no markdown:
+{"coach_note":"2 sentences in plain words: what this swing needs, given their body","root_cause":"the root cause restated with their limits in mind (keep the same underlying problem)","priority_checkpoint":"one thing to check on the next video","setup_fix":{"changes":[],"body":[],"summary":"","why":""},"drill_1":{"name":"","description":"what to do, reps, and a checkpoint"},"drill_2":{"name":"","description":""},"drill_3":{"name":"","description":""},"summary":"2 sentences"}
+setup_fix.changes may only contain "flare_feet", "trail_foot_back", "wider_stance". setup_fix.body may only contain "lead_heel_lift", "hips_turn_freely", "stand_taller", "shorter_swing", "step_through_finish". Use setup_fix null only if no setup change would help.${s.club === 'putter' ? ' This is a putting stroke: set setup_fix to null and give putting drills only.' : ''}`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': settings.claudeKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 3000, messages: [{ role: 'user', content: prompt }] })
+    });
+    if (!res.ok) throw new Error('Claude API ' + res.status);
+    const data = await res.json();
+    let text = (data.content?.map(b => b.text || '').join('') || '').replace(/```json|```/g, '');
+    text = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1).replace(/,\s*([}\]])/g, '$1');
+    const r = JSON.parse(text);
+    if (!r.drill_1) throw new Error('no drills returned');
+    if (!a.original_advice) a.original_advice = { root_cause: a.root_cause, priority_checkpoint: a.priority_checkpoint, summary: a.summary, setup_fix: a.setup_fix || null, drill_1: a.drill_1, drill_2: a.drill_2, drill_3: a.drill_3 };
+    ['root_cause', 'priority_checkpoint', 'summary', 'drill_1', 'drill_2', 'drill_3'].forEach(k => { if (r[k]) a[k] = r[k]; });
+    a.setup_fix = cleanSetupFix(r.setup_fix);
+    a.coach_note = r.coach_note || '';
+    a.recoached = { notes, date: new Date().toISOString() };
+    s.drillDiagrams = null;
+    saveSessionsToStorage(); scheduleSyncToGitHub();
+    viewSession(id);
+    renderHistory();
+    // Draw pictures for the new drills straight away
+    const drawBtn = document.getElementById('drawDrillsBtn');
+    if (drawBtn) drawDrillsForSession(id);
+  } catch(e) {
+    console.error(e);
+    if (btn) { btn.disabled = false; btn.textContent = '⚠️ Could not update — tap to try again'; }
+  }
+}
+function restoreOriginalAdvice(id) {
+  const s = sessions.find(x => x.id === id);
+  const o = s?.analysis?.original_advice;
+  if (!o) return;
+  Object.assign(s.analysis, o);
+  if (!o.setup_fix) delete s.analysis.setup_fix;
+  delete s.analysis.original_advice; delete s.analysis.recoached; delete s.analysis.coach_note;
+  s.drillDiagrams = null;
+  saveSessionsToStorage(); scheduleSyncToGitHub();
+  viewSession(id); renderHistory();
+}
+function recoachBlockHTML(s) {
+  const a = s.analysis || {};
+  let h = '';
+  if (a.recoached) {
+    h += `<div style="padding:12px 14px;background:#eef6ee;border-left:3px solid #2e7d32;border-radius:3px;margin-bottom:14px">
+      <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#2e7d32;margin-bottom:4px">📝 Advice updated for ${escHtml(s.golfer || 'this golfer')}'s body · ${new Date(a.recoached.date).toLocaleDateString()}</div>
+      ${a.coach_note ? `<div style="font-size:.9rem;color:#333;line-height:1.55">${escHtml(a.coach_note)}</div>` : ''}
+      <button onclick="restoreOriginalAdvice(${s.id})" style="background:none;border:none;padding:0;margin-top:6px;color:#1a73e8;font-family:'DM Mono',monospace;font-size:.62rem;cursor:pointer">↩ Show the original advice instead</button>
+    </div>`;
+  }
+  if (canRecoach(s)) {
+    h += `<button class="btn btn-gold" id="recoachBtn" style="width:100%;margin-bottom:14px;padding:12px;font-size:.7rem" onclick="recoachSession(${s.id})">🔄 ${a.recoached ? 'Your notes changed — update advice again' : 'Update Advice With My Body Notes'}</button>`;
+  }
+  return h;
 }
 
 function injectSwingDiagram(svg) {
@@ -3023,6 +3197,8 @@ function renderResults(data) {
         </ul>
       </div>` : ''}
 
+      ${setupFixHTML(a, 'dark')}
+
       ${drills.length ? `
       <div class="result-section">
         <div class="result-section-title">🏌️ Recommended Drills</div>
@@ -3315,6 +3491,9 @@ function viewSession(id) {
         ${a.improvements.map(s=>`<li style="padding:8px 12px;background:#fff5f0;border-radius:3px;border-left:3px solid #e87a5a;font-size:0.88rem;color:var(--ink-light)">${s}</li>`).join('')}
       </ul>
     </div>` : ''}
+
+    <div style="margin-top:16px">${recoachBlockHTML(s)}</div>
+    ${setupFixHTML(a, 'light')}
 
     ${drills.length ? `
     <div>
@@ -4095,6 +4274,8 @@ function buildAnalysisSectionHTML(a, meta, golferName, dateStr) {
     <ul style="margin:0 0 18px 0;padding-left:20px;font-size:13px;line-height:1.7">
       ${a.improvements.map(s => `<li>${s}</li>`).join('')}
     </ul>` : ''}
+
+    ${setupFixHTML(a, 'print')}
 
     ${drills.length ? `
     <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin-bottom:8px">Recommended Drills</h3>
