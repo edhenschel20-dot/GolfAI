@@ -892,15 +892,16 @@
     border-radius: 2px;
     transition: width 0.8s ease;
   }
+  .drill-diagram svg { display:block; width:100%; height:auto; }
 </style>
 </head>
 <body>
 
 <!-- Manage Golfers Modal -->
 <div class="modal-overlay" id="golfersModal">
-  <div class="modal" style="width:420px">
+  <div class="modal" style="width:460px">
     <h2>👥 Golfer Profiles</h2>
-    <p style="font-family:'DM Mono',monospace;font-size:.65rem;color:#999;margin-bottom:18px;line-height:1.5">Add everyone who'll use the app. Each session is tagged to a golfer so history and lesson plans stay separate.</p>
+    <p style="font-family:'DM Mono',monospace;font-size:.65rem;color:#999;margin-bottom:18px;line-height:1.5">Add everyone who'll use the app. Each session is tagged to a golfer so history and lesson plans stay separate. Use <strong>Body &amp; limits</strong> to note build, injuries or mobility — every analysis and lesson plan for that golfer will be tailored to it.</p>
     <div id="golferList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
     <div style="display:flex;gap:8px">
       <input class="form-input" type="text" id="newGolferName" placeholder="Name (e.g. Ed, Mike...)" style="flex:1" onkeydown="if(event.key==='Enter')addGolfer()">
@@ -1165,6 +1166,7 @@
             <button class="btn btn-secondary" style="padding:9px 14px;font-size:.65rem;white-space:nowrap" onclick="openManageGolfers()">Manage Golfers</button>
           </div>
 
+          <div id="golferNotesHint" class="notice notice-info" style="display:none;line-height:1.55"></div>
           <div id="currentFixBanner" class="notice notice-info" style="display:none;line-height:1.55"></div>
 
           <div class="quick-golfer" id="quickGolferRow">
@@ -1323,6 +1325,7 @@ let currentLessonPlanMeta = null;
 let settings = {};
 let sessions = [];
 let golfers = [];
+let golferProfiles = {}; // { "Ed": { notes: "overweight, back issues, limited rotation", updated: ISO } }
 let lessonPlans = [];
 let ghFileSHA = null;
 let syncDebounceTimer = null;
@@ -1364,6 +1367,7 @@ function loadState() {
   try { sessions = repairDeep(JSON.parse(localStorage.getItem('caddieai_sessions') || '[]')); } catch(e) { sessions = []; }
   try { golfers = repairDeep(JSON.parse(localStorage.getItem('caddieai_golfers') || '[]')); } catch(e) { golfers = []; }
   try { lessonPlans = repairDeep(JSON.parse(localStorage.getItem('caddieai_lessonplans') || '[]')); } catch(e) { lessonPlans = []; }
+  try { golferProfiles = repairDeep(JSON.parse(localStorage.getItem('caddieai_golferprofiles') || '{}')) || {}; } catch(e) { golferProfiles = {}; }
   try { ghFileSHA = localStorage.getItem('caddieai_sha') || null; } catch(e) {}
 }
 
@@ -1371,6 +1375,7 @@ function saveSessionsToStorage() {
   localStorage.setItem('caddieai_sessions', JSON.stringify(sessions));
   localStorage.setItem('caddieai_golfers', JSON.stringify(golfers));
   localStorage.setItem('caddieai_lessonplans', JSON.stringify(lessonPlans));
+  localStorage.setItem('caddieai_golferprofiles', JSON.stringify(golferProfiles));
 }
 
 // ============================================================
@@ -1402,6 +1407,7 @@ async function loadFromGitHub() {
     if (content.sessions) { sessions = content.sessions; }
     if (content.golfers) { golfers = content.golfers; }
     if (content.lessonPlans) { lessonPlans = content.lessonPlans; }
+    if (content.golferProfiles) { golferProfiles = content.golferProfiles; }
     saveSessionsToStorage();
     setSyncStatus('synced', 'github');
     renderHistory(); renderGolferSelects(); checkLessonTab(); renderSavedLessonPlans();
@@ -1416,7 +1422,7 @@ async function loadFromGitHub() {
 async function syncToGitHub() {
   if (!hasGitHub()) { setSyncStatus('', 'local'); return; }
   setSyncStatus('syncing', 'syncing...');
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions, golfers, lessonPlans }, null, 2))));
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions, golfers, golferProfiles, lessonPlans }, null, 2))));
   const body = { message: 'Caddie AI sync ' + new Date().toISOString(), content: encoded };
   if (ghFileSHA) body.sha = ghFileSHA;
   try {
@@ -1434,8 +1440,9 @@ async function syncToGitHub() {
             lessonPlans = mergeById(lessonPlans, remote.lessonPlans);
             golfers = Array.from(new Set([...(remote.golfers || []), ...golfers].map(g => typeof g === 'string' ? g : JSON.stringify(g))))
               .map(g => g.startsWith('{') ? JSON.parse(g) : g);
+            golferProfiles = Object.assign({}, remote.golferProfiles || {}, golferProfiles);
             saveSessionsToStorage();
-            body.content = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions, golfers, lessonPlans }, null, 2))));
+            body.content = btoa(unescape(encodeURIComponent(JSON.stringify({ sessions, golfers, golferProfiles, lessonPlans }, null, 2))));
             renderHistory(); renderGolferSelects();
           } catch(mergeErr) { console.error('merge failed', mergeErr); throw mergeErr; }
         }
@@ -1688,7 +1695,8 @@ async function analyzeSwing() {
       if (clubAuto) club = clubAuto.club;
     }
     const currentFix = getCurrentFix(golferCheck);
-    const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, duration, currentFix });
+    const physicalNotes = getGolferNotes(golferCheck);
+    const analysis = await callGeminiAnalysis(currentFile, { skill, angle, club, focus, notes, handicap, typicalMiss, ballFlight, duration, currentFix, physicalNotes });
     if (currentFix && analysis.fix_progress && typeof analysis.fix_progress === 'object') analysis.fix_progress.fix = currentFix.root_cause;
     if (club === 'auto') {
       const d = String(analysis.club_detected || '').toLowerCase();
@@ -1737,6 +1745,23 @@ async function analyzeSwing() {
           }
         }
       }).catch(() => {}); // silent fail — diagram is bonus
+    }
+
+    // Drill "how-to" pictures, one per drill (also a bonus — silent fail)
+    if (settings.claudeKey && analysis.drill_1) {
+      const ref = currentAnalysis;
+      document.querySelectorAll('[id^="resDrillDiagram"]').forEach(el => {
+        el.innerHTML = `<div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--divot);margin-top:8px">🎨 Drawing this drill…</div>`;
+      });
+      generateDrillDiagrams(analysis, physicalNotes).then(svgs => {
+        if (!svgs) { document.querySelectorAll('[id^="resDrillDiagram"]').forEach(el => el.innerHTML = ''); return; }
+        ref.drillDiagrams = svgs;
+        if (currentAnalysis === ref) injectDrillDiagrams(svgs, 'resDrillDiagram');
+        if (ref.savedId) {
+          const saved = sessions.find(s => s.id === ref.savedId);
+          if (saved) { saved.drillDiagrams = svgs; saveSessionsToStorage(); scheduleSyncToGitHub(); }
+        }
+      }).catch(() => {});
     }
   } catch(err) {
     showError(err.message || 'Analysis failed. Check your API key and try again.');
@@ -1833,7 +1858,7 @@ async function callGeminiAnalysis(file, opts) {
 - Usual miss on the course: ${missText}
 - What the ball did on THIS swing: ${flightText}
 - Focus requested: ${opts.focus}
-${opts.notes ? `- Notes from the golfer: ${opts.notes}` : ''}${opts.currentFix ? `
+${opts.notes ? `- Notes from the golfer: ${opts.notes}` : ''}${physicalNotesPrompt(opts.physicalNotes)}${opts.currentFix ? `
 
 CURRENT FIX this golfer has been working on (chosen from an earlier lesson):
 - Problem: ${opts.currentFix.root_cause}
@@ -2062,6 +2087,103 @@ Return ONLY the complete SVG element, nothing else. Start with <svg and end with
   // Extract SVG from response
   const svgMatch = text.match(/<svg[\s\S]*<\/svg>/i);
   return svgMatch ? svgMatch[0] : null;
+}
+
+// ============================================================
+// DRILL DIAGRAMS (Claude SVG) — one simple "how to do it" picture per drill
+// ============================================================
+function cleanSvg(svg) {
+  if (!svg) return null;
+  return svg
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*')/gi, '')
+    .replace(/(href\s*=\s*["'])\s*javascript:[^"']*/gi, '$1#');
+}
+
+async function generateDrillDiagrams(analysis, physicalNotes) {
+  if (!settings.claudeKey || !analysis) return null;
+  const drills = [analysis.drill_1, analysis.drill_2, analysis.drill_3].filter(Boolean);
+  if (!drills.length) return null;
+  const list = drills.map((d, i) => `DRILL ${i + 1}: ${d.name}\n${d.description}${d.checkpoint ? '\nCheckpoint: ' + d.checkpoint : ''}`).join('\n\n');
+
+  const prompt = `You are a golf instructor who draws clear, simple how-to diagrams for students who find written instructions hard to picture.
+
+The golfer's main problem: ${analysis.root_cause || analysis.key_fault || 'not given'}
+Assume a right-handed golfer. "Trail" = right side, "lead" = left side, target is to the golfer's left.${physicalNotes ? `\nGolfer's physical notes (keep the drawn positions realistic for them): ${physicalNotes}` : ''}
+
+Draw ONE SVG diagram for EACH drill below, in the same order (${drills.length} SVGs total).
+
+${list}
+
+Each SVG must:
+- Use viewBox="0 0 400 300" and start with a background rect fill="#1a2e1a"
+- Choose the view that makes the drill easiest to understand: OVERHEAD (looking down at feet, ball, target line, alignment sticks — best for stance, foot position and alignment drills) or SIDE / DOWN-THE-LINE (stick figure — best for posture, turn and club-position drills). Write the view name small in the top-right corner (e.g. "overhead view").
+- Stick figures: thick lines (stroke-width 3), circles for head and joints, cream #f5f0e8. Club as a thinner line. From overhead, show feet as ovals with toes marked, the ball as a small circle, and the target line as a dashed line with an arrow labelled "target".
+- Show any equipment the drill uses (alignment stick, wall, chair, tee, towel, headcover) as simple shapes.
+- Show the MOVEMENT or CHANGE with GREEN (#6abf6a) arrows. If something moves from a start to an end position, draw the start as a faint dashed outline and the end in solid color.
+- If the drill has an order of steps, number them 1, 2, 3 in small gold circles next to what happens.
+- Put the drill name at the top in gold (#c8a84b), font-size 15, bold, monospace.
+- Add 2-4 short labels (max 5 words each) in gold, font-size 12, monospace. Labels must not overlap each other or the drawing.
+- At the bottom, one line in cream, font-size 11, saying what to feel or check (max 10 words).
+- Only basic SVG shapes, lines, paths, text and <marker> arrowheads. No images, no scripts, no clipPath, no fonts other than monospace.
+
+Return ONLY the ${drills.length} complete <svg>...</svg> elements one after another, nothing else.`;
+
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': settings.claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 12000, messages: [{ role: 'user', content: prompt }] })
+    });
+  } catch(e) { return null; }
+  if (!res.ok) return null;
+  const data = await res.json();
+  const text = data.content?.map(b => b.text || '').join('') || '';
+  const svgs = (text.match(/<svg[\s\S]*?<\/svg>/gi) || []).slice(0, drills.length).map(cleanSvg);
+  if (!svgs.length) return null;
+  // Give each SVG's marker ids a unique prefix so arrowheads don't collide when several diagrams share a page
+  return svgs.map((svg, i) => {
+    const tag = 'dd' + Date.now().toString(36) + i + '_';
+    return svg.replace(/(\s)id="([^"]+)"/g, `$1id="${tag}$2"`).replace(/url\(#([^)]+)\)/g, `url(#${tag}$1)`).replace(/href="#([^"]+)"/g, `href="#${tag}$1"`);
+  });
+}
+
+function drillDiagramHTML(svg, light) {
+  if (!svg) return '';
+  return `<div class="drill-diagram" style="margin-top:10px;border-radius:4px;overflow:hidden;border:1px solid ${light ? '#e0ddd5' : 'rgba(200,168,75,.2)'};max-width:420px">${svg}</div>`;
+}
+
+// Fill in drill diagram slots on whatever screen is showing (results or history detail)
+function injectDrillDiagrams(svgs, prefix) {
+  (svgs || []).forEach((svg, i) => {
+    const slot = document.getElementById(prefix + i);
+    if (slot && svg) slot.innerHTML = drillDiagramHTML(svg, prefix === 'histDrillDiagram');
+  });
+}
+
+// History: draw diagrams for an older session that doesn't have them yet
+async function drawDrillsForSession(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s || !s.analysis) return;
+  const btn = document.getElementById('drawDrillsBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '🎨 Drawing drill diagrams (about 30 sec)…'; }
+  const svgs = await generateDrillDiagrams(s.analysis, getGolferNotes(s.golfer));
+  if (!svgs) {
+    if (btn) { btn.disabled = false; btn.textContent = '⚠️ Could not draw diagrams — tap to try again'; }
+    return;
+  }
+  s.drillDiagrams = svgs;
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  if (btn) btn.remove();
+  injectDrillDiagrams(svgs, 'histDrillDiagram');
 }
 
 function injectSwingDiagram(svg) {
@@ -2772,7 +2894,7 @@ async function runBatch() {
         if (dc) { club = dc.club; it.detected = dc.club; }
       }
       const currentFix = getCurrentFix(it.golfer);
-      const opts = { skill, angle, club, focus, notes: '', handicap: prevHcp ? prevHcp.handicap : null, typicalMiss: prevMiss ? prevMiss.typicalMiss : '', ballFlight: {}, duration, currentFix };
+      const opts = { skill, angle, club, focus, notes: '', handicap: prevHcp ? prevHcp.handicap : null, typicalMiss: prevMiss ? prevMiss.typicalMiss : '', ballFlight: {}, duration, currentFix, physicalNotes: getGolferNotes(it.golfer) };
       it.msg = 'Analyzing (about a minute)…'; renderBatch();
       const analysis = await callGeminiAnalysis(it.file, opts);
       if (currentFix && analysis.fix_progress && typeof analysis.fix_progress === 'object') analysis.fix_progress.fix = currentFix.root_cause;
@@ -2908,6 +3030,7 @@ function renderResults(data) {
                   <a href="https://www.youtube.com/results?search_query=golf+${encodeURIComponent(d.name)}" target="_blank" style="font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.06em;color:var(--sky);text-decoration:none;white-space:nowrap;border:1px solid rgba(122,184,212,.3);padding:2px 7px;border-radius:2px;flex-shrink:0">▶ YouTube</a>
                 </div>
                 <div class="drill-text">${d.description}</div>
+                <div id="resDrillDiagram${i}">${drillDiagramHTML(data.drillDiagrams?.[i], false)}</div>
               </div>
             </li>
           `).join('')}
@@ -3044,6 +3167,7 @@ function saveSession() {
     promptVersion: 2,
     analysis: currentAnalysis.analysis,
     svgDiagram: currentAnalysis.svgDiagram || null,
+    drillDiagrams: currentAnalysis.drillDiagrams || null,
     videoHash: currentAnalysis.videoHash || currentFileHash || null
   };
   currentAnalysis.savedId = session.id;
@@ -3197,9 +3321,11 @@ function viewSession(id) {
               <a href="https://www.youtube.com/results?search_query=golf+${encodeURIComponent(d.name)}" target="_blank" style="font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.06em;color:#1a73e8;text-decoration:none;white-space:nowrap;border:1px solid rgba(26,115,232,.25);padding:2px 7px;border-radius:2px;flex-shrink:0">▶ YouTube</a>
             </div>
             <div style="font-size:0.88rem;color:var(--ink-light);line-height:1.6">${d.description}</div>
+            <div id="histDrillDiagram${i}">${drillDiagramHTML(s.drillDiagrams?.[i], true)}</div>
           </li>
         `).join('')}
       </ul>
+      ${!s.drillDiagrams?.length && settings.claudeKey ? `<button class="btn btn-secondary" id="drawDrillsBtn" style="width:100%;margin-top:10px;padding:11px;font-size:.68rem" onclick="drawDrillsForSession(${s.id})">🎨 Draw Diagrams for These Drills</button>` : ''}
     </div>` : ''}
 
     ${s.svgDiagram ? `
@@ -3372,7 +3498,7 @@ async function generateLessonPlan() {
 
   const prompt = `You are a PGA-certified head instructor creating a personalized golf improvement plan.
 
-${golferName ? `Golfer: ${golferName}` : ''}
+${golferName ? `Golfer: ${golferName}` : ''}${physicalNotesPrompt(getGolferNotes(golferName), true)}
 Plan: ${weeks} weeks, ${days} practice days per week, ${mins} minutes per session
 
 Selected swing analysis sessions (most recent first):
@@ -3789,6 +3915,7 @@ function addGolfer() {
 function removeGolfer(name) {
   if (!confirm(`Remove "${name}"? Their sessions won't be deleted, just untagged.`)) return;
   golfers = golfers.filter(g => g !== name);
+  delete golferProfiles[name];
   saveSessionsToStorage();
   scheduleSyncToGitHub();
   renderGolferList();
@@ -3801,11 +3928,59 @@ function renderGolferList() {
     list.innerHTML = `<p style="font-family:'DM Mono',monospace;font-size:.65rem;color:#aaa;text-align:center;padding:12px">No golfers added yet.</p>`;
     return;
   }
-  list.innerHTML = golfers.map(g => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#f5f0e8;border-radius:3px;border-left:3px solid var(--flag)">
-      <span style="font-family:'DM Mono',monospace;font-size:.78rem;color:var(--ink)">👤 ${escHtml(g)}</span>
-      <button onclick="removeGolfer('${escHtml(g)}')" style="background:none;border:none;cursor:pointer;color:#c44b2b;font-size:.75rem;font-family:'DM Mono',monospace">Remove</button>
+  list.innerHTML = golfers.map((g, i) => `
+    <div style="padding:9px 12px;background:#f5f0e8;border-radius:3px;border-left:3px solid var(--flag)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:'DM Mono',monospace;font-size:.78rem;color:var(--ink)">👤 ${escHtml(g)}</span>
+        <button onclick="removeGolfer('${escHtml(g)}')" style="background:none;border:none;cursor:pointer;color:#c44b2b;font-size:.75rem;font-family:'DM Mono',monospace">Remove</button>
+      </div>
+      <label for="gNotes${i}" style="display:block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#8a6a20;margin:8px 0 4px">Body &amp; limits (optional)</label>
+      <textarea id="gNotes${i}" rows="3" placeholder="e.g. Overweight, lower-back issues, limited rotation. Can't hold a long finish." style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #d8d2c2;border-radius:3px;font-family:inherit;font-size:.85rem;line-height:1.45;resize:vertical;background:#fff;color:#222">${escHtml(getGolferNotes(g))}</textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <span id="gNotesStatus${i}" style="font-family:'DM Mono',monospace;font-size:.6rem;color:#2e7d32"></span>
+        <button class="btn btn-gold" style="padding:6px 12px;font-size:.62rem" onclick="saveGolferNotes(${i})">Save notes</button>
+      </div>
     </div>`).join('');
+}
+
+function getGolferNotes(name) {
+  const p = name && golferProfiles[name];
+  return (p && typeof p.notes === 'string') ? p.notes.trim() : '';
+}
+function saveGolferNotes(i) {
+  const name = golfers[i];
+  const el = document.getElementById('gNotes' + i);
+  if (!name || !el) return;
+  const notes = el.value.trim();
+  if (notes) golferProfiles[name] = Object.assign({}, golferProfiles[name], { notes, updated: new Date().toISOString() });
+  else delete golferProfiles[name];
+  saveSessionsToStorage();
+  scheduleSyncToGitHub();
+  const st = document.getElementById('gNotesStatus' + i);
+  if (st) st.textContent = notes ? '✓ Saved — used in every analysis' : '✓ Notes cleared';
+  renderGolferNotesHint();
+}
+// Small reminder under the golfer picker so it's clear notes are being applied
+function renderGolferNotesHint() {
+  const el = document.getElementById('golferNotesHint');
+  if (!el) return;
+  const name = document.getElementById('golferSelect')?.value || '';
+  const notes = getGolferNotes(name);
+  if (!notes) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = `📝 <strong>Tailored to ${escHtml(name)}:</strong> ${escHtml(notes.length > 140 ? notes.slice(0, 140) + '…' : notes)} <a href="#" onclick="openManageGolfers();return false" style="color:var(--sky)">Edit</a>`;
+}
+// Text block added to every AI prompt for this golfer
+function physicalNotesPrompt(notes, forPlan) {
+  if (!notes) return '';
+  return `
+
+PHYSICAL NOTES — written by the golfer about their own body. Treat these as hard constraints:
+"${notes.replace(/"/g, "'")}"
+- Judge the swing against what THIS body can realistically do, not a textbook model. Do not set targets like "90-degree shoulder turn" or "lead shoulder under the chin" if these notes suggest limited mobility.
+- If limited rotation or a restricted turn is the result of these limits, say so plainly; don't treat it as a pure technique fault.
+- Prefer fixes that create rotation without extra strain: setup changes (flaring both feet out, a slightly closed stance, wider stance, standing a bit taller), letting the lead heel lift, letting the hips turn freely with the shoulders, a shorter swing, a step-through finish.
+- Every drill must be safe for these limits. No drills that twist hard against a braced lower body, hold end-range positions, or load the lower back. If a drill has a risk, add a one-line caution.${forPlan ? '\n- Include a short, gentle mobility warm-up each day, pain-free range only, and say to stop anything that hurts.' : ''}`;
 }
 
 function renderGolferSelects() {
@@ -3839,6 +4014,7 @@ function updateGolferSelectStyle() {
   const sel = document.getElementById('golferSelect');
   if (!sel) return;
   sel.style.borderColor = sel.value ? 'rgba(200,168,75,.4)' : 'var(--danger)';
+  renderGolferNotesHint();
 }
 
 let lastGolferChoice = '';
@@ -3923,6 +4099,7 @@ function buildAnalysisSectionHTML(a, meta, golferName, dateStr) {
           <a href="https://www.youtube.com/results?search_query=golf+${encodeURIComponent(d.name)}" style="font-size:10px;color:#1a73e8;text-decoration:none;white-space:nowrap">▶ Watch on YouTube</a>
         </div>
         <div style="font-size:12px;line-height:1.6;color:#444">${d.description}</div>
+        ${meta?.drillDiagrams?.[i] ? `<div class="drill-diagram" style="margin-top:8px;max-width:360px;border:1px solid #ddd;border-radius:4px;overflow:hidden;page-break-inside:avoid">${meta.drillDiagrams[i]}</div>` : ''}
       </div>`).join('')}` : ''}
 
     ${a.phases ? `
@@ -3976,7 +4153,8 @@ function printFullReport() {
       date: new Date().toISOString(),
       club: currentAnalysis.club,
       analysis: currentAnalysis.analysis,
-      svgDiagram: currentAnalysis.svgDiagram || null
+      svgDiagram: currentAnalysis.svgDiagram || null,
+      drillDiagrams: currentAnalysis.drillDiagrams || null
     }];
   }
 
