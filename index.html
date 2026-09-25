@@ -178,7 +178,13 @@
     max-width: 95vw;
     box-shadow: 0 24px 80px rgba(0,0,0,0.5);
     border-top: 4px solid var(--flag);
+    max-height: 90vh;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
+  @media (max-width: 600px) { .modal { padding: 24px 18px; } }
 
   .modal h2 {
     font-family: 'Playfair Display', serif;
