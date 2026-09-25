@@ -240,7 +240,7 @@
             "rating": "needs_work"
           }
         },
-        "root_cause": "An extremely inside takeaway where the clubhead is pulled behind the body immediately, leaving no room to turn and forcing an over-the-top steepening move on the downswing.",
+        "root_cause": "The clubhead is being yanked sharply inside and behind the body on the very first move, and because your body cannot make a full turn to get back on plane, the downswing has nowhere to go but over the top — this is the same inside-takeaway fault observed in the video, but your limited mobility makes it harder to self-correct once the club gets stuck behind you.",
         "cause_chain": [
           "Inside takeaway",
           "Flat, laid-off top of backswing",
@@ -250,7 +250,7 @@
         ],
         "what_sets_you_apart": "Unlike many players with an over-the-top path, this golfer has a very deliberate, patient pre-shot routine and does not rush the transition.",
         "ball_flight_check": "The inside-to-over-the-top path typically produces a high slice or a pull-left, consistent with this swing signature.",
-        "priority_checkpoint": "At takeaway (shaft parallel to the ground), the clubhead must be directly in line with or slightly outside the hands, not behind the trail hip.",
+        "priority_checkpoint": "On the next video, pause at waist height in the backswing and check that the clubhead is still visible in front of your hands, not hidden behind your body.",
         "confidence": "high",
         "not_assessable": [
           "weight shift",
@@ -283,21 +283,18 @@
         ],
         "key_fault": "Inside takeaway forcing an over-the-top downswing.",
         "drill_1": {
-          "name": "Wall Takeaway Drill",
-          "description": "Stand with your rear about 1 to 1.5 feet away from a wall. Practice your takeaway without letting the clubhead touch the wall. Reps: 20 slow rehearsals. Checkpoint: Clubhead stays in front of your hands.",
-          "reps": 20
+          "name": "Tee-in-Grip Takeaway Check",
+          "description": "Stick a tee in the butt end of your grip so it points at your belt buckle at address. Make slow, half-speed takeaways and watch that the tee continues to point roughly at your belt line — not the sky and not the ground — until the club reaches waist height. If the tee shoots skyward, the clubhead has gone inside. Do 15 slow rehearsals in front of a mirror or window reflection. Checkpoint: At waist height, the clubhead should be visible outside your hands when you glance down. No twisting or forcing — stop at waist height every time. Caution: This is a half-swing rehearsal only; do not swing through to a full finish."
         },
         "drill_2": {
-          "name": "Alignment Stick Gate",
-          "description": "Place an alignment stick in the ground 3 feet behind your ball, angled along your target line. Practice taking the club back outside of the stick. Reps: 15 swings.",
-          "reps": 15
+          "name": "Heel-Up Rotation Feel Drill",
+          "description": "Take your normal setup with feet flared. Without a club, cross your arms over your chest and make a slow backswing, consciously allowing your lead heel to lift off the ground as you turn. Feel your belly button rotate to face slightly behind the ball. Hold for one second, then step your lead foot toward the target as you rotate through — this is your step-through finish cue built right in. Do 10 slow reps. This is a no-club drill, so there is no load on the spine. Checkpoint: Your heel lifts naturally, your hips turn with your shoulders, and you feel balanced at the end — not falling back. Caution: Keep the motion slow and rhythmic; do not force the turn past the point of comfort."
         },
         "drill_3": {
-          "name": "Pump and Shallow Drill",
-          "description": "Take the club to the top, pause, and let your arms drop straight down to hip height before rotating through. Reps: 15 practice swings.",
-          "reps": 15
+          "name": "Short Swing, Full Shift",
+          "description": "Hit shots — even chip-length swings — with the driver, stopping the backswing at about hip height using the corrected takeaway from Drill 1. From that short top position, focus entirely on stepping or shifting toward the target and rotating your belt buckle to face the target at finish. Use your step-through finish: if you need to, literally step your trail foot forward after impact to get your weight moving. Hit 10 balls this way. Checkpoint: Ball contact should feel more solid and the ball should fly lower and straighter than your usual shot shape. Caution: Resist the urge to swing longer to hit the ball farther — a short, on-plane swing with a weight shift will outperform a long, over-the-top swing every time for your body type."
         },
-        "summary": "The primary issue is the takeaway. By pulling the club inside immediately, you force an over-the-top move to get back to the ball. Fix the takeaway to keep the club in front of your chest, and the downswing will naturally shallow out.",
+        "summary": "Your body cannot and does not need to make a tour-style full turn — the goal is to get the club on a better path in the first 12 inches of the swing, and your setup changes will unlock enough rotation to make that happen safely. Fix the takeaway, let the heel lift, shift through the ball, and the over-the-top move will have no reason to exist.",
         "metrics": {
           "swing_plane": "steep in transition",
           "tempo": "deliberate",
@@ -305,11 +302,53 @@
           "balance_at_finish": "slightly back",
           "clubface_at_top": "shut",
           "shaft_lean_at_impact": "neutral to backward"
+        },
+        "original_advice": {
+          "root_cause": "An extremely inside takeaway where the clubhead is pulled behind the body immediately, leaving no room to turn and forcing an over-the-top steepening move on the downswing.",
+          "priority_checkpoint": "At takeaway (shaft parallel to the ground), the clubhead must be directly in line with or slightly outside the hands, not behind the trail hip.",
+          "summary": "The primary issue is the takeaway. By pulling the club inside immediately, you force an over-the-top move to get back to the ball. Fix the takeaway to keep the club in front of your chest, and the downswing will naturally shallow out.",
+          "setup_fix": null,
+          "drill_1": {
+            "name": "Wall Takeaway Drill",
+            "description": "Stand with your rear about 1 to 1.5 feet away from a wall. Practice your takeaway without letting the clubhead touch the wall. Reps: 20 slow rehearsals. Checkpoint: Clubhead stays in front of your hands.",
+            "reps": 20
+          },
+          "drill_2": {
+            "name": "Alignment Stick Gate",
+            "description": "Place an alignment stick in the ground 3 feet behind your ball, angled along your target line. Practice taking the club back outside of the stick. Reps: 15 swings.",
+            "reps": 15
+          },
+          "drill_3": {
+            "name": "Pump and Shallow Drill",
+            "description": "Take the club to the top, pause, and let your arms drop straight down to hip height before rotating through. Reps: 15 practice swings.",
+            "reps": 15
+          }
+        },
+        "setup_fix": {
+          "changes": [
+            "flare_feet",
+            "wider_stance"
+          ],
+          "body": [
+            "lead_heel_lift",
+            "hips_turn_freely",
+            "stand_taller",
+            "shorter_swing",
+            "step_through_finish"
+          ],
+          "summary": "Flare both feet out 20-30 degrees, widen your stance slightly, and stand a touch taller at address. Allow your lead heel to lift freely as you turn back, let your hips rotate with your shoulders rather than resisting them, and commit to a shorter, controlled swing with a step-through finish.",
+          "why": "Flaring both feet and widening the stance gives your hips permission to turn without grinding on your lower back. Letting the lead heel lift adds several more degrees of backswing rotation safely — it is how golfers played for decades and it is perfect for your body. Standing a touch taller reduces the spine angle you have to maintain, which directly reduces the early-extension urge at impact. A shorter swing keeps you in control and on plane. The step-through finish encourages weight shift and stops you from hanging back."
+        },
+        "coach_note": "Your inside takeaway is the trigger for everything else going wrong — fixing just that one move will clean up the over-the-top downswing and the standing-up at impact. Given your limited turn, we are going to use setup tweaks and a shorter swing to get you the rotation you need without hurting your back.",
+        "recoached": {
+          "notes": "Overweight. Struggle with turning. That being said stretches amd such would help but I will never turn like a pro. Things that help me with limited turn and avoiding back issues.",
+          "date": "2026-09-25T17:03:20.663Z"
         }
       },
       "svgDiagram": null,
       "videoHash": "11a860bb89623bfc5f91ec49919aa65c8b67dbafd68d469578b74aab5b9db600",
-      "cardPath": "swing-cards/1790212669759.jpg"
+      "cardPath": "swing-cards/1790212669759.jpg",
+      "drillDiagrams": null
     },
     {
       "id": 1790212622015,
