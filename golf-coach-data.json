@@ -2474,6 +2474,12 @@
     "Gary",
     "Mike"
   ],
+  "golferProfiles": {
+    "Ed": {
+      "notes": "Overweight. Struggle with turning. That being said stretches amd such would help but I will never turn like a pro. Things that help me with limited turn and avoiding back issues.",
+      "updated": "2026-09-25T16:02:11.199Z"
+    }
+  },
   "lessonPlans": [
     {
       "id": 1782239948144,
