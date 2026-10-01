@@ -3859,7 +3859,7 @@ function deleteSavedPlan(id) {
 // UTILITIES
 // ============================================================
 function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // Close modals on overlay click
@@ -4097,7 +4097,8 @@ function addGolfer() {
   renderGolferSelects();
 }
 
-function removeGolfer(name) {
+function removeGolfer(i) {
+  const name = golfers[i]; if (name === undefined) return;
   if (!confirm(`Remove "${name}"? Their sessions won't be deleted, just untagged.`)) return;
   golfers = golfers.filter(g => g !== name);
   delete golferProfiles[name];
@@ -4117,7 +4118,7 @@ function renderGolferList() {
     <div style="padding:9px 12px;background:#f5f0e8;border-radius:3px;border-left:3px solid var(--flag)">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-family:'DM Mono',monospace;font-size:.78rem;color:var(--ink)">👤 ${escHtml(g)}</span>
-        <button onclick="removeGolfer('${escHtml(g)}')" style="background:none;border:none;cursor:pointer;color:#c44b2b;font-size:.75rem;font-family:'DM Mono',monospace">Remove</button>
+        <button onclick="removeGolfer(${i})" style="background:none;border:none;cursor:pointer;color:#c44b2b;font-size:.75rem;font-family:'DM Mono',monospace">Remove</button>
       </div>
       <label for="gNotes${i}" style="display:block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#8a6a20;margin:8px 0 4px">Body &amp; limits (optional)</label>
       <textarea id="gNotes${i}" rows="3" placeholder="e.g. Overweight, lower-back issues, limited rotation. Can't hold a long finish." style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #d8d2c2;border-radius:3px;font-family:inherit;font-size:.85rem;line-height:1.45;resize:vertical;background:#fff;color:#222">${escHtml(getGolferNotes(g))}</textarea>
