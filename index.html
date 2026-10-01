@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' data: blob: https://api.github.com https://generativelanguage.googleapis.com https://api.anthropic.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Caddie AI — Golf Swing Coach</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
@@ -1349,10 +1351,15 @@ function repairText(s) {
   }
   return s;
 }
-function repairDeep(v) {
-  if (typeof v === 'string') return repairText(v);
-  if (Array.isArray(v)) return v.map(repairDeep);
-  if (v && typeof v === 'object') { const o = {}; for (const k in v) o[k] = repairDeep(v[k]); return o; }
+// SECURITY: text from the data file, golfers and the AI is never allowed to contain markup.
+// "<" and '"' become look-alike characters, so no value can open an HTML tag or break out of an attribute.
+// Only the SVG diagram fields keep real markup, and those go through cleanSvg() every time they are shown.
+const RAW_SVG_KEYS = new Set(['svgDiagram', 'drillDiagrams']);
+function neutralizeText(s) { return typeof s === 'string' ? s.replace(/</g, '\u2039').replace(/"/g, '\u201D') : s; }
+function repairDeep(v, raw) {
+  if (typeof v === 'string') return raw ? repairText(v) : neutralizeText(repairText(v));
+  if (Array.isArray(v)) return v.map(x => repairDeep(x, raw));
+  if (v && typeof v === 'object') { const o = {}; for (const k in v) o[k] = repairDeep(v[k], raw || RAW_SVG_KEYS.has(k)); return o; }
   return v;
 }
 // Decode GitHub base64 content as UTF-8 (plain atob() was corrupting text on every load)
@@ -1795,8 +1802,8 @@ async function detectClub(file) {
 Clues: putter = short pendulum stroke, usually on a green, ball rolls along the ground. Wedge = short shaft, often a partial swing near a green or from sand/rough. Driver = longest club with a large round head, ball teed up high, wide stance, ball forward in stance. Fairway wood / hybrid = long club, ball on the grass or a low tee. Irons = medium-length shaft, ball on the ground, a divot is likely.
 Respond with ONLY JSON: {"club":"driver|3-wood|hybrid|long-iron|mid-iron|short-iron|wedge|putter","confidence":"high|medium|low"}. If unsure which iron, answer "mid-iron".`;
   const call = advanced => fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${settings.geminiKey}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': settings.geminiKey }, body: JSON.stringify({
       contents: [{ parts: [
         Object.assign({ inline_data: { mime_type: file.type || 'video/mp4', data: base64 } }, advanced ? { video_metadata: { fps: 2 } } : {}),
         { text: prompt }
@@ -1958,8 +1965,8 @@ Now analyze the ACTUAL video. Return one JSON object in that format. Phase ratin
   };
 
   const callOnce = (advanced) => fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${settings.geminiKey}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildBody(advanced)) }
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': settings.geminiKey }, body: JSON.stringify(buildBody(advanced)) }
   );
 
   let res = await callOnce(true);
@@ -2016,6 +2023,7 @@ Now analyze the ACTUAL video. Return one JSON object in that format. Phase ratin
     }
   }
 
+  parsed = repairDeep(parsed);
   // Ensure all score values are sane integers 0-100
   const clamp = v => Math.max(0, Math.min(100, parseInt(v) || 0));
   if (parsed.scores) {
@@ -2105,13 +2113,31 @@ Return ONLY the complete SVG element, nothing else. Start with <svg and end with
 // ============================================================
 // DRILL DIAGRAMS (Claude SVG) — one simple "how to do it" picture per drill
 // ============================================================
+// SECURITY: allow-list SVG sanitizer. Parses the SVG without running it, keeps only drawing
+// elements, drops every event handler, external link, <script>, <foreignObject>, <a>, animation and
+// any url() that points outside the drawing. Called every time an SVG is put on screen.
+const SVG_OK_TAGS = new Set(['svg','g','defs','marker','path','line','polyline','polygon','rect','circle','ellipse',
+  'text','tspan','title','desc','lineargradient','radialgradient','stop','clippath','mask','pattern','symbol','use','style']);
 function cleanSvg(svg) {
-  if (!svg) return null;
-  return svg
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
-    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*')/gi, '')
-    .replace(/(href\s*=\s*["'])\s*javascript:[^"']*/gi, '$1#');
+  if (!svg || typeof svg !== 'string') return '';
+  let root;
+  try { root = new DOMParser().parseFromString('<body>' + svg, 'text/html').querySelector('svg'); } catch (e) { return ''; }
+  if (!root) return '';
+  const badUrl = v => /url\s*\(\s*['"]?\s*(?!#)/i.test(v) || /javascript:|data:|@import|expression\s*\(/i.test(v);
+  const walk = el => {
+    for (const ch of [...el.children]) {
+      const tag = ch.localName.toLowerCase();
+      if (!SVG_OK_TAGS.has(tag)) { ch.remove(); continue; }
+      if (tag === 'style' && badUrl(ch.textContent)) { ch.remove(); continue; }
+      walk(ch);
+    }
+    for (const a of [...el.attributes]) {
+      const n = a.name.toLowerCase(), v = a.value;
+      if (n.startsWith('on') || ((n === 'href' || n === 'xlink:href') && !/^#[\w.-]+$/.test(v.trim())) || badUrl(v)) el.removeAttribute(a.name);
+    }
+  };
+  walk(root);
+  return root.outerHTML;
 }
 
 async function generateDrillDiagrams(analysis, physicalNotes) {
@@ -2177,7 +2203,7 @@ Return ONLY the ${drills.length} complete <svg>...</svg> elements one after anot
 
 function drillDiagramHTML(svg, light) {
   if (!svg) return '';
-  return `<div class="drill-diagram" style="margin-top:10px;border-radius:4px;overflow:hidden;border:1px solid ${light ? '#e0ddd5' : 'rgba(200,168,75,.2)'};max-width:420px">${svg}</div>`;
+  return `<div class="drill-diagram" style="margin-top:10px;border-radius:4px;overflow:hidden;border:1px solid ${light ? '#e0ddd5' : 'rgba(200,168,75,.2)'};max-width:420px">${cleanSvg(svg)}</div>`;
 }
 
 // Fill in drill diagram slots on whatever screen is showing (results or history detail)
@@ -2320,7 +2346,7 @@ setup_fix.changes may only contain "flare_feet", "trail_foot_back", "wider_stanc
     const data = await res.json();
     let text = (data.content?.map(b => b.text || '').join('') || '').replace(/```json|```/g, '');
     text = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1).replace(/,\s*([}\]])/g, '$1');
-    const r = JSON.parse(text);
+    const r = repairDeep(JSON.parse(text));
     if (!r.drill_1) throw new Error('no drills returned');
     if (!a.original_advice) a.original_advice = { root_cause: a.root_cause, priority_checkpoint: a.priority_checkpoint, summary: a.summary, setup_fix: a.setup_fix || null, drill_1: a.drill_1, drill_2: a.drill_2, drill_3: a.drill_3 };
     ['root_cause', 'priority_checkpoint', 'summary', 'drill_1', 'drill_2', 'drill_3'].forEach(k => { if (r[k]) a[k] = r[k]; });
@@ -2372,7 +2398,7 @@ function injectSwingDiagram(svg) {
   container.innerHTML = `
     <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--flag);margin-bottom:10px">Fault Diagram</div>
     <div style="border-radius:4px;overflow:hidden;border:1px solid rgba(200,168,75,.2)">
-      ${svg}
+      ${cleanSvg(svg)}
     </div>
     <p style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--divot);margin-top:8px;letter-spacing:.05em">AI-generated diagram · red highlights fault areas · arrows indicate corrections needed</p>
   `;
@@ -3029,7 +3055,7 @@ function renderBatch() {
           <div class="option-group"><select onchange="batchSet(${i}, 'golfer', this.value)" style="${it.golfer ? '' : 'border-color:var(--danger)'}">${gOpts(it.golfer)}</select></div>
           <div class="option-group"><select onchange="batchSet(${i}, 'club', this.value)">${clubOpts.replace(`value="${it.club}"`, `value="${it.club}" selected`)}</select></div>
         </div>`}
-        ${statusText(it) ? `<div style="font-size:.76rem;margin-top:6px;color:${it.status === 'failed' ? '#e87a5a' : it.status === 'done' ? '#6abf6a' : 'var(--sky)'};line-height:1.45">${statusText(it)}
+        ${statusText(it) ? `<div style="font-size:.76rem;margin-top:6px;color:${it.status === 'failed' ? '#e87a5a' : it.status === 'done' ? '#6abf6a' : 'var(--sky)'};line-height:1.45">${escHtml(statusText(it))}
           ${it.sessionId ? ` <button onclick="viewSession(${it.sessionId})" style="background:none;border:none;color:var(--sky);text-decoration:underline;cursor:pointer;font:inherit;padding:0">open</button>` : ''}</div>` : ''}
       </div>`;
     }).join('')}
@@ -3220,7 +3246,7 @@ function renderResults(data) {
       </div>` : ''}
 
       <div class="save-row">
-        <input type="text" id="sessionLabel" placeholder="Name this session (e.g. Driver practice)..." value="${data.fileName ? data.fileName.replace(/\.[^.]+$/,'') : ''}" onchange="renameCurrentSession(this.value)">
+        <input type="text" id="sessionLabel" placeholder="Name this session (e.g. Driver practice)..." value="${data.fileName ? escHtml(data.fileName.replace(/\.[^.]+$/,'')) : ''}" onchange="renameCurrentSession(this.value)">
         <button class="btn btn-gold" onclick="saveSession()">Save Session</button>
       </div>
       <div id="cardButtonSlot">${data.cardBlob ? cardButtonHTML('current') : ''}</div>
@@ -3305,7 +3331,7 @@ function showError(msg) {
   const panel = document.getElementById('resultsContent');
   panel.innerHTML = `
     <div class="notice notice-warn fade-in" style="margin:0">
-      <strong>Error:</strong> ${msg}
+      <strong>Error:</strong> ${escHtml(msg)}
     </div>
   `;
   document.getElementById('analyzeBtn').disabled = false;
@@ -3318,7 +3344,7 @@ function renameCurrentSession(label) {
   if (!currentAnalysis || !currentAnalysis.savedId) return;
   const s = sessions.find(x => x.id === currentAnalysis.savedId);
   if (!s || !label.trim()) return;
-  s.label = label.trim();
+  s.label = neutralizeText(label.trim()).slice(0, 120);
   saveSessionsToStorage(); scheduleSyncToGitHub(); renderHistory();
 }
 
@@ -3516,7 +3542,7 @@ function viewSession(id) {
     ${s.svgDiagram ? `
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e0ddd5">
       <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:#8a6a20;margin-bottom:10px">📊 Fault Diagram</div>
-      <div style="border-radius:4px;overflow:hidden;border:1px solid #e0ddd5">${s.svgDiagram}</div>
+      <div style="border-radius:4px;overflow:hidden;border:1px solid #e0ddd5">${cleanSvg(s.svgDiagram)}</div>
       <p style="font-family:'DM Mono',monospace;font-size:0.58rem;color:#aaa;margin-top:6px">AI-generated · red = fault areas · arrows indicate corrections</p>
     </div>` : ''}
   `;
@@ -3738,11 +3764,11 @@ Format the plan clearly with Week headers, Day headers (Day 1, Day 2, etc.), and
     const text = data.content?.map(b => b.text || '').join('') || '';
     if (!text) throw new Error(`Claude returned empty content. Full response: ${JSON.stringify(data).slice(0,300)}`);
 
-    currentLessonPlanText = text;
+    currentLessonPlanText = neutralizeText(text);
     currentLessonPlanMeta = { golfer: golferName || null, weeks, days, mins, sessionCount: recentSessions.length, sessionIds: chosenSessions.map(s => s.id) };
     renderLessonPlan(text);
   } catch(err) {
-    lessonEl.innerHTML = `<div class="notice notice-warn">Error generating lesson plan: ${err.message}</div>`;
+    lessonEl.innerHTML = `<div class="notice notice-warn">Error generating lesson plan: ${escHtml(err.message)}</div>`;
   }
 
   genBtn.disabled = false;
@@ -3787,7 +3813,7 @@ function renderLessonPlan(text) {
 // ============================================================
 function saveLessonPlan() {
   if (!currentLessonPlanText) return;
-  const label = document.getElementById('lessonPlanLabel')?.value || 'Lesson Plan';
+  const label = neutralizeText(document.getElementById('lessonPlanLabel')?.value || 'Lesson Plan').slice(0, 120);
   const plan = {
     id: Date.now(),
     label,
@@ -4086,7 +4112,7 @@ function openManageGolfers() {
 
 function addGolfer() {
   const input = document.getElementById('newGolferName');
-  const name = input.value.trim();
+  const name = neutralizeText(input.value.trim()).slice(0, 40);
   if (!name) return;
   if (golfers.includes(name)) { input.value = ''; return; }
   golfers.push(name);
@@ -4137,7 +4163,7 @@ function saveGolferNotes(i) {
   const name = golfers[i];
   const el = document.getElementById('gNotes' + i);
   if (!name || !el) return;
-  const notes = el.value.trim();
+  const notes = neutralizeText(el.value.trim()).slice(0, 2000);
   if (notes) golferProfiles[name] = Object.assign({}, golferProfiles[name], { notes, updated: new Date().toISOString() });
   else delete golferProfiles[name];
   saveSessionsToStorage();
@@ -4287,7 +4313,7 @@ function buildAnalysisSectionHTML(a, meta, golferName, dateStr) {
           <a href="https://www.youtube.com/results?search_query=golf+${encodeURIComponent(d.name)}" style="font-size:10px;color:#1a73e8;text-decoration:none;white-space:nowrap">▶ Watch on YouTube</a>
         </div>
         <div style="font-size:12px;line-height:1.6;color:#444">${d.description}</div>
-        ${meta?.drillDiagrams?.[i] ? `<div class="drill-diagram" style="margin-top:8px;max-width:360px;border:1px solid #ddd;border-radius:4px;overflow:hidden;page-break-inside:avoid">${meta.drillDiagrams[i]}</div>` : ''}
+        ${meta?.drillDiagrams?.[i] ? `<div class="drill-diagram" style="margin-top:8px;max-width:360px;border:1px solid #ddd;border-radius:4px;overflow:hidden;page-break-inside:avoid">${cleanSvg(meta.drillDiagrams[i])}</div>` : ''}
       </div>`).join('')}` : ''}
 
     ${a.phases ? `
@@ -4312,7 +4338,7 @@ function buildAnalysisSectionHTML(a, meta, golferName, dateStr) {
 
     ${meta?.svgDiagram ? `
     <h3 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a6a20;margin:18px 0 8px">Fault Diagram</h3>
-    <div style="border:1px solid #ddd;border-radius:4px;overflow:hidden;max-width:400px">${meta.svgDiagram}</div>
+    <div style="border:1px solid #ddd;border-radius:4px;overflow:hidden;max-width:400px">${cleanSvg(meta.svgDiagram)}</div>
     ` : ''}
   `;
 }
