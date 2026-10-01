@@ -928,17 +928,18 @@
     <div class="form-group">
       <label class="form-label">Gemini API Key <span style="color:var(--danger)">*</span></label>
       <input class="form-input" type="password" id="geminiKey" placeholder="AIzaSy...">
-      <p class="api-key-note">Required for video analysis. Get one free at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a></p>
+      <p class="api-key-note">Required for video analysis. Get one free at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com</a></p>
     </div>
     <div class="form-group">
       <label class="form-label">Claude API Key</label>
       <input class="form-input" type="password" id="claudeKey" placeholder="sk-ant-...">
-      <p class="api-key-note">Required for lesson plan generation. Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+      <p class="api-key-note">Optional. Adds lesson plans, fault diagrams and drill diagrams. Get one at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a></p>
     </div>
+    <p style="font-family:'DM Mono',monospace;font-size:.62rem;color:#2e7d32;line-height:1.55;margin:-6px 0 16px">🔒 Your keys are saved only in this browser on this device. They are sent only to Google (Gemini) and Anthropic (Claude), never to the app's owner.</p>
     <div class="form-group">
       <div style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #e0ddd5">
-        <p style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:10px">GitHub Sync (Recommended)</p>
-        <p style="font-family:'DM Mono',monospace;font-size:.62rem;color:#999;line-height:1.55;margin-bottom:12px">Stores sessions in a JSON file on your repo — no size limits, syncs across devices. Create a <a href="https://github.com/settings/tokens?type=beta" target="_blank" style="color:#8a6a20">fine-grained PAT</a> with Contents read+write.</p>
+        <p style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:10px">GitHub Sync (Optional)</p>
+        <p style="font-family:'DM Mono',monospace;font-size:.62rem;color:#999;line-height:1.55;margin-bottom:12px">Leave this blank to keep everything in this browser only. To sync across devices, create a <strong>private</strong> GitHub repo for your data and a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:#8a6a20">fine-grained token</a> limited to that one repo with Contents read+write. Never point this at a public repo, because anyone could read your swings and notes.</p>
         <div class="form-group">
           <label class="form-label">GitHub Username</label>
           <input class="form-input" type="text" id="ghUser" placeholder="e.g. edhenschel20">
@@ -958,6 +959,16 @@
         </div>
         <p id="ghTestResult" style="font-family:'DM Mono',monospace;font-size:.62rem;margin-top:8px"></p>
       </div>
+      <div style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #e0ddd5">
+        <p style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:8px">Backup</p>
+        <p style="font-family:'DM Mono',monospace;font-size:.62rem;color:#999;line-height:1.55;margin-bottom:10px">Save a copy of your golfers, sessions and plans as a file. Use this if you don't use GitHub sync, because clearing your browser data deletes them.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" style="padding:6px 14px;font-size:.62rem" onclick="downloadBackup()">⬇ Download Backup</button>
+          <button class="btn btn-secondary" style="padding:6px 14px;font-size:.62rem" onclick="document.getElementById('restoreFile').click()">⬆ Restore Backup</button>
+          <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" onchange="restoreBackup(this)">
+        </div>
+        <p id="backupResult" style="font-family:'DM Mono',monospace;font-size:.62rem;margin-top:8px"></p>
+      </div>
       <label class="form-label">Your Name (optional)</label>
       <input class="form-input" type="text" id="userName" placeholder="e.g. Ed">
     </div>
@@ -973,6 +984,31 @@
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
       <button class="btn btn-gold" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- First-run welcome -->
+<div class="modal-overlay" id="welcomeModal">
+  <div class="modal">
+    <h2>⛳ Welcome to Caddie AI</h2>
+    <p style="line-height:1.6;margin-bottom:12px">Upload a swing video and get a coach-style breakdown: what's going on, the one thing to fix first, and drills for it.</p>
+    <p style="line-height:1.6;margin-bottom:8px"><strong>You use your own AI key.</strong> It takes about two minutes:</p>
+    <ol style="line-height:1.7;margin:0 0 12px 20px;padding:0">
+      <li>Open <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> and sign in with a Google account.</li>
+      <li>Tap <strong>Create API key</strong> and copy it.</li>
+      <li>Paste it below. Google has a free tier.</li>
+    </ol>
+    <div class="form-group">
+      <label class="form-label">Gemini API Key</label>
+      <input class="form-input" type="password" id="welcomeGeminiKey" placeholder="AIzaSy..." autocomplete="off">
+    </div>
+    <p style="font-family:'DM Mono',monospace;font-size:.62rem;color:#2e7d32;line-height:1.55;margin-bottom:6px">🔒 Your key and your swings stay in this browser on this device. Nothing is sent to the app's owner.</p>
+    <p style="font-family:'DM Mono',monospace;font-size:.62rem;color:#999;line-height:1.55;margin-bottom:14px">Optional extras (lesson plans, diagrams, syncing across devices) are in ⚙️ Settings.</p>
+    <p id="welcomeResult" style="font-family:'DM Mono',monospace;font-size:.65rem;color:#c44b2b;margin-bottom:8px"></p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeWelcome()">Look around first</button>
+      <button class="btn btn-gold" onclick="saveWelcomeKey()">Save &amp; Start</button>
     </div>
   </div>
 </div>
@@ -1385,10 +1421,17 @@ function loadState() {
 }
 
 function saveSessionsToStorage() {
-  localStorage.setItem('caddieai_sessions', JSON.stringify(sessions));
-  localStorage.setItem('caddieai_golfers', JSON.stringify(golfers));
-  localStorage.setItem('caddieai_lessonplans', JSON.stringify(lessonPlans));
-  localStorage.setItem('caddieai_golferprofiles', JSON.stringify(golferProfiles));
+  try {
+    localStorage.setItem('caddieai_sessions', JSON.stringify(sessions));
+    localStorage.setItem('caddieai_golfers', JSON.stringify(golfers));
+    localStorage.setItem('caddieai_lessonplans', JSON.stringify(lessonPlans));
+    localStorage.setItem('caddieai_golferprofiles', JSON.stringify(golferProfiles));
+  } catch (e) {
+    if (!saveSessionsToStorage.warned) {
+      saveSessionsToStorage.warned = true;
+      alert('This browser is out of storage space for Caddie AI. Open ⚙️ Settings → Download Backup now, then delete some old sessions or turn on GitHub sync.');
+    }
+  }
 }
 
 // ============================================================
@@ -1493,6 +1536,7 @@ async function init() {
   loadState();
   applySettings();
   checkKeys();
+  maybeShowWelcome();
   renderGolferSelects();
   if (hasGitHub()) { setSyncStatus('syncing', 'loading...'); await loadFromGitHub(); } else { setSyncStatus('', 'local'); }
   renderHistory();
@@ -1510,6 +1554,61 @@ function applySettings() {
   if (settings.ghUser)    document.getElementById('ghUser').value    = settings.ghUser;
   if (settings.ghRepo)    document.getElementById('ghRepo').value    = settings.ghRepo;
   if (settings.ghToken)   document.getElementById('ghToken').value   = settings.ghToken;
+}
+
+// ============================================================
+// FIRST RUN + BACKUP (people using their own keys, no GitHub)
+// ============================================================
+function maybeShowWelcome() {
+  let seen = false; try { seen = localStorage.getItem('caddieai_welcomed') === '1'; } catch (e) {}
+  if (!settings.geminiKey && !seen) document.getElementById('welcomeModal').classList.add('open');
+}
+function closeWelcome() {
+  try { localStorage.setItem('caddieai_welcomed', '1'); } catch (e) {}
+  document.getElementById('welcomeModal').classList.remove('open');
+}
+function saveWelcomeKey() {
+  const key = document.getElementById('welcomeGeminiKey').value.trim();
+  const out = document.getElementById('welcomeResult');
+  if (!/^[A-Za-z0-9_\-]{30,60}$/.test(key)) { out.textContent = 'That doesn\'t look like a Gemini key. It usually starts with "AIza".'; return; }
+  settings.geminiKey = key;
+  localStorage.setItem('caddieai_settings', JSON.stringify(settings));
+  const f = document.getElementById('geminiKey'); if (f) f.value = key;
+  checkKeys();
+  closeWelcome();
+}
+function downloadBackup() {
+  const data = { app: 'caddie-ai', exported: new Date().toISOString(), sessions, golfers, golferProfiles, lessonPlans };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'caddie-ai-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  document.getElementById('backupResult').textContent = '✓ Backup downloaded';
+}
+function restoreBackup(input) {
+  const file = input.files && input.files[0];
+  const out = document.getElementById('backupResult');
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const d = repairDeep(JSON.parse(reader.result));
+      if (!d || !Array.isArray(d.sessions)) throw new Error('not a Caddie AI backup');
+      sessions = mergeById(sessions, d.sessions.filter(x => x && x.id));
+      lessonPlans = mergeById(lessonPlans, (d.lessonPlans || []).filter(x => x && x.id));
+      golfers = Array.from(new Set([...golfers, ...(d.golfers || []).filter(g => typeof g === 'string')]));
+      golferProfiles = Object.assign({}, d.golferProfiles || {}, golferProfiles);
+      saveSessionsToStorage(); scheduleSyncToGitHub();
+      renderHistory(); renderGolferSelects();
+      out.style.color = '#2e7d32'; out.textContent = `✓ Restored ${d.sessions.length} sessions (kept everything you already had)`;
+    } catch (e) {
+      out.style.color = '#c44b2b'; out.textContent = '✕ Could not read that file: ' + e.message;
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function checkKeys() {
